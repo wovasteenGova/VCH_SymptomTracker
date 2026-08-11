@@ -30,6 +30,7 @@
     <NuxtRouteAnnouncer />
     <NuxtPage />
     <SubmissionToast v-if="showGlobalSubmissionToast" />
+    <PwaInstallPrompt />
   </UApp>
 </template>
 

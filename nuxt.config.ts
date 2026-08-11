@@ -121,19 +121,24 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/png', href: '/vch-logo.png' },
         { rel: 'shortcut icon', type: 'image/png', href: '/vch-logo.png' },
-        { rel: 'apple-touch-icon', href: '/vch-logo.png' }
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }
       ]
     }
   },
   pwa: {
     registerType: 'autoUpdate',
-    includeAssets: ['vch-logo.png', 'vch-shield-mark.png', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'notification-badge.png'],
+    includeAssets: ['vch-logo.png', 'vch-shield-mark.png', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png', 'notification-badge.png'],
     workbox: {
-      importScripts: ['/log-reminder-handlers.js']
+      importScripts: ['/log-reminder-handlers.js'],
+      // This is an authenticated server app, not an offline SPA shell. Keep the
+      // reminder service worker active without replacing navigations or API/auth
+      // responses with a cached root document.
+      navigateFallbackDenylist: [/.*/]
     },
     manifest: {
+      id: '/',
       name: 'VCH Symptom Tracker',
-      short_name: 'VCH',
+      short_name: 'Symptoms',
       description: 'A mobile-first symptom tracker for veterans to log symptoms and supporter observations.',
       theme_color: '#0f172a',
       background_color: '#020617',
@@ -143,27 +148,25 @@ export default defineNuxtConfig({
       start_url: '/',
       icons: [
         {
-          src: '/vch-logo.png',
+          src: '/pwa-192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any'
+        },
+        {
+          src: '/pwa-512.png',
           sizes: '512x512',
           type: 'image/png',
           purpose: 'any'
         },
         {
-          src: '/vch-logo.png',
+          src: '/pwa-maskable-512.png',
           sizes: '512x512',
           type: 'image/png',
           purpose: 'maskable'
         }
       ],
-      categories: ['health', 'productivity', 'utilities'],
-      screenshots: [
-        {
-          src: '/vch-logo.png',
-          sizes: '512x512',
-          type: 'image/png',
-          form_factor: 'narrow'
-        }
-      ]
+      categories: ['health', 'productivity', 'utilities']
     }
   },
   vite: {
@@ -172,13 +175,12 @@ export default defineNuxtConfig({
     }
   },
   nitro: {
-    // node-server for Render; Netlify sets NITRO_PRESET=netlify.
+    // Render runs the generated Nitro node server in production.
     preset: process.env.NITRO_PRESET || 'node-server',
     compatibilityDate: '2025-07-15',
     compressPublicAssets: true
   },
   routeRules: {
-    '/': { redirect: { to: '/', statusCode: 301 } },
     '/app/**': { redirect: { to: '/', statusCode: 301 } },
     '/': { ssr: false },
     '/profile': { ssr: false },

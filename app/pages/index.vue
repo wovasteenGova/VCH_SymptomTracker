@@ -2294,7 +2294,7 @@ import { LOG_REMINDER_TEST_INTERVAL_MS, LOG_REMINDER_TEST_MODE } from '../utils/
 import { conditionImageAssets } from '../utils/conditionImages'
 import { getSeverityEmoji, getSeverityGuidance, severityQuickPresets } from '../utils/severityGuidance'
 import { CalendarDate } from '@internationalized/date'
-import { computed, inject, nextTick, onBeforeMount, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import { useKeyboardAwareScroll } from '../composables/useKeyboardAwareScroll'
 import {
   buildEntryDraftSnapshot,
@@ -2526,8 +2526,7 @@ const isPdfExportOverlayOpen = ref(false)
 const selectedExportConditionKeys = ref<string[]>([])
 const pdfExportAcknowledged = ref(false)
 const transitionDirection = ref<HomeTransitionDirection>('next')
-const installPlatform = ref<'ios' | 'android' | 'desktop'>('desktop')
-const deferredInstallPrompt = ref<any>(null)
+const { installPlatform, canPromptInstall, promptInstall } = usePwaInstall()
 const historyExpanded = ref(false)
 const historyPanelAnimating = ref(false)
 const historyScrollEl = ref<HTMLElement | null>(null)
@@ -2693,20 +2692,6 @@ const desktopWhatHappened = computed({
 })
 
 const historyTabs = ['Entries', 'Calendar', 'Export']
-const installDismissedKey = 'symptom-tracker-install-dismissed'
-
-function readInstallPlatform(): 'ios' | 'android' | 'desktop' {
-  if (typeof window === 'undefined') {
-    return 'desktop'
-  }
-
-  const userAgent = window.navigator.userAgent.toLowerCase()
-  const isIos = /iphone|ipad|ipod/.test(userAgent)
-  const isAndroid = /android/.test(userAgent)
-
-  return isIos ? 'ios' : isAndroid ? 'android' : 'desktop'
-}
-
 const submissionHighlightDurationMs = 5_000
 
 const pendingDeleteDraft = ref(false)
@@ -3927,7 +3912,6 @@ const hasCustomConditionSearch = computed(() => debouncedCustomConditionPreview.
 const showCustomConditionEmptyState = computed(() =>
   hasCustomConditionSearch.value && filteredPickerConditionResults.value.length === 0
 )
-const canPromptInstall = computed(() => Boolean(deferredInstallPrompt.value))
 const installGuideVideoUrl = computed(() => {
   if (installPlatform.value === 'ios') {
     return iosAddToHomeScreenVideoUrl
@@ -4149,10 +4133,6 @@ watch(isConditionPickerOpen, (open) => {
   }
 })
 
-onBeforeMount(() => {
-  installPlatform.value = readInstallPlatform()
-})
-
 onMounted(async () => {
   const shouldShowBootstrapLoader = !homeWorkspaceReady.value
 
@@ -4183,8 +4163,6 @@ onMounted(async () => {
   if (!homeGreetingWord.value) {
     homeGreetingWord.value = Math.random() < 0.5 ? 'Hello' : 'Hey'
   }
-  setupInstallCard()
-
   if (shouldShowBootstrapLoader) {
     await loadAppWelcomeState()
     await refreshTrackedConditions()
@@ -4774,33 +4752,6 @@ function prefillConditionStatementForEntry(label = entryTitle.value) {
   if (statement) {
     entryForm.value[PDF_CONDITION_STATEMENT_KEY] = statement
   }
-}
-
-function setupInstallCard() {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault()
-    deferredInstallPrompt.value = event
-    installPlatform.value = 'android'
-  })
-
-  window.addEventListener('appinstalled', () => {
-    deferredInstallPrompt.value = null
-    window.localStorage.setItem(installDismissedKey, 'true')
-  })
-}
-
-async function promptInstall() {
-  if (!deferredInstallPrompt.value) {
-    return
-  }
-
-  deferredInstallPrompt.value.prompt()
-  await deferredInstallPrompt.value.userChoice
-  deferredInstallPrompt.value = null
 }
 
 async function refreshTrackedConditions() {

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { androidAddToHomeScreenVideoUrl, iosAddToHomeScreenVideoUrl } from '../utils/installGuide'
+
+const { canPromptInstall, promptInstall } = usePwaInstall()
 </script>
 
 <template>
@@ -21,6 +23,21 @@ import { androidAddToHomeScreenVideoUrl, iosAddToHomeScreenVideoUrl } from '../u
       </header>
 
       <div class="mt-6 flex-1 space-y-4 overflow-y-auto no-scrollbar pb-4">
+        <section class="rounded-4xl border border-slate-800 bg-slate-900 p-5">
+          <h2 class="text-xl font-bold text-white">Computer</h2>
+          <p class="mt-3 text-sm leading-6 text-slate-300">
+            In Chrome or Edge, use the install icon in the address bar or open the browser menu and choose <span class="font-bold text-white">Install VCH Symptom Tracker</span>.
+          </p>
+          <button
+            v-if="canPromptInstall"
+            type="button"
+            class="mt-4 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-slate-200"
+            @click="promptInstall"
+          >
+            Install app
+          </button>
+        </section>
+
         <section class="rounded-4xl border border-slate-800 bg-slate-900 p-5">
           <h2 class="text-xl font-bold text-white">iPhone</h2>
           <ol class="mt-4 space-y-3 text-sm leading-6 text-slate-300">
@@ -54,7 +71,7 @@ import { androidAddToHomeScreenVideoUrl, iosAddToHomeScreenVideoUrl } from '../u
             <li><span class="font-bold text-white">2.</span> Tap Install app if Chrome shows it.</li>
             <li><span class="font-bold text-white">3.</span> If not, tap the three-dot menu.</li>
             <li><span class="font-bold text-white">4.</span> Tap Add to Home screen or Install app.</li>
-            <li><span class="font-bold text-white">4.</span> Process is Similar for Most Other Browsers</li>
+            <li><span class="font-bold text-white">5.</span> The process is similar in most other Android browsers.</li>
           </ol>
 
           <a
