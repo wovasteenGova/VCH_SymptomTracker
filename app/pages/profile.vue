@@ -653,7 +653,7 @@
             Notifications are blocked for this app. Enable them in your phone or browser settings, then come back and tap Enable.
           </p>
           <p v-else-if="pushBackendConfigured === false" class="mt-3 text-sm leading-6 text-amber-200">
-            Background push is not configured on the server yet (missing VAPID keys in Netlify). Reminders cannot reach this device until that is fixed.
+            Background push is not configured on the server yet (missing VAPID keys in server setup). Reminders cannot reach this device until that is fixed.
           </p>
           <p v-else-if="hasRegisteredPushSubscription === false" class="mt-3 text-sm leading-6 text-amber-200">
             This device is not registered for push reminders yet. Tap Enable after notifications are allowed.
@@ -2216,7 +2216,7 @@ async function toggleLogReminders() {
 
   if (result.reason === 'missing-vapid') {
     showSubmissionToast({
-      message: 'Push reminders are not configured on the server yet. Add VAPID keys in Netlify, redeploy, then try again.',
+      message: 'Push reminders are not configured on the server yet. Add VAPID keys in Render, redeploy, then try again.',
       tone: 'error'
     })
     return

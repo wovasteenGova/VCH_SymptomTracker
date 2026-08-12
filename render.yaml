@@ -16,3 +16,19 @@ services:
         value: https://tracker.veteranscentralhub.us
       - key: NODE_ENV
         value: production
+
+  - type: cron
+    name: vch-tracker-reminder-cron
+    runtime: node
+    plan: starter
+    region: oregon
+    schedule: "0 * * * *"
+    buildCommand: npm install
+    startCommand: node scripts/reminder-cron.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: APP_URL
+        value: https://tracker.veteranscentralhub.us
+      - key: REMINDER_CRON_SECRET
+        sync: false
