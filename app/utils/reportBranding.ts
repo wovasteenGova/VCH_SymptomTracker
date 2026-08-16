@@ -29,7 +29,7 @@ export const reportBranding = {
   organizationName: 'Veterans Central Hub',
   reportTitle: 'Veteran Symptom History Report',
   reportSubtitle: 'Personal evidence organizer for medical visits, claims, and your records',
-  logoPath: '/vch-logo.png'
+  logoPath: '/brand/vch-symptom-tracker-logo.png'
 }
 
 export const CP_PREP_DISCLAIMER_TITLE = 'Not for VA submission'

@@ -9,8 +9,8 @@
         <div class="flex w-full max-w-[min(28rem,92vw)] flex-col items-center gap-4 sm:max-w-[32rem]">
           <div class="flex items-center justify-center gap-3">
             <img
-              src="/vch-logo.png"
-              alt="Veterans Central Hub"
+              src="/brand/vch-symptom-tracker-logo.png"
+              alt="VCH Symptom Tracker"
               class="size-11 shrink-0 rounded-full object-cover object-center ring-1 ring-slate-700 shadow-sm"
               decoding="async"
             >

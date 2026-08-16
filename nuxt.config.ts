@@ -115,12 +115,12 @@ export default defineNuxtConfig({
         { property: 'og:title', content: 'Veteran Symptom Tracker' },
         { property: 'og:description', content: 'Track symptoms, daily impact, and signed supporter observations from your phone.' },
         { property: 'og:type', content: 'website' },
-        { property: 'og:image', content: '/vch-logo.png' },
+        { property: 'og:image', content: '/brand/vch-symptom-tracker-logo.png' },
         { name: 'twitter:card', content: 'summary' }
       ],
       link: [
-        { rel: 'icon', type: 'image/png', href: '/vch-logo.png' },
-        { rel: 'shortcut icon', type: 'image/png', href: '/vch-logo.png' },
+        { rel: 'icon', type: 'image/png', href: '/brand/vch-symptom-tracker-logo.png' },
+        { rel: 'shortcut icon', type: 'image/png', href: '/brand/vch-symptom-tracker-logo.png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'manifest', href: '/manifest.webmanifest' }
       ]
@@ -128,7 +128,7 @@ export default defineNuxtConfig({
   },
   pwa: {
     registerType: 'autoUpdate',
-    includeAssets: ['vch-logo.png', 'vch-shield-mark.png', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png', 'notification-badge.png'],
+    includeAssets: ['brand/vch-symptom-tracker-logo.png', 'vch-logo.png', 'vch-logo-loader.svg', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png', 'notification-badge.png'],
     workbox: {
       importScripts: ['/log-reminder-handlers.js'],
       // This is an authenticated server app, not an offline SPA shell. Keep the

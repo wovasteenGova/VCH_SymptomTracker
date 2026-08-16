@@ -5,7 +5,7 @@
         <div class="flex min-w-0 items-center gap-2.5">
           <div class="size-10 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200 dark:ring-slate-700">
             <img
-              src="/vch-logo.png"
+              src="/brand/vch-symptom-tracker-logo.png"
               alt="Veterans Central Hub"
               class="size-10 object-cover object-center"
             >

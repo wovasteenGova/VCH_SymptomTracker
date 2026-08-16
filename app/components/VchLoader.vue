@@ -5,15 +5,15 @@
       class="vch-loader-brand"
     >
       <img
-        src="/vch-logo.png"
-        alt="Veterans Central Hub"
+        :src="reportBranding.logoPath"
+        alt="VCH Symptom Tracker"
         class="vch-loader-logo"
         decoding="async"
       >
       <span class="vch-loader-wordmark text-slate-950 dark:text-white">VCH</span>
     </div>
     <img
-      src="/vch-tank-loader.svg?v=3"
+      src="/vch-tank-loader.svg?v=4"
       class="vch-loader-img"
       :style="{ width: `${width}px` }"
       alt=""
@@ -24,10 +24,12 @@
 </template>
 
 <script setup lang="ts">
+import { reportBranding } from '../utils/reportBranding'
+
 withDefaults(defineProps<{
   label?: string
   width?: number
-  /** Logo + VCH above the tank — use for main/workspace loaders, not auth. */
+  /** Logo + VCH above the animated logo loader — use for main/workspace loaders, not auth. */
   showBrand?: boolean
 }>(), {
   label: '',
