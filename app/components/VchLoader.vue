@@ -7,10 +7,10 @@
       <img
         :src="reportBranding.logoPath"
         alt="VCH Symptom Tracker"
-        class="vch-loader-logo"
+        class="vch-loader-logo ring-1 ring-default shadow-sm"
         decoding="async"
       >
-      <span class="vch-loader-wordmark text-slate-950 dark:text-white">VCH</span>
+      <span class="vch-loader-wordmark text-default">VCH</span>
     </div>
     <img
       src="/vch-tank-loader.svg?v=4"
@@ -19,7 +19,7 @@
       alt=""
       aria-hidden="true"
     >
-    <p v-if="label" class="vch-loader-label">{{ label }}</p>
+    <p v-if="label" class="vch-loader-label text-muted">{{ label }}</p>
   </div>
 </template>
 
@@ -60,8 +60,6 @@ withDefaults(defineProps<{
   border-radius: 9999px;
   object-fit: cover;
   object-position: center;
-  border: 1px solid rgb(51 65 85);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
 }
 
 .vch-loader-wordmark {
@@ -81,7 +79,6 @@ withDefaults(defineProps<{
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #94a3b8;
   animation: vch-loader-pulse 1.6s ease-in-out infinite;
 }
 

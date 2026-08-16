@@ -11,10 +11,10 @@
             <img
               src="/brand/vch-symptom-tracker-logo.png"
               alt="VCH Symptom Tracker"
-              class="size-11 shrink-0 rounded-full object-cover object-center ring-1 ring-slate-700 shadow-sm"
+              class="size-11 shrink-0 rounded-full object-cover object-center ring-1 ring-default shadow-sm"
               decoding="async"
             >
-            <span class="text-[2rem] font-semibold leading-none tracking-[0.12em] text-white">
+            <span class="text-[2rem] font-semibold leading-none tracking-[0.12em] text-default">
               VCH
             </span>
           </div>
