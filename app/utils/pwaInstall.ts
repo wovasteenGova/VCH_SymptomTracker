@@ -73,3 +73,37 @@ export function browserIsStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches
     || iosNavigator.standalone === true
 }
+
+export interface InstalledRelatedApp {
+  platform?: string
+  url?: string
+  id?: string
+}
+
+export interface PwaInstallStatus {
+  standalone: boolean
+  installedOnDevice: boolean
+}
+
+export async function resolvePwaInstallStatus(input?: {
+  standalone?: boolean
+  getInstalledRelatedApps?: () => Promise<InstalledRelatedApp[]>
+}): Promise<PwaInstallStatus> {
+  const standalone = input?.standalone ?? browserIsStandalone()
+  if (standalone) {
+    return { standalone: true, installedOnDevice: true }
+  }
+
+  const getInstalledRelatedApps = input?.getInstalledRelatedApps
+  if (!getInstalledRelatedApps) {
+    return { standalone: false, installedOnDevice: false }
+  }
+
+  try {
+    const apps = await getInstalledRelatedApps()
+    const installedOnDevice = apps.some(app => app.platform === 'webapp')
+    return { standalone: false, installedOnDevice }
+  } catch {
+    return { standalone: false, installedOnDevice: false }
+  }
+}

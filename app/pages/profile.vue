@@ -953,6 +953,8 @@
           </div>
         </section>
 
+        <PwaInstallSettingsSection :compact="compact" />
+
         <section id="settings-passkeys" :class="settingsSectionClass(compact)">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Sign-in &amp; security</p>
           <h2 class="mt-1 text-xl font-bold text-highlighted">Passkeys</h2>
@@ -1501,6 +1503,7 @@ const settingsSections: SettingsSection[] = [
   { id: 'settings-logging', label: 'Logging' },
   { id: 'settings-reminders', label: 'Reminders' },
   { id: 'settings-display', label: 'Display' },
+  { id: 'settings-install', label: 'Install app' },
   { id: 'settings-supporters', label: 'Lay Reporting' },
   { id: 'settings-passkeys', label: 'Passkeys' },
   { id: 'settings-sessions', label: 'Sessions' },
