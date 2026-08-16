@@ -42,17 +42,10 @@ const panelClass = trackerDesktopPanelClass()
           >
             All
           </button>
-          <button
-            type="button"
-            class="rounded-full border border-dashed border-primary/40 bg-primary/10 px-3 py-1 text-[0.6875rem] font-semibold text-primary transition hover:bg-primary/15"
-            @click="$emit('addCustom')"
-          >
-            + Custom
-          </button>
         </div>
       </div>
 
-      <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto p-2">
+      <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
         <p
           v-if="!conditions.length"
           class="px-2 py-6 text-center text-sm text-muted"
@@ -99,6 +92,17 @@ const panelClass = trackerDesktopPanelClass()
             />
           </button>
         </div>
+      </div>
+
+      <div class="shrink-0 border-t border-default p-3">
+        <button
+          type="button"
+          class="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary/40 bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/15"
+          @click="$emit('addCustom')"
+        >
+          <UIcon name="i-lucide-plus" class="size-4" />
+          Custom condition
+        </button>
       </div>
     </aside>
 

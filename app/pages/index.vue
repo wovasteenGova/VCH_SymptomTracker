@@ -260,73 +260,80 @@
           @add-custom="openConditionBrowserForCustom"
         >
           <template #main>
-            <ConditionBrowser
-              v-if="showConditionBrowser"
-              ref="conditionBrowserRef"
-              class="min-h-0 flex-1 bg-default dark:bg-default"
-              :mode="needsOnboarding ? 'onboarding' : 'manage'"
-              :conditions="conditionPickerOptions"
-              :selected-keys="draftSelectedKeys"
-              :list-order-keys="conditionBrowserListOrder"
-              :locked-keys="[]"
-              :restricted-keys="mentalHealthRestrictedKeys"
-              :show-pro-limit="false"
-              :saving="isSavingTrackedConditions"
-              :error="trackedConditionsError"
-              :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
-              @toggle="toggleDraftCondition"
-              @add-custom="addCustomDraftCondition"
-              @restricted-select="handleRestrictedConditionSelect"
-              @confirm="confirmConditionOnboarding"
-              @done="finishConditionBrowser"
-            />
+            <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+              <Transition name="desktop-log-panel" mode="out-in">
+                <ConditionBrowser
+                  v-if="showConditionBrowser"
+                  key="condition-browser"
+                  ref="conditionBrowserRef"
+                  class="min-h-0 flex-1 bg-default dark:bg-default"
+                  :mode="needsOnboarding ? 'onboarding' : 'manage'"
+                  :conditions="conditionPickerOptions"
+                  :selected-keys="draftSelectedKeys"
+                  :list-order-keys="conditionBrowserListOrder"
+                  :locked-keys="[]"
+                  :restricted-keys="mentalHealthRestrictedKeys"
+                  :show-pro-limit="false"
+                  :saving="isSavingTrackedConditions"
+                  :error="trackedConditionsError"
+                  :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
+                  @toggle="toggleDraftCondition"
+                  @add-custom="addCustomDraftCondition"
+                  @restricted-select="handleRestrictedConditionSelect"
+                  @confirm="confirmConditionOnboarding"
+                  @done="finishConditionBrowser"
+                />
 
-            <TrackerDesktopQuickEntry
-              v-else-if="isEntryOpen"
-              :title="entryTitle"
-              :image="activeEntryImage"
-              :is-editing="isEditingEntry"
-              :severity="severityValue"
-              :what-happened="desktopWhatHappened"
-              :date-time-preview="entryDateTimePreview"
-              :calendar-date="entryCalendarDate"
-              :calendar-placeholder="entryCalendarPlaceholder"
-              :time-hour="entryTimeHour"
-              :time-minute="entryTimeMinute"
-              :time-period="entryTimePeriod"
-              :has-logged-entry-on-day="hasLoggedEntryOnDay"
-              :get-calendar-day-display="getCalendarDayDisplay"
-              :get-logged-day-severity-title="getLoggedDaySeverityTitle"
-              :is-saving="isSavingEntry"
-              :error="entryError"
-              @update:severity="severityValue = $event"
-              @update:what-happened="desktopWhatHappened = $event"
-              @update:calendar-date="onEntryCalendarDateUpdate"
-              @update:calendar-placeholder="onEntryCalendarPlaceholderUpdate"
-              @update:time-hour="entryTimeHour = $event"
-              @update:time-minute="entryTimeMinute = $event"
-              @update:time-period="entryTimePeriod = $event"
-              @time-change="onEntryTimePartsChange"
-              @set-now="setEntryDateTimeNow"
-              @save="saveDesktopQuickEntry"
-              @cancel="cancelDesktopEntry"
-            />
+                <TrackerDesktopQuickEntry
+                  v-else-if="isEntryOpen"
+                  key="desktop-quick-entry"
+                  :title="entryTitle"
+                  :image="activeEntryImage"
+                  :is-editing="isEditingEntry"
+                  :severity="severityValue"
+                  :what-happened="desktopWhatHappened"
+                  :date-time-preview="entryDateTimePreview"
+                  :calendar-date="entryCalendarDate"
+                  :calendar-placeholder="entryCalendarPlaceholder"
+                  :time-hour="entryTimeHour"
+                  :time-minute="entryTimeMinute"
+                  :time-period="entryTimePeriod"
+                  :has-logged-entry-on-day="hasLoggedEntryOnDay"
+                  :get-calendar-day-display="getCalendarDayDisplay"
+                  :get-logged-day-severity-title="getLoggedDaySeverityTitle"
+                  :is-saving="isSavingEntry"
+                  :error="entryError"
+                  @update:severity="severityValue = $event"
+                  @update:what-happened="desktopWhatHappened = $event"
+                  @update:calendar-date="onEntryCalendarDateUpdate"
+                  @update:calendar-placeholder="onEntryCalendarPlaceholderUpdate"
+                  @update:time-hour="entryTimeHour = $event"
+                  @update:time-minute="entryTimeMinute = $event"
+                  @update:time-period="entryTimePeriod = $event"
+                  @time-change="onEntryTimePartsChange"
+                  @set-now="setEntryDateTimeNow"
+                  @save="saveDesktopQuickEntry"
+                  @cancel="cancelDesktopEntry"
+                />
 
-            <TrackerDesktopCenter
-              v-else
-              v-model:active-tab="desktopCenterTab"
-              v-model:charts-show-all-conditions="desktopChartsShowAllConditions"
-              :title="activeCondition.title"
-              :category="activeCondition.category"
-              :image="activeCondition.image"
-              :has-conditions="homeConditions.length > 0"
-              :logging="false"
-              :tip="homeVisitTip"
-              :chart-metrics="desktopChartMetrics"
-              @log="startDesktopLogEntry"
-              @open-browser="openConditionBrowser"
-              @show-all-tips="openHomeTipsOverlay"
-            />
+                <TrackerDesktopCenter
+                  v-else
+                  key="desktop-center"
+                  v-model:active-tab="desktopCenterTab"
+                  v-model:charts-show-all-conditions="desktopChartsShowAllConditions"
+                  :title="activeCondition.title"
+                  :category="activeCondition.category"
+                  :image="activeCondition.image"
+                  :has-conditions="homeConditions.length > 0"
+                  :logging="false"
+                  :tip="homeVisitTip"
+                  :chart-metrics="desktopChartMetrics"
+                  @log="startDesktopLogEntry"
+                  @open-browser="openConditionBrowser"
+                  @show-all-tips="openHomeTipsOverlay"
+                />
+              </Transition>
+            </div>
           </template>
 
           <template #history>
@@ -4332,12 +4339,14 @@ watch(shouldHideHistoryChrome, (hide) => {
 })
 
 watch(historyExpanded, (expanded, wasExpanded) => {
-  if (wasExpanded !== undefined) {
-    historyPanelAnimating.value = true
-    window.setTimeout(() => {
-      historyPanelAnimating.value = false
-    }, HISTORY_TRANSITION_LOCK_MS + 50)
+  if (wasExpanded === undefined) {
+    if (!expanded) {
+      blockConditionSlideEntry(HISTORY_TRANSITION_LOCK_MS)
+    }
+    return
   }
+
+  historyPanelAnimating.value = true
 
   if (expanded) {
     conditionSlideEntryBlocked.value = true
@@ -4345,7 +4354,7 @@ watch(historyExpanded, (expanded, wasExpanded) => {
   }
 
   blockConditionSlideEntry(HISTORY_TRANSITION_LOCK_MS)
-}, { immediate: true })
+})
 
 watch(() => route.query.login, (value) => {
   if (value === '1') {
@@ -6863,6 +6872,7 @@ function expandHistorySheet() {
   isSubmissionDropdownOpen.value = false
 
   if (!historyExpanded.value) {
+    historyPanelAnimating.value = true
     blockConditionSlideEntry(HISTORY_TRANSITION_LOCK_MS)
     historyExpanded.value = true
     lockHistoryTransition()
@@ -6874,6 +6884,7 @@ function collapseHistorySheet() {
     return
   }
 
+  historyPanelAnimating.value = true
   historyExpanded.value = false
   historyScrollEl.value?.scrollTo({ top: 0 })
   lockHistoryTransition()
@@ -8337,7 +8348,6 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   padding-bottom: env(safe-area-inset-bottom, 0px);
   transition:
     height 650ms cubic-bezier(0.22, 1, 0.36, 1),
-    max-height 650ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -8350,7 +8360,18 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
 .home-history-panel.is-history-collapsed:not(.is-history-animating) .history-panel-header-extra,
 .home-history-panel.is-history-collapsed:not(.is-history-animating) .history-panel-tabs,
 .home-history-panel.is-history-collapsed:not(.is-history-animating) .history-panel-scroll {
-  display: none;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.home-history-panel.is-history-collapsed .history-panel-scroll {
+  flex: 0 0 0;
+  min-height: 0;
 }
 
 .home-history-panel.is-history-collapsed .history-panel-handle {
@@ -8366,6 +8387,43 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   height: 80%;
   max-height: 80%;
   box-shadow: 0 -12px 40px rgb(0 0 0 / 0.12);
+}
+
+.desktop-log-panel-enter-active,
+.desktop-log-panel-leave-active {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  transition:
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.desktop-log-panel-leave-active {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.desktop-log-panel-enter-active {
+  position: relative;
+  z-index: 2;
+}
+
+.desktop-log-panel-enter-from {
+  opacity: 0;
+  transform: translateY(1.25rem);
+}
+
+.desktop-log-panel-leave-to {
+  opacity: 0;
+  transform: translateY(-0.75rem);
+}
+
+.desktop-log-panel-enter-to,
+.desktop-log-panel-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .dark .home-history-panel.is-history-expanded {
