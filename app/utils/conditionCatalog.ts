@@ -41,6 +41,11 @@ export const HOME_HONESTY_TIP = {
   text: 'Log what actually happened—not what you think you should report. Honest entries help you see your real patterns and give raters a timeline they can trust. This is your record, not a performance.'
 } as const
 
+export const DONT_DOWNPLAY_SYMPTOMS_TIP = {
+  title: 'Don\'t downplay it',
+  text: 'There are people depending on you not to downplay your symptoms. Log the hard days and the real impact—your family, your care team, and your future self need an honest record.'
+} as const
+
 export const LOG_HISTORY_LENGTH_TIP = {
   title: 'How much to log',
   text: 'There is no hard rule, but about three months of steady entries—roughly 30 to 40 logs—gives you a useful pattern for exams and reviews. Consistency beats volume.'
