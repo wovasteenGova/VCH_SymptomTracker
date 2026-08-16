@@ -2,7 +2,6 @@
 import type { HomeVisitTip } from '../../utils/conditionCatalog'
 import { VA_CRISIS_LINE_SHORT } from '../../utils/conditionCatalog'
 import type { SymptomDashboardMetrics } from '../../utils/symptomDashboard'
-import { VCH_PRIVACY_URL, VCH_TERMS_URL } from '../../utils/subscription'
 import { td } from '../../utils/trackerDesktopTheme'
 
 type CenterTab = 'log' | 'charts'
@@ -44,18 +43,22 @@ const scopeButtonClass = (active: boolean) => active
     @pointerenter="centerHoverActive = true"
     @pointerleave="centerHoverActive = false"
   >
-    <Transition name="center-hover-log">
-      <button
-        v-if="showHoverLogButton && hasConditions"
-        type="button"
-        class="center-hover-log-btn absolute left-1/2 top-0 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-inverted shadow-lg shadow-primary/25 ring-1 ring-primary/30"
-        :disabled="logging"
-        @click="$emit('log')"
-      >
-        <UIcon name="i-lucide-plus" class="size-4" />
-        Log entry
-      </button>
-    </Transition>
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center"
+    >
+      <Transition name="center-hover-log">
+        <button
+          v-if="showHoverLogButton && hasConditions"
+          type="button"
+          class="pointer-events-auto flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-inverted shadow-lg shadow-primary/25 ring-1 ring-primary/30"
+          :disabled="logging"
+          @click="$emit('log')"
+        >
+          <UIcon name="i-lucide-plus" class="size-4" />
+          Log entry
+        </button>
+      </Transition>
+    </div>
 
     <div
       v-if="hasConditions"
@@ -179,25 +182,6 @@ const scopeButtonClass = (active: boolean) => active
       </p>
     </div>
 
-    <p
-      :class="['shrink-0 px-4 py-3 text-center text-xs leading-snug text-muted', td.divider]"
-      role="note"
-    >
-      VCH Symptom Tracker helps you log symptoms and export reports. It is not medical or legal advice and does not guarantee any VA or benefits outcome.
-      <a
-        :href="VCH_TERMS_URL"
-        target="_blank"
-        rel="noopener noreferrer"
-        :class="td.link"
-      >Terms</a>
-      and
-      <a
-        :href="VCH_PRIVACY_URL"
-        target="_blank"
-        rel="noopener noreferrer"
-        :class="td.link"
-      >Privacy</a>.
-    </p>
   </div>
 </template>
 
@@ -205,19 +189,19 @@ const scopeButtonClass = (active: boolean) => active
 .center-hover-log-enter-active,
 .center-hover-log-leave-active {
   transition:
-    opacity 0.38s ease,
-    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 320ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .center-hover-log-enter-from,
 .center-hover-log-leave-to {
   opacity: 0;
-  transform: translate(-50%, 0.75rem);
+  transform: translateY(0.65rem);
 }
 
 .center-hover-log-enter-to,
 .center-hover-log-leave-from {
   opacity: 1;
-  transform: translate(-50%, calc(-100% - 0.65rem));
+  transform: translateY(-0.35rem);
 }
 </style>
