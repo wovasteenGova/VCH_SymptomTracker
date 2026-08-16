@@ -2,7 +2,10 @@
   <main
     id="tracker-app-shell"
     class="app-shell relative overflow-hidden bg-default text-default transition-colors"
-    :class="{ 'app-shell-embed': isEmbeddedPreview }"
+    :class="{
+      'app-shell-embed': isEmbeddedPreview,
+      'tracker-app-shell--ready': homeWorkspaceReady || isEmbeddedPreview
+    }"
   >
     <section
       class="mx-auto flex h-full w-full flex-col overflow-hidden"
@@ -254,10 +257,12 @@
           :is-condition-locked="isConditionLogLocked"
           @select="handleDesktopConditionSelect"
           @open-browser="openConditionBrowser"
+          @add-custom="openConditionBrowserForCustom"
         >
           <template #main>
             <ConditionBrowser
               v-if="showConditionBrowser"
+              ref="conditionBrowserRef"
               class="min-h-0 flex-1 bg-default dark:bg-default"
               :mode="needsOnboarding ? 'onboarding' : 'manage'"
               :conditions="conditionPickerOptions"
@@ -906,6 +911,7 @@
               <Transition name="home-state-fade">
                 <ConditionBrowser
                   v-if="showConditionBrowser"
+                  ref="conditionBrowserRef"
                   key="condition-browser"
                   class="absolute inset-0 z-20 bg-default"
                   :mode="needsOnboarding ? 'onboarding' : 'manage'"
@@ -1000,6 +1006,15 @@
                           {{ activeCondition.title }}
                         </h2>
                       </div>
+
+                      <button
+                        v-if="isMobileCarouselLayout && !isHomeOverviewSlide"
+                        type="button"
+                        class="absolute right-3 top-3 z-20 rounded-full bg-black/45 px-3.5 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white ring-1 ring-white/25 backdrop-blur-sm transition hover:bg-black/60"
+                        @click.stop="openHomeOverview"
+                      >
+                        All conditions
+                      </button>
                     </div>
                   </Transition>
 
@@ -1177,13 +1192,13 @@
               v-if="homeConditions.length && !showConditionBrowser"
               class="home-carousel-footer mb-2 shrink-0 pt-3"
               :class="{
-                'has-mobile-log-space': !isDesktopLayout && (homeSharedTransitionActive || !isHomeOverviewSlide),
+                'has-mobile-log-space': isMobileCarouselLayout && (homeSharedTransitionActive || !isHomeOverviewSlide),
                 'pointer-events-none': historyExpanded
               }"
             >
               <Transition name="home-log-btn">
                 <div
-                  v-if="!isDesktopLayout && !isHomeOverviewSlide && !historyExpanded && isConditionSlideEntryEnabled"
+                  v-if="isMobileCarouselLayout && !prefersDesktopCarouselChrome && !isHomeOverviewSlide && !historyExpanded && isConditionSlideEntryEnabled"
                   key="condition-log-btn"
                   class="mt-4 flex w-full justify-center"
                 >
@@ -1200,7 +1215,7 @@
               </Transition>
 
               <div
-                v-if="isDesktopLayout && !historyExpanded"
+                v-if="prefersDesktopCarouselChrome && !historyExpanded"
                 class="flex items-center justify-center gap-4"
                 :class="isHomeOverviewSlide ? '' : 'mt-4'"
               >
@@ -2206,20 +2221,6 @@
     </AppOverlayShell>
   </Transition>
 
-  <Teleport to="body">
-    <div
-      v-if="!isEmbeddedPreview && !homeWorkspaceReady"
-      class="fixed inset-0 z-[95] flex items-center justify-center bg-default px-4"
-      role="status"
-      aria-live="polite"
-      aria-label="Loading"
-    >
-      <VchLoader
-        :width="320"
-        show-brand
-      />
-    </div>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -2517,6 +2518,7 @@ const hasLoadedEntriesOnce = ref(false)
 let entriesLoadPromise: Promise<void> | null = null
 const homeConditionOrderKeys = ref<string[]>([])
 const conditionBrowserListOrder = ref<string[]>([])
+const conditionBrowserRef = ref<{ focusCustomConditionInput?: () => void } | null>(null)
 const isExportingPdf = ref(false)
 const pdfExportDownloadStarted = ref(false)
 const exportError = ref('')
@@ -2548,7 +2550,7 @@ const {
   persistReminderSettings,
   enableRemindersWithPermission
 } = useLogReminders()
-const { isDesktopLayout, isMobileLayout, isEmbeddedPreview } = useTrackerLayout()
+const { isDesktopLayout, isMobileLayout, isMobileCarouselLayout, prefersDesktopCarouselChrome, isEmbeddedPreview } = useTrackerLayout()
 const { homeWorkspaceReady, markHomeWorkspaceReady, resetHomeWorkspaceReady } = useHomeWorkspaceReady()
 const { openSettingsPanel } = useTrackerSettingsPanelOpen()
 
@@ -4824,6 +4826,13 @@ function openConditionBrowser() {
   collapseHistorySheet()
 }
 
+function openConditionBrowserForCustom() {
+  openConditionBrowser()
+  nextTick(() => {
+    conditionBrowserRef.value?.focusCustomConditionInput?.()
+  })
+}
+
 function toggleDraftCondition(key: string) {
   trackedConditionsError.value = ''
 
@@ -6671,6 +6680,14 @@ function showConditionSlide(index: number, options: { clearSelectedSearchConditi
   closeEntryPanel()
   transitionDirection.value = resolveCarouselTransitionDirection(index, currentIndex)
   void animateHomeSlideChange(index, resolveSharedHomeTransitionKey(index, currentIndex))
+}
+
+function openHomeOverview() {
+  if (isHomeOverviewSlide.value) {
+    return
+  }
+
+  showSlide(0)
 }
 
 function showPreviousCondition() {

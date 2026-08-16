@@ -26,10 +26,45 @@ function readStoredLayoutMode(): TrackerLayoutMode {
   return 'auto'
 }
 
+export function resolveTrackerLayoutState(input: {
+  isEmbeddedPreview: boolean
+  forceDesktopFromQuery: boolean
+  layoutMode: TrackerLayoutMode
+  matchesWideViewport: boolean
+}) {
+  const isWideDesktopWorkspace = (() => {
+    if (input.isEmbeddedPreview || input.forceDesktopFromQuery) {
+      return true
+    }
+
+    if (input.layoutMode === 'mobile') {
+      return false
+    }
+
+    if (!input.matchesWideViewport) {
+      return false
+    }
+
+    return input.layoutMode === 'desktop' || input.layoutMode === 'auto'
+  })()
+
+  const isMobileCarouselLayout = !isWideDesktopWorkspace && !input.isEmbeddedPreview
+
+  const prefersDesktopCarouselChrome = !isWideDesktopWorkspace
+    && !input.isEmbeddedPreview
+    && input.layoutMode === 'desktop'
+
+  return {
+    isWideDesktopWorkspace,
+    isMobileCarouselLayout,
+    prefersDesktopCarouselChrome
+  }
+}
+
 export function useTrackerLayout() {
   const route = useRoute()
   const isEmbeddedPreview = inject(TRACKER_EMBED_KEY, false)
-  const matchesDesktopViewport = useMediaQuery('(min-width: 1024px)')
+  const matchesWideViewport = useMediaQuery('(min-width: 1024px)')
   const layoutMode = useState<TrackerLayoutMode>('tracker-layout-mode', readStoredLayoutMode)
 
   if (import.meta.client) {
@@ -45,23 +80,32 @@ export function useTrackerLayout() {
     return layout === 'desktop' || embed === 'desktop' || embed === '1' || embed === 'true'
   })
 
-  const isDesktopLayout = computed(() => {
-    if (isEmbeddedPreview || forceDesktopFromQuery.value) {
-      return true
-    }
+  /** Three-column desktop workspace (conditions | log | history). Requires a wide viewport. */
+  const isWideDesktopWorkspace = computed(() => resolveTrackerLayoutState({
+    isEmbeddedPreview,
+    forceDesktopFromQuery: forceDesktopFromQuery.value,
+    layoutMode: layoutMode.value,
+    matchesWideViewport: matchesWideViewport.value
+  }).isWideDesktopWorkspace)
 
-    if (layoutMode.value === 'desktop') {
-      return true
-    }
+  /** Phone-style carousel (overview + condition slides). */
+  const isMobileCarouselLayout = computed(() => resolveTrackerLayoutState({
+    isEmbeddedPreview,
+    forceDesktopFromQuery: forceDesktopFromQuery.value,
+    layoutMode: layoutMode.value,
+    matchesWideViewport: matchesWideViewport.value
+  }).isMobileCarouselLayout)
 
-    if (layoutMode.value === 'mobile') {
-      return false
-    }
+  /** Arrow controls on the carousel when desktop layout is forced on a narrow window. */
+  const prefersDesktopCarouselChrome = computed(() => resolveTrackerLayoutState({
+    isEmbeddedPreview,
+    forceDesktopFromQuery: forceDesktopFromQuery.value,
+    layoutMode: layoutMode.value,
+    matchesWideViewport: matchesWideViewport.value
+  }).prefersDesktopCarouselChrome)
 
-    return matchesDesktopViewport.value
-  })
-
-  const isMobileLayout = computed(() => !isDesktopLayout.value)
+  const isDesktopLayout = isWideDesktopWorkspace
+  const isMobileLayout = computed(() => !isWideDesktopWorkspace.value)
 
   function setLayoutMode(mode: TrackerLayoutMode) {
     layoutMode.value = mode
@@ -75,6 +119,9 @@ export function useTrackerLayout() {
     layoutMode,
     isDesktopLayout,
     isMobileLayout,
+    isWideDesktopWorkspace,
+    isMobileCarouselLayout,
+    prefersDesktopCarouselChrome,
     isEmbeddedPreview,
     setLayoutMode
   }

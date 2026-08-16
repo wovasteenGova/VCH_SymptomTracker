@@ -18,6 +18,7 @@ defineProps<{
 defineEmits<{
   select: [condition: Condition]
   openBrowser: []
+  addCustom: []
 }>()
 
 const panelClass = trackerDesktopPanelClass()
@@ -40,6 +41,13 @@ const panelClass = trackerDesktopPanelClass()
             @click="$emit('openBrowser')"
           >
             All
+          </button>
+          <button
+            type="button"
+            class="rounded-full border border-dashed border-primary/40 bg-primary/10 px-3 py-1 text-[0.6875rem] font-semibold text-primary transition hover:bg-primary/15"
+            @click="$emit('addCustom')"
+          >
+            + Custom
           </button>
         </div>
       </div>
@@ -94,10 +102,12 @@ const panelClass = trackerDesktopPanelClass()
       </div>
     </aside>
 
-    <div
-      :class="[panelClass, 'min-w-0 flex-1']"
-    >
-      <slot name="main" />
+    <div class="relative min-w-0 flex-1 overflow-visible">
+      <div
+        :class="[panelClass, 'flex min-h-0 flex-1 flex-col overflow-hidden']"
+      >
+        <slot name="main" />
+      </div>
     </div>
 
     <aside

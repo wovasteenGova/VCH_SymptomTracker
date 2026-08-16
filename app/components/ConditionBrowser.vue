@@ -90,6 +90,38 @@
 
       >
 
+      <div class="mt-3 rounded-2xl border border-dashed border-primary/35 bg-primary/5 p-3">
+        <label
+          for="custom-condition-name"
+          class="block text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted"
+        >
+          Add custom condition
+        </label>
+        <div class="mt-2 flex gap-2">
+          <input
+            id="custom-condition-name"
+            ref="customLabelInputEl"
+            v-model="customLabelDraft"
+            type="text"
+            placeholder="Example: tinnitus, skin flare-up..."
+            class="min-w-0 flex-1 rounded-xl border border-default bg-default px-3 py-2.5 text-sm font-semibold text-highlighted outline-none placeholder:text-dimmed focus:border-primary"
+            @keydown.enter.prevent="submitCustomLabel"
+          >
+          <button
+            type="button"
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+            :disabled="!customLabelDraft.trim()"
+            @click="submitCustomLabel"
+          >
+            <UIcon name="i-lucide-plus" class="size-4" />
+            Add
+          </button>
+        </div>
+        <p class="mt-2 text-xs leading-5 text-toned">
+          Not in the list? Type your condition and tap Add to track it on your home screen.
+        </p>
+      </div>
+
     </div>
 
 
@@ -419,6 +451,10 @@ const searchQuery = ref('')
 
 const debouncedSearchQuery = ref('')
 
+const customLabelDraft = ref('')
+
+const customLabelInputEl = ref<HTMLInputElement | null>(null)
+
 let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
 
 
@@ -528,6 +564,22 @@ function emitAddCustomFromSearch() {
   searchQuery.value = ''
   debouncedSearchQuery.value = ''
 }
+
+function submitCustomLabel() {
+  const label = customLabelDraft.value.trim()
+  if (!label) {
+    return
+  }
+
+  emit('addCustom', label)
+  customLabelDraft.value = ''
+}
+
+defineExpose({
+  focusCustomConditionInput() {
+    customLabelInputEl.value?.focus()
+  }
+})
 
 
 

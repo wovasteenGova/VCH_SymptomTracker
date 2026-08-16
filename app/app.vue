@@ -3,7 +3,7 @@
     <Transition name="app-splash-fade">
       <div
         v-if="showAppSplash"
-        class="fixed inset-0 z-[100] grid place-items-center bg-slate-950 px-4"
+        class="fixed inset-0 z-[100] grid place-items-center bg-default px-4"
         aria-hidden="true"
       >
         <div class="flex w-full max-w-[min(28rem,92vw)] flex-col items-center gap-4 sm:max-w-[32rem]">
@@ -188,10 +188,19 @@ onUnmounted(() => {
 
 <style>
 .app-splash-fade-leave-active {
-  transition: opacity 0.35s ease;
+  transition: opacity 0.5s ease;
 }
 
 .app-splash-fade-leave-to {
   opacity: 0;
+}
+
+.tracker-app-shell:not(.tracker-app-shell--ready):not(.app-shell-embed) {
+  opacity: 0;
+}
+
+.tracker-app-shell--ready {
+  opacity: 1;
+  transition: opacity 0.45s ease;
 }
 </style>

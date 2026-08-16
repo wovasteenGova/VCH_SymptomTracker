@@ -1686,7 +1686,7 @@ const layoutOptions: Array<{ value: TrackerLayoutMode, label: string, copy: stri
   {
     value: 'desktop',
     label: 'Desktop',
-    copy: 'Always show arrow controls and the wider carousel layout.'
+    copy: 'Keep the three-panel desktop workspace on wide screens. On narrower windows, falls back to the phone carousel with arrow controls.'
   },
   {
     value: 'mobile',

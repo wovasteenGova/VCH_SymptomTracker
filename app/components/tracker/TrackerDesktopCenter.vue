@@ -26,13 +26,37 @@ defineEmits<{
 const activeTab = defineModel<CenterTab>('activeTab', { default: 'log' })
 const chartsShowAllConditions = defineModel<boolean>('chartsShowAllConditions', { default: false })
 
+const centerHoverActive = ref(false)
+
+const showHoverLogButton = computed(() =>
+  centerHoverActive.value
+  && activeTab.value === 'log'
+)
+
 const scopeButtonClass = (active: boolean) => active
   ? 'border-primary/35 bg-primary/10 text-highlighted'
   : 'border-default/80 bg-muted/60 text-muted hover:border-accented hover:bg-accented/40'
 </script>
 
 <template>
-  <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+  <div
+    class="relative flex min-h-0 flex-1 flex-col overflow-hidden"
+    @pointerenter="centerHoverActive = true"
+    @pointerleave="centerHoverActive = false"
+  >
+    <Transition name="center-hover-log">
+      <button
+        v-if="showHoverLogButton && hasConditions"
+        type="button"
+        class="center-hover-log-btn absolute left-1/2 top-0 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-inverted shadow-lg shadow-primary/25 ring-1 ring-primary/30"
+        :disabled="logging"
+        @click="$emit('log')"
+      >
+        <UIcon name="i-lucide-plus" class="size-4" />
+        Log entry
+      </button>
+    </Transition>
+
     <div
       v-if="hasConditions"
       :class="td.panelHeaderSm"
@@ -176,3 +200,24 @@ const scopeButtonClass = (active: boolean) => active
     </p>
   </div>
 </template>
+
+<style scoped>
+.center-hover-log-enter-active,
+.center-hover-log-leave-active {
+  transition:
+    opacity 0.38s ease,
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.center-hover-log-enter-from,
+.center-hover-log-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 0.75rem);
+}
+
+.center-hover-log-enter-to,
+.center-hover-log-leave-from {
+  opacity: 1;
+  transform: translate(-50%, calc(-100% - 0.65rem));
+}
+</style>
