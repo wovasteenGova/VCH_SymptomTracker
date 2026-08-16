@@ -261,13 +261,12 @@
         >
           <template #main>
             <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div class="grid min-h-0 flex-1 grid-cols-1 grid-rows-1 overflow-hidden">
-                <Transition name="desktop-log-panel" mode="out-in">
+              <Transition name="desktop-log-panel" mode="out-in">
                   <ConditionBrowser
                     v-if="showConditionBrowser"
                     key="condition-browser"
                     ref="conditionBrowserRef"
-                    class="col-start-1 row-start-1 flex min-h-0 flex-col overflow-hidden bg-default dark:bg-default"
+                    class="flex min-h-0 flex-1 flex-col overflow-hidden bg-default dark:bg-default"
                   :mode="needsOnboarding ? 'onboarding' : 'manage'"
                   :conditions="conditionPickerOptions"
                   :selected-keys="draftSelectedKeys"
@@ -288,7 +287,7 @@
                 <TrackerDesktopQuickEntry
                   v-else-if="isEntryOpen"
                   key="desktop-quick-entry"
-                  class="col-start-1 row-start-1 flex min-h-0 flex-col overflow-hidden"
+                  class="flex min-h-0 flex-1 flex-col overflow-hidden"
                   :title="entryTitle"
                   :image="activeEntryImage"
                   :is-editing="isEditingEntry"
@@ -321,7 +320,7 @@
                 <TrackerDesktopCenter
                   v-else
                   key="desktop-center"
-                  class="col-start-1 row-start-1 flex min-h-0 flex-col overflow-hidden"
+                  class="flex min-h-0 flex-1 flex-col overflow-hidden"
                   v-model:active-tab="desktopCenterTab"
                   v-model:charts-show-all-conditions="desktopChartsShowAllConditions"
                   :title="activeCondition.title"
@@ -336,8 +335,6 @@
                   @show-all-tips="openHomeTipsOverlay"
                 />
               </Transition>
-              </div>
-              <TrackerDesktopLegalNote />
             </div>
           </template>
 
@@ -2329,7 +2326,6 @@ import TrackerDesktopWorkspace from '../components/tracker/TrackerDesktopWorkspa
 import TrackerDesktopCenter from '../components/tracker/TrackerDesktopCenter.vue'
 import TrackerDesktopHistory from '../components/tracker/TrackerDesktopHistory.vue'
 import TrackerDesktopQuickEntry from '../components/tracker/TrackerDesktopQuickEntry.vue'
-import TrackerDesktopLegalNote from '../components/tracker/TrackerDesktopLegalNote.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'

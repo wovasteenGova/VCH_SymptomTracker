@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TrackerDesktopLegalNote from './TrackerDesktopLegalNote.vue'
 import { td, trackerDesktopPanelClass } from '../../utils/trackerDesktopTheme'
 
 type Condition = {
@@ -106,11 +107,14 @@ const panelClass = trackerDesktopPanelClass()
       </div>
     </aside>
 
-    <div class="relative min-w-0 flex-1 overflow-visible">
+    <div class="relative flex min-h-0 min-w-0 flex-1 flex-col">
       <div
         :class="[panelClass, 'flex min-h-0 flex-1 flex-col overflow-hidden']"
       >
-        <slot name="main" />
+        <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <slot name="main" />
+        </div>
+        <TrackerDesktopLegalNote />
       </div>
     </div>
 

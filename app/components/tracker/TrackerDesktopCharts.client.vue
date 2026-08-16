@@ -141,7 +141,7 @@ const mixOptions = computed<ChartOptions<'doughnut'>>(() => ({
     </p>
   </div>
 
-  <div v-else class="space-y-4 p-4">
+  <div v-else class="space-y-4 p-4 pb-8">
     <div :class="['grid grid-cols-3 gap-2 p-3', td.insetCard]">
       <div class="text-center">
         <p :class="['text-[0.65rem] font-bold uppercase tracking-[0.12em]', td.meta]">Logs</p>
