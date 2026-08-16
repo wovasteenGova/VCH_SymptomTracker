@@ -270,6 +270,7 @@
               :error="trackedConditionsError"
               :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
               @toggle="toggleDraftCondition"
+              @add-custom="addCustomDraftCondition"
               @restricted-select="handleRestrictedConditionSelect"
               @confirm="confirmConditionOnboarding"
               @done="finishConditionBrowser"
@@ -918,6 +919,7 @@
                   :error="trackedConditionsError"
                   :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
                   @toggle="toggleDraftCondition"
+                  @add-custom="addCustomDraftCondition"
                   @restricted-select="handleRestrictedConditionSelect"
                   @confirm="confirmConditionOnboarding"
                   @done="finishConditionBrowser"
@@ -2289,7 +2291,7 @@ import { filterAndRankConditions } from '../utils/conditionSearch'
 import { getWeeklyLogCaution, type WeeklyLogCaution } from '../utils/loggingCadence'
 import { buildLoggingActivityMetrics } from '../utils/loggingActivityReport'
 import { buildSymptomDashboardMetrics } from '../utils/symptomDashboard'
-import { conditionCatalog, buildHomeVisitTips, getCatalogConditionByKey, isMentalHealthConditionKey, listMentalHealthConditionKeys, MENTAL_HEALTH_ONE_CONDITION_MESSAGE, normalizeConditionLabel, pickRandomHomeVisitTip, resolveCatalogConditionByStoredKey, VA_CRISIS_LINE_SHORT, type HomeVisitTip } from '../utils/conditionCatalog'
+import { buildConditionPickerOptions, buildCustomConditionLabelsFromEntries, buildHomeVisitTips, conditionCatalog, getCatalogConditionByKey, isCustomTrackedConditionKey, isMentalHealthConditionKey, listMentalHealthConditionKeys, MENTAL_HEALTH_ONE_CONDITION_MESSAGE, normalizeConditionLabel, pickRandomHomeVisitTip, resolveCatalogConditionByStoredKey, resolveTrackedConditionByStoredKey, resolveTrackedConditionKey, VA_CRISIS_LINE_SHORT, type HomeVisitTip } from '../utils/conditionCatalog'
 import { LOG_REMINDER_TEST_INTERVAL_MS, LOG_REMINDER_TEST_MODE } from '../utils/logReminders'
 import { conditionImageAssets } from '../utils/conditionImages'
 import { getSeverityEmoji, getSeverityGuidance, severityQuickPresets } from '../utils/severityGuidance'
@@ -2766,7 +2768,13 @@ const conditionResults = conditionCatalog
 
 type HomeCondition = typeof conditionCatalog[number]
 
-const conditionPickerOptions = computed(() => conditionCatalog)
+const conditionPickerOptions = computed(() => buildConditionPickerOptions({
+  trackedKeys: trackedConditionKeys.value,
+  extraKeys: draftSelectedKeys.value.filter((key) => isCustomTrackedConditionKey(key)),
+  customLabels: customConditionLabels.value
+}))
+
+const customConditionLabels = computed(() => buildCustomConditionLabelsFromEntries(savedEntries.value))
 const HOME_CONDITION_ORDER_STORAGE_PREFIX = 'symptom-tracker-home-condition-order'
 
 function getHomeConditionOrderStorageKey() {
@@ -2923,7 +2931,7 @@ const homeConditions = computed(() => {
   const fallbackOrderIndex = new Map(fallbackOrder.map((key, index) => [key, index]))
 
   const conditions = trackedConditionKeys.value
-    .map((storedKey) => resolveCatalogConditionByStoredKey(storedKey))
+    .map((storedKey) => resolveTrackedConditionByStoredKey(storedKey, customConditionLabels.value))
     .filter((condition): condition is HomeCondition => Boolean(condition))
 
   return conditions.sort((a, b) => {
@@ -4892,15 +4900,16 @@ async function syncFreeConditionWithTrackedKeys(keys: string[]) {
 }
 
 async function syncHomeConditionsAfterEntrySave(savedConditionKey: string) {
-  const resolved = resolveCatalogConditionByStoredKey(savedConditionKey)
-  if (!resolved) {
+  const key = resolveTrackedConditionKey(savedConditionKey) ?? savedConditionKey.trim()
+  if (!key) {
     return
   }
 
-  const key = resolved.key
-
   if (isPro.value) {
-    if (!trackedConditionKeys.value.includes(key)) {
+    const trackedKeysNormalized = trackedConditionKeys.value.map(
+      (storedKey) => resolveTrackedConditionKey(storedKey) ?? storedKey
+    )
+    if (!trackedKeysNormalized.includes(key)) {
       await updateTrackedConditions([...trackedConditionKeys.value, key])
     }
     return
@@ -4911,13 +4920,50 @@ async function syncHomeConditionsAfterEntrySave(savedConditionKey: string) {
   }
 
   const trackedKeysNormalized = trackedConditionKeys.value.map(
-    (storedKey) => resolveCatalogConditionByStoredKey(storedKey)?.key ?? storedKey
+    (storedKey) => resolveTrackedConditionKey(storedKey) ?? storedKey
   )
   const keyAlreadyRepresented = trackedKeysNormalized.includes(key)
 
   if (!keyAlreadyRepresented) {
     await updateTrackedConditions([key])
   }
+}
+
+function addCustomDraftCondition(label: string) {
+  const trimmed = label.trim()
+  if (!trimmed) {
+    return
+  }
+
+  trackedConditionsError.value = ''
+
+  const catalogMatch = conditionCatalog.find((condition) => condition.title.toLowerCase() === trimmed.toLowerCase())
+  if (catalogMatch) {
+    toggleDraftCondition(catalogMatch.key)
+    return
+  }
+
+  const key = conditionKeyFromLabel(trimmed)
+  if (!key) {
+    return
+  }
+
+  const catalogByKey = getCatalogConditionByKey(key)
+  if (catalogByKey) {
+    toggleDraftCondition(catalogByKey.key)
+    return
+  }
+
+  if (draftSelectedKeys.value.includes(key)) {
+    return
+  }
+
+  if (isDemoMode || !isPro.value) {
+    draftSelectedKeys.value = [key]
+    return
+  }
+
+  draftSelectedKeys.value = [key, ...draftSelectedKeys.value]
 }
 
 async function confirmConditionOnboarding() {

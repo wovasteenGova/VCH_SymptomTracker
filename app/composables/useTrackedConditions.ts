@@ -4,7 +4,7 @@ import { useSupabaseAuth } from './useSupabaseAuth'
 import { useTrackerDb } from './useTrackerDb'
 import { TRACKER_DEMO_KEY } from './useTrackerLayout'
 import { conditionKeyFromLabel } from '../utils/subscription'
-import { normalizeTrackedConditionKeys, resolveCatalogConditionByStoredKey } from '../utils/conditionCatalog'
+import { normalizeTrackedConditionKeys } from '../utils/conditionCatalog'
 
 const TRACKED_CONDITIONS_STORAGE_KEY = 'symptom-tracker-tracked-condition-keys'
 const ONBOARDING_COMPLETED_STORAGE_KEY = 'symptom-tracker-conditions-onboarding-completed'
@@ -184,13 +184,19 @@ export function useTrackedConditions() {
       writeLocalState(keys, completed, storageKey, onboardingKey)
 
       const rawKeys = [...(profile?.tracked_condition_keys || [])].filter(Boolean)
+      const normalizedFromRaw = normalizeTrackedConditionKeys(rawKeys)
       const needsHeal = rawKeys.some((rawKey) => {
-        const resolvedKey = resolveCatalogConditionByStoredKey(rawKey)?.key
-        return !resolvedKey || resolvedKey !== rawKey
-      })
+        const trimmed = rawKey?.trim()
+        if (!trimmed) {
+          return true
+        }
 
-      if (needsHeal && keys.length) {
-        await persistTrackedConditions(keys, completed)
+        const [canonical] = normalizeTrackedConditionKeys([trimmed])
+        return !canonical || canonical !== trimmed
+      }) || normalizedFromRaw.length !== rawKeys.filter((rawKey) => rawKey?.trim()).length
+
+      if (needsHeal && normalizedFromRaw.length) {
+        await persistTrackedConditions(normalizedFromRaw, completed)
       }
     } catch (error) {
       loadError.value = error instanceof Error ? error.message : 'Could not load your conditions.'

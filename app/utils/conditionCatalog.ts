@@ -1,5 +1,5 @@
 import { getConditionImage } from './conditionImages'
-import { conditionKeyFromLabel } from './subscription'
+import { conditionKeyFromLabel, formatConditionKeyLabel } from './subscription'
 
 export type HomeVisitTipLink = {
   label: string
@@ -747,8 +747,115 @@ export function resolveCatalogConditionByStoredKey(storedKey: string): Condition
 
 export function normalizeTrackedConditionKeys(keys: string[]) {
   return [...new Set(keys
-    .map((storedKey) => resolveCatalogConditionByStoredKey(storedKey)?.key || null)
+    .map((storedKey) => resolveTrackedConditionKey(storedKey))
     .filter(Boolean) as string[])]
+}
+
+export const CUSTOM_CONDITION_CATEGORY = 'Custom'
+
+const customConditionFocus = [
+  'Symptom frequency and severity',
+  'Work, sleep, and daily-life impact'
+] as const
+
+const customConditionTip =
+  'Log what actually happened—not what you think you should report. Patterns over time matter more than one perfect entry.'
+
+export function isCustomTrackedConditionKey(key: string) {
+  const trimmedKey = key?.trim()
+  if (!trimmedKey) {
+    return false
+  }
+
+  return !resolveCatalogConditionByStoredKey(trimmedKey)
+}
+
+export function resolveTrackedConditionKey(storedKey: string): string | null {
+  const trimmedKey = storedKey?.trim()
+  if (!trimmedKey) {
+    return null
+  }
+
+  const catalogMatch = resolveCatalogConditionByStoredKey(trimmedKey)
+  if (catalogMatch) {
+    return catalogMatch.key
+  }
+
+  const slug = conditionKeyFromLabel(trimmedKey)
+  return slug || null
+}
+
+export function buildCustomConditionItem(key: string, label?: string): ConditionCatalogItem {
+  const title = label?.trim() || formatConditionKeyLabel(key)
+
+  return {
+    key,
+    title,
+    category: CUSTOM_CONDITION_CATEGORY,
+    description: 'Your custom condition — log symptoms, severity, and how they affect your day.',
+    vaFocus: customConditionFocus,
+    tip: customConditionTip,
+    image: getConditionImage(title, CUSTOM_CONDITION_CATEGORY)
+  }
+}
+
+export function resolveTrackedConditionByStoredKey(
+  storedKey: string,
+  customLabels?: Record<string, string>
+): ConditionCatalogItem | null {
+  const catalogMatch = resolveCatalogConditionByStoredKey(storedKey)
+  if (catalogMatch) {
+    return catalogMatch
+  }
+
+  const key = resolveTrackedConditionKey(storedKey)
+  if (!key || getCatalogConditionByKey(key)) {
+    return null
+  }
+
+  return buildCustomConditionItem(key, customLabels?.[key])
+}
+
+export function buildCustomConditionLabelsFromEntries(
+  entries: ReadonlyArray<{ condition_key?: string | null, condition_label?: string | null }>
+) {
+  const labels: Record<string, string> = {}
+
+  for (const entry of entries) {
+    const key = entry.condition_key?.trim()
+    if (!key || resolveCatalogConditionByStoredKey(key)) {
+      continue
+    }
+
+    const label = entry.condition_label?.trim()
+    if (label) {
+      labels[key] = label
+    }
+  }
+
+  return labels
+}
+
+export function buildConditionPickerOptions(input: {
+  catalog?: ConditionCatalogItem[]
+  trackedKeys?: string[]
+  extraKeys?: string[]
+  customLabels?: Record<string, string>
+}) {
+  const catalog = input.catalog ?? conditionCatalog
+  const catalogKeySet = new Set(catalog.map((condition) => condition.key))
+  const keys = [...new Set([
+    ...(input.trackedKeys ?? []),
+    ...(input.extraKeys ?? [])
+  ])]
+
+  const customItems = keys
+    .filter((key) => isCustomTrackedConditionKey(key))
+    .map((key) => resolveTrackedConditionByStoredKey(key, input.customLabels))
+    .filter((condition): condition is ConditionCatalogItem => Boolean(condition))
+    .filter((condition) => !catalogKeySet.has(condition.key))
+
+  return [...customItems, ...catalog]
 }
 
 export function normalizeConditionLabel(label: string | null | undefined) {

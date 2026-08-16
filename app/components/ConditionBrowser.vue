@@ -36,7 +36,7 @@
             v-if="mode === 'onboarding'"
             class="mt-2 text-sm leading-6 text-toned"
           >
-            Pick as many conditions as you want for quick access on your home screen.
+            Pick catalog conditions or search to add your own — anything you want quick access to on your home screen.
           </p>
 
         </div>
@@ -65,7 +65,7 @@
         v-if="mode === 'manage' && selectedCount === 0"
         class="mt-2 text-sm leading-6 text-toned"
       >
-        Tap conditions below to add them to your home screen.
+        Tap conditions below or search to add a custom one to your home screen.
       </p>
 
 
@@ -110,11 +110,42 @@
 
           <p class="mt-2 text-sm leading-6 text-toned">
 
-            Try a different search term.
+            Add your own condition name below.
 
           </p>
 
+          <button
+            v-if="canAddCustomFromSearch"
+            type="button"
+            class="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
+            @click="emitAddCustomFromSearch"
+          >
+            <UIcon name="i-lucide-plus" class="size-4" />
+            Add "{{ trimmedSearchQuery }}"
+          </button>
+
         </div>
+
+
+
+        <button
+          v-else-if="showAddCustomRow"
+          type="button"
+          class="mb-2 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 px-3 py-3 text-left transition hover:bg-primary/10"
+          @click="emitAddCustomFromSearch"
+        >
+          <span class="grid size-16 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary">
+            <UIcon name="i-lucide-plus" class="size-7" />
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-lg font-bold leading-snug text-highlighted">
+              Add "{{ trimmedSearchQuery }}"
+            </span>
+            <span class="mt-1 block text-sm leading-5 text-toned">
+              Custom condition — track it on your home screen like any other.
+            </span>
+          </span>
+        </button>
 
 
 
@@ -374,6 +405,8 @@ const emit = defineEmits<{
 
   restrictedSelect: [key: string]
 
+  addCustom: [label: string]
+
   confirm: []
 
   done: []
@@ -463,11 +496,38 @@ const filteredConditions = computed(() => {
 
 
 
+const trimmedSearchQuery = computed(() => debouncedSearchQuery.value.trim())
+
+const canAddCustomFromSearch = computed(() => {
+  const query = trimmedSearchQuery.value
+  if (!query) {
+    return false
+  }
+
+  const lower = query.toLowerCase()
+  return !props.conditions.some((condition) => condition.title.toLowerCase() === lower)
+})
+
+const showAddCustomRow = computed(() => {
+  return canAddCustomFromSearch.value && filteredConditions.value.length > 0
+})
+
 const showEmptyState = computed(() => {
 
-  return Boolean(debouncedSearchQuery.value.trim()) && filteredConditions.value.length === 0
+  return Boolean(trimmedSearchQuery.value) && filteredConditions.value.length === 0
 
 })
+
+function emitAddCustomFromSearch() {
+  const label = trimmedSearchQuery.value
+  if (!label) {
+    return
+  }
+
+  emit('addCustom', label)
+  searchQuery.value = ''
+  debouncedSearchQuery.value = ''
+}
 
 
 
