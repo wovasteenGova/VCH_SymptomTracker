@@ -31,6 +31,7 @@
     <NuxtPage />
     <SubmissionToast v-if="showGlobalSubmissionToast" />
     <PwaInstallPrompt />
+    <VchCookieConsentBanner />
   </UApp>
 </template>
 
