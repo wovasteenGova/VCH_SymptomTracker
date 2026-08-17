@@ -920,6 +920,10 @@ export function buildHomeVisitTips(conditions: ConditionCatalogItem[]): HomeVisi
       text: HOME_HONESTY_TIP.text
     },
     {
+      title: DONT_DOWNPLAY_SYMPTOMS_TIP.title,
+      text: DONT_DOWNPLAY_SYMPTOMS_TIP.text
+    },
+    {
       title: 'Crisis support',
       text: VA_MENTAL_HEALTH_CRISIS_TIP
     }

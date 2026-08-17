@@ -5,6 +5,12 @@ export const TRACKER_TOOLTIP = {
   content: { side: 'bottom' as const, sideOffset: 6 }
 }
 
+export const CLAIMBUILDER_ACTION = {
+  label: 'Open ClaimBuilder',
+  ariaLabel: 'Open ClaimBuilder in a new tab',
+  tooltip: 'Draft and organize VA claim prep with AI assistance'
+} as const
+
 export const LAY_REPORTING_ACTION = {
   label: 'Lay Reporting',
   ariaLabel: 'Open Lay Reporting settings',

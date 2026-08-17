@@ -50,6 +50,26 @@
           <div v-else class="ml-auto flex min-w-0 shrink items-center gap-1.5 sm:gap-2">
             <UTooltip
               v-if="!isEmbeddedPreview"
+              :text="CLAIMBUILDER_ACTION.tooltip"
+              :delay-duration="TRACKER_TOOLTIP.delayDuration"
+              :content="TRACKER_TOOLTIP.content"
+            >
+              <UButton
+                type="button"
+                size="xs"
+                color="primary"
+                variant="soft"
+                icon="i-lucide-file-stack"
+                class="shrink-0"
+                :aria-label="CLAIMBUILDER_ACTION.ariaLabel"
+                @click="openClaimBuilder"
+              >
+                <span class="hidden md:inline">{{ CLAIMBUILDER_ACTION.label }}</span>
+              </UButton>
+            </UTooltip>
+
+            <UTooltip
+              v-if="!isEmbeddedPreview"
               :text="LAY_REPORTING_ACTION.tooltip"
               :delay-duration="TRACKER_TOOLTIP.delayDuration"
               :content="TRACKER_TOOLTIP.content"
@@ -2245,10 +2265,12 @@ import { useAppWelcome } from '../composables/useAppWelcome'
 import { useTimedPasswordReveal } from '../composables/useTimedPasswordReveal'
 import { FREE_CONDITION_LIMIT, PRO_ANNUAL_PRICE_LABEL, formatConditionKeyLabel, conditionKeyFromLabel } from '../utils/subscription'
 import {
+  CLAIMBUILDER_ACTION,
   LAY_REPORTING_ACTION,
   SUBMISSIONS_INBOX_ACTION,
   TRACKER_TOOLTIP
 } from '../utils/trackerToolbarUi'
+import { buildClaimBuilderUrl } from '../utils/claimBuilderLinks'
 import { mapEntryHistoryItem } from '../utils/entryDisplay'
 import {
   buildSymptomEntrySavePayload,
@@ -7376,6 +7398,16 @@ function populateEntryFormFromRecord(entry: Record<string, any>) {
 function openDesktopHistoryExport() {
   ensureExportConditionSelection()
   openPdfExportOverlay()
+}
+
+function openClaimBuilder() {
+  if (!import.meta.client) return
+  const config = useRuntimeConfig()
+  window.open(
+    buildClaimBuilderUrl({ claimBuilderUrl: config.public.claimBuilderUrl }),
+    '_blank',
+    'noopener,noreferrer'
+  )
 }
 
 function openLayReportingSettings() {
