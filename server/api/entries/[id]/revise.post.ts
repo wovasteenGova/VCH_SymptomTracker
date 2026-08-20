@@ -1,6 +1,6 @@
 import { readBody } from 'h3'
-import { MAX_ENTRY_EDITS } from '../../../app/utils/entryEditHistory'
-import type { EntryRevisionSnapshot } from '../../../app/utils/entryEditHistory'
+import { MAX_ENTRY_EDITS } from '../../../../app/utils/entryEditHistory'
+import type { EntryRevisionSnapshot } from '../../../../app/utils/entryEditHistory'
 import { requireAuthUser } from '../../../utils/authUser'
 import { getSupabaseAdmin } from '../../../utils/supabaseAdmin'
 
