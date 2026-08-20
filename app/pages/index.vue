@@ -1,35 +1,4 @@
 <template>
-  <Teleport to="body">
-    <Transition name="app-splash-fade">
-      <div
-        v-if="showHomeWorkspaceLoader"
-        class="fixed inset-0 z-[100] grid place-items-center bg-default px-4"
-        role="status"
-        aria-live="polite"
-        aria-label="Loading"
-      >
-        <div class="flex w-full max-w-[min(28rem,92vw)] flex-col items-center gap-4 sm:max-w-[32rem]">
-          <div class="flex items-center justify-center gap-3">
-            <img
-              src="/brand/vch-symptom-tracker-logo.png"
-              alt="VCH Symptom Tracker"
-              class="size-11 shrink-0 rounded-full object-cover object-center ring-1 ring-default shadow-sm"
-              decoding="async"
-            >
-            <span class="text-[2rem] font-semibold leading-none tracking-[0.12em] text-default">
-              VCH
-            </span>
-          </div>
-          <img
-            src="/vch-tank-loader.svg"
-            alt=""
-            class="w-full select-none"
-            decoding="async"
-          >
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
   <main
     id="tracker-app-shell"
     class="tracker-app-shell app-shell relative overflow-hidden bg-default text-default transition-colors"
@@ -2811,11 +2780,6 @@ const homeConditions = computed(() => {
     return aIndex - bIndex
   })
 })
-
-/** Fullscreen tank SVG loader on home until bootstrap completes. */
-const showHomeWorkspaceLoader = computed(() =>
-  !isEmbeddedPreview.value && !homeWorkspaceReady.value
-)
 
 /** Desktop manage-mode browser overlays the center panel instead of replacing it (avoids flash). */
 const showDesktopConditionBrowserOverlay = computed(() =>
