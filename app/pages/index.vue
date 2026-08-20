@@ -1,10 +1,33 @@
 <template>
-  <VchOpeningWorkspaceLoader
-    v-if="showHomeWorkspaceLoader"
-    full-screen
-    show-brand
-    :label="homeWorkspaceLoadingLabel"
-  />
+  <Teleport to="body">
+    <div
+      v-if="showHomeWorkspaceLoader"
+      class="fixed inset-0 z-[80] grid place-items-center bg-default px-4"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
+    >
+      <div class="flex w-full max-w-[min(28rem,92vw)] flex-col items-center gap-4 sm:max-w-[32rem]">
+        <div class="flex items-center justify-center gap-3">
+          <img
+            src="/brand/vch-symptom-tracker-logo.png"
+            alt="VCH Symptom Tracker"
+            class="size-11 shrink-0 rounded-full object-cover object-center ring-1 ring-default shadow-sm"
+            decoding="async"
+          >
+          <span class="text-[2rem] font-semibold leading-none tracking-[0.12em] text-default">
+            VCH
+          </span>
+        </div>
+        <img
+          src="/vch-tank-loader.svg"
+          alt=""
+          class="w-full select-none"
+          decoding="async"
+        >
+      </div>
+    </div>
+  </Teleport>
   <main
     id="tracker-app-shell"
     class="app-shell relative overflow-hidden bg-default text-default transition-colors"
@@ -2691,13 +2714,9 @@ const homeConditions = computed(() => {
   })
 })
 
-/** Single fullscreen tank loader while the home workspace bootstraps (Claim Builder pattern). */
+/** Single fullscreen tank loader while the home workspace bootstraps. */
 const showHomeWorkspaceLoader = computed(() =>
   !isEmbeddedPreview.value && !homeWorkspaceReady.value
-)
-
-const homeWorkspaceLoadingLabel = computed(() =>
-  isAuthLoading.value ? 'Making sure things run smoothly' : 'Setting up workspace'
 )
 
 const showConditionBrowser = computed(() => {
