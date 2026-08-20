@@ -1,5 +1,5 @@
 import { useSupabaseClient } from '#imports'
-import { MAX_ENTRY_EDITS, type EntryRevisionRecord, type EntryRevisionSnapshot } from '../utils/entryEditHistory'
+import { type EntryRevisionRecord, type EntryRevisionSnapshot, normalizeRevisionRecords } from '../utils/entryEditHistory'
 import { useTrackerDb } from './useTrackerDb'
 
 type SymptomEntryPayload = {
@@ -20,6 +20,16 @@ export class EntryEditLimitError extends Error {
     super('This entry has reached the maximum of 3 edits. Log a new entry if you need to add more detail.')
     this.name = 'EntryEditLimitError'
   }
+}
+
+async function getAccessToken(supabase: ReturnType<typeof useSupabaseClient>) {
+  const { data, error } = await supabase.auth.getSession()
+
+  if (error) {
+    throw error
+  }
+
+  return data.session?.access_token || null
 }
 
 export function useSymptomEntries() {
@@ -101,55 +111,35 @@ export function useSymptomEntries() {
     beforeSnapshot: EntryRevisionSnapshot,
     payload: Partial<SymptomEntryPayload>
   ) {
-    const userId = await getUserId()
+    const accessToken = await getAccessToken(supabase)
 
-    const { data: existingEntry, error: fetchError } = await trackerDb
-      .from('symptom_entries')
-      .select('edit_count, source')
-      .eq('id', id)
-      .single()
-
-    if (fetchError) {
-      throw fetchError
+    if (!accessToken) {
+      throw new Error('Please sign in before saving symptom entries.')
     }
 
-    const editCount = Number(existingEntry?.edit_count) || 0
-
-    if (editCount >= MAX_ENTRY_EDITS) {
-      throw new EntryEditLimitError()
-    }
-
-    const revisionNumber = editCount + 1
-
-    const { error: revisionError } = await trackerDb
-      .from('symptom_entry_revisions')
-      .insert({
-        entry_id: id,
-        user_id: userId,
-        revision_number: revisionNumber,
-        snapshot: beforeSnapshot
+    try {
+      const data = await $fetch<Record<string, unknown>>(`/api/entries/${id}/revise`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          beforeSnapshot,
+          payload
+        }
       })
 
-    if (revisionError) {
-      throw revisionError
+      return data
+    } catch (error: unknown) {
+      const fetchError = error as { statusCode?: number, data?: { message?: string }, message?: string }
+      const message = fetchError.data?.message || fetchError.message || 'Could not save entry revision.'
+
+      if (fetchError.statusCode === 400 && message.includes('maximum of 3 edits')) {
+        throw new EntryEditLimitError()
+      }
+
+      throw new Error(message)
     }
-
-    const { data, error } = await trackerDb
-      .from('symptom_entries')
-      .update({
-        ...payload,
-        edit_count: revisionNumber,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      throw error
-    }
-
-    return data
   }
 
   async function listRevisionsForEntries(entryIds: string[]) {
@@ -157,17 +147,29 @@ export function useSymptomEntries() {
       return [] as EntryRevisionRecord[]
     }
 
-    const { data, error } = await trackerDb
-      .from('symptom_entry_revisions')
-      .select('id, entry_id, revision_number, revised_at, snapshot')
-      .in('entry_id', entryIds)
-      .order('revision_number', { ascending: true })
+    const accessToken = await getAccessToken(supabase)
 
-    if (error) {
-      throw error
+    if (!accessToken) {
+      return [] as EntryRevisionRecord[]
     }
 
-    return (data || []) as EntryRevisionRecord[]
+    try {
+      const response = await $fetch<{ revisions: EntryRevisionRecord[] }>(
+        `/api/entries/revisions?entryIds=${encodeURIComponent(entryIds.join(','))}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      )
+
+      return normalizeRevisionRecords(response.revisions || [])
+    } catch (error: unknown) {
+      const fetchError = error as { data?: { message?: string }, message?: string }
+      const message = fetchError.data?.message || fetchError.message || 'Could not load entry revisions for export.'
+
+      throw new Error(message)
+    }
   }
 
   async function deleteEntry(id: string) {
