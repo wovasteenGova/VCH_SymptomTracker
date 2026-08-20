@@ -2,15 +2,14 @@
   <UApp>
     <NuxtRouteAnnouncer />
     <NuxtPage />
-    <SubmissionToast v-if="showGlobalSubmissionToast" />
+    <SubmissionToast />
     <PwaInstallPrompt />
     <VchCookieConsentBanner />
   </UApp>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
+import { onMounted, onUnmounted } from 'vue'
 import { isIosWebKitBrowser, resolveMobileViewport } from './utils/mobileViewport'
 
 const { themeId } = useClaimColorTheme()
@@ -24,16 +23,6 @@ useHead(() => ({
 
 const { showSubmissionToast } = useSubmissionToast()
 const supabase = useSupabaseClient()
-const route = useRoute()
-const isDesktopViewport = useMediaQuery('(min-width: 768px)')
-const showGlobalSubmissionToast = computed(() => {
-  if (route.path === '/' && isDesktopViewport.value) {
-    return false
-  }
-
-  return true
-})
-
 const CHECKOUT_SUCCESS_TOAST_KEY = 'symptom-tracker-checkout-success-toast'
 let visualBaselineHeight = 0
 

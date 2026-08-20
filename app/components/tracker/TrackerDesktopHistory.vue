@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { td } from '../../utils/trackerDesktopTheme'
 
 type HistoryEntry = {
@@ -31,6 +31,7 @@ const props = defineProps<{
   authLoading: boolean
   isDemoMode: boolean
   activeTab: HistoryTab
+  highlightedEntryId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -60,6 +61,40 @@ function selectTab(tab: HistoryTab) {
 
   emit('update:activeTab', tab)
 }
+
+const scrollEl = ref<HTMLElement | null>(null)
+
+async function scrollEntryIntoView(entryId: string) {
+  await nextTick()
+
+  if (!import.meta.client) {
+    return
+  }
+
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => resolve())
+  })
+
+  const container = scrollEl.value
+  const entryElement = container?.querySelector(`[data-entry-id="${entryId}"]`) as HTMLElement | null
+
+  if (!container || !entryElement) {
+    return
+  }
+
+  const scrollTarget = entryElement.getBoundingClientRect().top
+    - container.getBoundingClientRect().top
+    + container.scrollTop
+
+  container.scrollTo({
+    top: Math.max(0, scrollTarget - 4),
+    behavior: 'smooth'
+  })
+}
+
+defineExpose({
+  scrollEntryIntoView
+})
 </script>
 
 <template>
@@ -111,7 +146,10 @@ function selectTab(tab: HistoryTab) {
       </div>
     </div>
 
-    <div class="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-2">
+    <div
+      ref="scrollEl"
+      class="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-2"
+    >
       <template v-if="activeTab === 'Entries'">
         <div v-if="!signedIn && !authLoading && !isDemoMode" class="py-10 text-center">
           <p class="font-bold text-highlighted">Sign in to save entries</p>
@@ -148,7 +186,14 @@ function selectTab(tab: HistoryTab) {
           v-for="entry in entries"
           v-else
           :key="entry.id"
-          :class="['group cursor-pointer rounded-2xl px-2 py-3', td.rowHover]"
+          :data-entry-id="entry.id"
+          :class="[
+            'group cursor-pointer rounded-2xl px-2 py-3 transition duration-500',
+            td.rowHover,
+            highlightedEntryId === entry.id
+              ? 'submission-flash bg-primary/10 ring-2 ring-primary/35 shadow-lg shadow-black/10 dark:bg-primary/15 dark:ring-primary/50 dark:shadow-black/20'
+              : ''
+          ]"
           role="button"
           tabindex="0"
           @click="$emit('openEntry', entry.id)"

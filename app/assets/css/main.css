@@ -398,3 +398,24 @@ html.dark .sym-entry-time-select {
   color: #ffffff;
   box-shadow: inset 0 0 0 1px rgb(51 65 85);
 }
+
+.submission-flash {
+  animation: submission-flash 1.15s ease-out both;
+}
+
+@keyframes submission-flash {
+  0% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+
+  18% {
+    filter: brightness(1.08);
+    transform: scale(1.01);
+  }
+
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}

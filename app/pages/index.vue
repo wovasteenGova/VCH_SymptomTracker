@@ -407,12 +407,14 @@
 
           <template #history>
             <TrackerDesktopHistory
+              ref="desktopHistoryRef"
               v-model:active-tab="activeHistoryTab"
               class="min-h-0 flex-1"
               :entries="desktopHistoryEntries"
               :show-all-entries="desktopHistoryShowAll"
               :entries-filtered="!desktopHistoryShowAll"
               :condition-filter-label="activeCondition.title"
+              :highlighted-entry-id="highlightedSubmissionId"
               :is-loading="isLoadingEntries && !hasLoadedEntriesOnce"
               :error="entriesError"
               :loading-message="loadingEntriesMessage"
@@ -2303,6 +2305,7 @@ const { installPlatform, canPromptInstall, promptInstall } = usePwaInstall()
 const historyExpanded = ref(false)
 const historyPanelAnimating = ref(false)
 const historyScrollEl = ref<HTMLElement | null>(null)
+const desktopHistoryRef = ref<{ scrollEntryIntoView: (entryId: string) => Promise<void> } | null>(null)
 const conditionSlideEntryBlocked = ref(false)
 let conditionSlideEntryBlockedTimer: ReturnType<typeof setTimeout> | undefined
 const homeVisitTip = ref<HomeVisitTip | null>(null)
@@ -4916,6 +4919,11 @@ async function scrollHistoryEntryIntoView(entryId: string) {
     window.requestAnimationFrame(() => resolve())
   })
 
+  if (isDesktopLayout.value) {
+    await desktopHistoryRef.value?.scrollEntryIntoView(entryId)
+    return
+  }
+
   const container = historyScrollEl.value
   const entryElement = container?.querySelector(`[data-entry-id="${entryId}"]`) as HTMLElement | null
 
@@ -4965,10 +4973,6 @@ function closeSubmissionDropdown() {
 }
 
 async function focusSubmission(entryId: string) {
-  activeHistoryTab.value = 'Entries'
-  const wasCollapsed = !historyExpanded.value
-  expandHistorySheet()
-  isSubmissionDropdownOpen.value = false
   highlightedSubmissionId.value = entryId
   scheduleSubmissionHighlightClear()
 
@@ -4976,6 +4980,18 @@ async function focusSubmission(entryId: string) {
   if (submission?.createdAt) {
     markSubmissionSeenUpTo(submission.createdAt)
   }
+
+  isSubmissionDropdownOpen.value = false
+  activeHistoryTab.value = 'Entries'
+
+  if (isDesktopLayout.value) {
+    await nextTick()
+    await scrollHistoryEntryIntoView(entryId)
+    return
+  }
+
+  const wasCollapsed = !historyExpanded.value
+  expandHistorySheet()
 
   if (wasCollapsed) {
     await new Promise<void>((resolve) => {
@@ -5081,7 +5097,7 @@ async function saveEntry() {
     await syncHomeConditionsAfterEntrySave(payload.condition_key)
     await loadEntitlements()
 
-    if (!wasEditing && savedEntryId && isMobileLayout.value) {
+    if (!wasEditing && savedEntryId) {
       await focusSubmission(savedEntryId)
     }
 
@@ -8468,26 +8484,5 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   margin-top: 0.75rem;
   opacity: 1;
   transform: translateY(0);
-}
-
-.submission-flash {
-  animation: submission-flash 1.15s ease-out both;
-}
-
-@keyframes submission-flash {
-  0% {
-    filter: brightness(1);
-    transform: scale(1);
-  }
-
-  18% {
-    filter: brightness(1.08);
-    transform: scale(1.01);
-  }
-
-  100% {
-    filter: brightness(1);
-    transform: scale(1);
-  }
 }
 </style>
