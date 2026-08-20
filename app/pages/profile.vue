@@ -211,7 +211,7 @@
 
         <div
           ref="settingsScrollEl"
-          class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain no-scrollbar pb-[max(1rem,env(safe-area-inset-bottom))]"
+          class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar pb-[max(1rem,env(safe-area-inset-bottom))]"
           :class="[
             settingsSectionsStackClass(compact),
             settingsScrollBodyClass({ compact, overlay }),

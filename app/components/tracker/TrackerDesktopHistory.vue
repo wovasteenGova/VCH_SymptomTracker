@@ -111,7 +111,7 @@ function selectTab(tab: HistoryTab) {
       </div>
     </div>
 
-    <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
+    <div class="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-2">
       <template v-if="activeTab === 'Entries'">
         <div v-if="!signedIn && !authLoading && !isDemoMode" class="py-10 text-center">
           <p class="font-bold text-highlighted">Sign in to save entries</p>

@@ -281,7 +281,7 @@
         >
           <template #main>
             <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <Transition name="desktop-log-panel" mode="out-in">
+              <Transition name="desktop-log-panel">
                   <ConditionBrowser
                     v-if="showConditionBrowser"
                     key="condition-browser"
@@ -1052,7 +1052,7 @@
 
           <div
             ref="historyScrollEl"
-            class="history-panel-scroll min-h-0 flex-1 overscroll-contain bg-elevated pb-2 pt-3 no-scrollbar"
+            class="history-panel-scroll min-h-0 flex-1 overscroll-contain bg-elevated pb-2 pt-3 custom-scrollbar"
             :class="[
               isMobileLayout ? 'px-3' : 'px-4',
               historyExpanded ? 'overflow-y-auto' : 'overflow-hidden touch-pan-y'
@@ -2704,7 +2704,8 @@ const isHomeBootstrapLoading = computed(() => {
   // Only show the in-page tank loader while the workspace is still bootstrapping.
   // After markHomeWorkspaceReady(), auth hydration may refresh conditions quietly -
   // without this guard that second fetch flashes the loader over the conditions UI.
-  return !hasLoadedTrackedConditions.value
+  return !isEntryOpen.value
+    && !hasLoadedTrackedConditions.value
     && isLoadingTrackedConditions.value
     && !trackedConditionsLoadError.value
     && !homeWorkspaceReady.value
@@ -4015,11 +4016,24 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     return
   }
 
-  resetHomeWorkspaceReady()
-  resetTrackedConditionsLoadState()
+  // Signed out — clear data without blanking the shell (avoids tank-loader flash).
+  if (!nextId && prevId) {
+    profileDisplayName.value = ''
+    savedEntries.value = []
+    homeConditionOrderKeys.value = []
+    hasLoadedEntriesOnce.value = false
+    closeEntryPanel(true, true)
+    refreshEntryDraftPreview()
+    await refreshTrackedConditions()
+    return
+  }
 
-  try {
-    if (nextId) {
+  // Different signed-in account — full bootstrap reset.
+  if (nextId && prevId) {
+    resetHomeWorkspaceReady()
+    resetTrackedConditionsLoadState()
+
+    try {
       isAuthPanelOpen.value = false
       loadProfileDisplayName()
       loadEntitlements()
@@ -4028,18 +4042,9 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
       restoreCachedHomeConditionOrderKeys()
       await loadEntries()
       refreshEntryDraftPreview()
-      return
+    } finally {
+      markHomeWorkspaceReady()
     }
-
-    profileDisplayName.value = ''
-    savedEntries.value = []
-    homeConditionOrderKeys.value = []
-    hasLoadedEntriesOnce.value = false
-    closeEntryPanel(true, true)
-    refreshEntryDraftPreview()
-    await refreshTrackedConditions()
-  } finally {
-    markHomeWorkspaceReady()
   }
 })
 
@@ -7217,7 +7222,9 @@ function openEntryForEdit(entryId: string) {
   debouncedCustomConditionPreview.value = ''
   isConditionPickerOpen.value = false
   historyExpanded.value = false
-  transitionDirection.value = 'expand'
+  if (!isDesktopLayout.value) {
+    transitionDirection.value = 'expand'
+  }
   entryStep.value = 0
   entryError.value = ''
   hasActiveDraft.value = true
@@ -7456,7 +7463,9 @@ function openEntryPanelInner(options: {
   }
 
   historyExpanded.value = false
-  transitionDirection.value = 'expand'
+  if (!isDesktopLayout.value) {
+    transitionDirection.value = 'expand'
+  }
   entryStep.value = 0
   resetEntryForm()
   editingEntryId.value = null

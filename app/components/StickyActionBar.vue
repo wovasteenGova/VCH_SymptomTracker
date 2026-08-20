@@ -7,7 +7,7 @@
         : 'sticky bottom-0 z-30 -mx-4 sm:-mx-0',
       tone === 'dark'
         ? 'border-slate-800 bg-slate-950/95 supports-[backdrop-filter]:bg-slate-950/85'
-        : 'border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-950/95 supports-[backdrop-filter]:bg-slate-50/85 dark:supports-[backdrop-filter]:bg-slate-950/85'
+        : 'border-default bg-default/95 supports-[backdrop-filter]:bg-default/85'
     ]"
     :style="floatingStyle"
   >

@@ -86,7 +86,7 @@ const scopeButtonClass = (active: boolean) => active
       </div>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain no-scrollbar">
+    <div class="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
       <template v-if="!hasConditions || activeTab === 'log'">
         <div class="flex flex-col items-center px-8 py-6 pb-8 text-center">
           <template v-if="hasConditions">

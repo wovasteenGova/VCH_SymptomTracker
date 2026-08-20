@@ -1,4 +1,4 @@
-import { useSupabaseClient } from '#imports'
+import { useState, useSupabaseClient } from '#imports'
 import { computed, inject, ref } from 'vue'
 import { useSupabaseAuth } from './useSupabaseAuth'
 import { useTrackerDb } from './useTrackerDb'
@@ -57,9 +57,9 @@ export function useTrackedConditions() {
   const initialOnboardingCompleted = readStoredOnboardingCompleted(onboardingKey) || initialStoredKeys.length > 0
   const trackedConditionKeys = ref<string[]>(normalizeTrackedConditionKeys(initialStoredKeys))
   const onboardingCompleted = ref(initialOnboardingCompleted)
-  const isLoading = ref(false)
-  const hasLoadedTrackedConditions = ref(isDemoMode)
-  const loadError = ref('')
+  const isLoading = useState('tracker-conditions-loading', () => false)
+  const hasLoadedTrackedConditions = useState('tracker-conditions-loaded', () => isDemoMode)
+  const loadError = useState('tracker-conditions-load-error', () => '')
 
   const needsOnboarding = computed(() => {
     if (isDemoMode || !user.value || isAuthLoading.value) {

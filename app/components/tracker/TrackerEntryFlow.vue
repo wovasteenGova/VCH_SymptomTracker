@@ -199,13 +199,10 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
 </script>
 
 <template>
-  <div
-    class="flex min-h-0 flex-1 flex-col overflow-hidden"
-    :class="isDesktop ? '' : ''"
-  >
+  <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
     <div
       class="flex min-h-0 flex-1 flex-col overflow-hidden"
-      :class="isDesktop ? 'mx-auto w-full max-w-xl px-5 py-4' : ''"
+      :class="isDesktop ? 'mx-auto w-full max-w-xl px-5 pt-4' : ''"
     >
       <div
         class="shrink-0 flex items-center gap-4"
@@ -361,13 +358,13 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
       <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div
           v-if="!isEntryKeyboardOpen"
-          class="relative z-10 shrink-0 flex items-center justify-between gap-4 bg-default px-1"
-          :class="isDesktop ? 'mb-5' : 'mb-6'"
+          class="relative z-10 shrink-0 flex items-center justify-between gap-4 px-1"
+          :class="isDesktop ? 'mb-4' : 'mb-6'"
           data-step-swipe-block
         >
           <button
             type="button"
-            class="grid place-items-center rounded-full bg-muted text-highlighted transition hover:bg-accented disabled:opacity-30"
+            class="grid place-items-center rounded-full bg-elevated/80 text-highlighted ring-1 ring-default/70 transition hover:bg-accented disabled:opacity-30"
             :class="isDesktop ? 'size-11' : 'size-10'"
             :disabled="entryStep === 0"
             aria-label="Previous entry step"
@@ -402,7 +399,7 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
 
           <button
             type="button"
-            class="grid place-items-center rounded-full bg-muted text-highlighted transition hover:bg-accented disabled:opacity-30"
+            class="grid place-items-center rounded-full bg-elevated/80 text-highlighted ring-1 ring-default/70 transition hover:bg-accented disabled:opacity-30"
             :class="isDesktop ? 'size-11' : 'size-10'"
             :disabled="isLastEntryStep"
             aria-label="Next entry step"
@@ -433,8 +430,8 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
               :class="currentStepHasSliderField && currentStepFields.length === 1
                 ? 'justify-center px-1 py-4'
                 : currentStepIsEpisodeDetailStep
-                  ? 'mt-8 justify-start space-y-12 overflow-y-auto no-scrollbar pt-2'
-                  : 'mt-6 justify-start space-y-6 overflow-y-auto no-scrollbar'"
+                  ? 'mt-8 justify-start space-y-12 overflow-y-auto custom-scrollbar pt-2'
+                  : 'mt-6 justify-start space-y-6 overflow-y-auto custom-scrollbar'"
               :style="entryStepScrollStyle"
               @focusin="handleEntryFieldFocus"
             >
@@ -663,12 +660,11 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
       <div
         v-if="!isEntryKeyboardOpen"
         class="mt-auto shrink-0"
-        :class="isDesktop ? td.dividerPt : ''"
-        :style="{ minHeight: `${entryActionBarHeight}px` }"
+        :class="isDesktop ? 'border-t border-default/80 pt-3' : ''"
       >
         <StickyActionBar
           v-if="!isDesktop"
-          class="-mx-5 rounded-none border-x-0 border-default"
+          class="-mx-5 rounded-none border-x-0 border-default bg-default/95"
           :keyboard-offset="entryKeyboardInset"
         >
           <button
