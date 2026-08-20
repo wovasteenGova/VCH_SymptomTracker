@@ -233,19 +233,7 @@
             v-if="entitlementsLoaded"
             class="mt-3 flex flex-wrap items-center gap-2"
           >
-            <span
-              class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.12em] ring-1"
-              :class="isPro
-                ? PRO_BADGE_CLASS
-                : 'bg-primary/10 text-primary ring-primary/40'"
-            >
-              <UIcon
-                :name="isPro ? 'i-lucide-crown' : 'i-lucide-sparkles'"
-                class="size-3"
-                :class="isPro ? PRO_BADGE_ICON_CLASS : 'text-primary'"
-              />
-              {{ isPro ? 'Pro' : 'Free' }}
-            </span>
+            <TrackerPlanBadge size="md" />
             <p
               v-if="signInMethodLabel"
               class="flex items-center gap-1.5 text-xs text-muted"
@@ -1432,8 +1420,6 @@ import type { SettingsSection } from '../composables/useSettingsSectionNav'
 import { mapEntryHistoryItem } from '../utils/entryDisplay'
 import { copyToClipboard } from '../utils/copyToClipboard'
 import {
-  PRO_BADGE_CLASS,
-  PRO_BADGE_ICON_CLASS,
   PRO_LOCK_BODY_CLASS,
   PRO_LOCK_LINK_CLASS,
   PRO_LOCK_PANEL_CLASS,

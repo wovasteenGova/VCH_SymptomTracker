@@ -324,9 +324,12 @@ async function onSignedIn() {
         >
           <header class="flex shrink-0 items-start justify-between gap-1 border-b border-default/60 px-2 pt-2">
             <div class="min-w-0 px-1 pb-2">
-              <p class="truncate text-sm font-semibold text-highlighted">
-                {{ accountDisplayName }}
-              </p>
+              <div class="flex min-w-0 flex-wrap items-center gap-2">
+                <p class="truncate text-sm font-semibold text-highlighted">
+                  {{ accountDisplayName }}
+                </p>
+                <TrackerPlanBadge />
+              </div>
               <p
                 v-if="user.email"
                 class="truncate text-xs text-muted"
@@ -398,12 +401,15 @@ async function onSignedIn() {
                 <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
                   Symptom Tracker
                 </p>
-                <h2
-                  id="tracker-settings-expanded-title"
-                  class="mt-1 text-2xl font-semibold text-highlighted"
-                >
-                  Account Settings
-                </h2>
+                <div class="mt-1 flex min-w-0 flex-wrap items-center gap-2">
+                  <h2
+                    id="tracker-settings-expanded-title"
+                    class="truncate text-2xl font-semibold text-highlighted"
+                  >
+                    Account Settings
+                  </h2>
+                  <TrackerPlanBadge />
+                </div>
                 <p
                   v-if="user.email"
                   class="mt-1 truncate text-base text-muted"
