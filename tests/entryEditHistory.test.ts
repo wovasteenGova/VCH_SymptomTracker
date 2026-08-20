@@ -3,6 +3,7 @@ import {
   buildFieldEditHistory,
   getRemainingEntryEdits,
   isEntryEditLocked,
+  normalizeRevisionSnapshot,
   type EntryRevisionRecord
 } from '../app/utils/entryEditHistory'
 import type { SymptomEntrySavePayload } from '../app/utils/symptomEntrySavePayload'
@@ -54,5 +55,20 @@ describe('entry edit history', () => {
     const impactHistory = buildFieldEditHistory(revisions, current, { kind: 'impact' })
     expect(impactHistory.priorValues).toEqual([])
     expect(impactHistory.currentValue).toBe('Tired')
+  })
+
+  it('normalizes string snapshot json from the database', () => {
+    const snapshot = normalizeRevisionSnapshot(JSON.stringify({
+      condition_key: 'gerd',
+      condition_label: 'GERD',
+      severity: 5,
+      occurred_at: '2026-07-06T23:37:00.000Z',
+      summary: 'Original summary',
+      impact: 'Poor sleep',
+      details: {}
+    }))
+
+    expect(snapshot.summary).toBe('Original summary')
+    expect(snapshot.severity).toBe(5)
   })
 })

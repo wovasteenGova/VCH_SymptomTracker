@@ -128,10 +128,64 @@ export function buildSymptomEntrySavePayloadFromReportEntry(entry: {
   }
 }
 
+export function normalizeRevisionSnapshot(raw: unknown): EntryRevisionSnapshot {
+  if (!raw) {
+    return {
+      condition_key: '',
+      condition_label: '',
+      severity: 5,
+      occurred_at: null,
+      summary: '',
+      impact: null,
+      details: {}
+    }
+  }
+
+  if (typeof raw === 'string') {
+    try {
+      return normalizeRevisionSnapshot(JSON.parse(raw))
+    } catch {
+      return {
+        condition_key: '',
+        condition_label: '',
+        severity: 5,
+        occurred_at: null,
+        summary: raw.trim(),
+        impact: null,
+        details: {}
+      }
+    }
+  }
+
+  const record = raw as Partial<EntryRevisionSnapshot>
+  return {
+    condition_key: normalizeText(record.condition_key),
+    condition_label: normalizeText(record.condition_label) || 'Symptom log',
+    severity: typeof record.severity === 'number' ? record.severity : 5,
+    occurred_at: record.occurred_at || null,
+    summary: normalizeText(record.summary),
+    impact: normalizeText(record.impact) || null,
+    details: {
+      ...((record.details as Record<string, string>) || {})
+    }
+  }
+}
+
+export function normalizeRevisionRecord(revision: EntryRevisionRecord): EntryRevisionRecord {
+  return {
+    ...revision,
+    snapshot: normalizeRevisionSnapshot(revision.snapshot)
+  }
+}
+
+export function normalizeRevisionRecords(revisions: EntryRevisionRecord[]) {
+  return revisions.map((revision) => normalizeRevisionRecord(revision))
+}
+
 export function groupRevisionsByEntryId(revisions: EntryRevisionRecord[]) {
   const grouped = new Map<string, EntryRevisionRecord[]>()
 
-  for (const revision of revisions) {
+  for (const revision of normalizeRevisionRecords(revisions)) {
     const existing = grouped.get(revision.entry_id) || []
     existing.push(revision)
     grouped.set(revision.entry_id, existing)
