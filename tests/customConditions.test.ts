@@ -21,6 +21,7 @@ describe('custom tracked conditions', () => {
     expect(item.title).toBe('Skin flare-up')
     expect(item.category).toBe('Custom')
     expect(item.key).toBe('skin_flare_up')
+    expect(item.image).toBe('/image/custom-condition.png')
   })
 
   it('detects custom vs catalog keys', () => {

@@ -1,4 +1,4 @@
-import { getConditionImage } from './conditionImages'
+import { conditionImageAssets, getConditionImage } from './conditionImages'
 import { conditionKeyFromLabel, formatConditionKeyLabel } from './subscription'
 
 export type HomeVisitTipLink = {
@@ -800,7 +800,7 @@ export function buildCustomConditionItem(key: string, label?: string): Condition
     description: 'Your custom condition — log symptoms, severity, and how they affect your day.',
     vaFocus: customConditionFocus,
     tip: customConditionTip,
-    image: getConditionImage(title, CUSTOM_CONDITION_CATEGORY)
+    image: conditionImageAssets.customCondition
   }
 }
 

@@ -27,7 +27,9 @@ export const conditionImageAssets = {
   fibromyalgia: '/image/fibromyalgia.png',
   chronicFatigue: '/image/chronic-fatigue.png',
   chronicFatigueCloseup: '/image/chronic-fatigue-closeup.png',
-  chronicFatigueAlternate: '/image/chronic-fatigue-alternate.png'
+  chronicFatigueAlternate: '/image/chronic-fatigue-alternate.png',
+  /** Dedicated art for user-added custom conditions (not category fallbacks). */
+  customCondition: '/image/custom-condition.png'
 } as const
 
 const categoryImageMap: Record<string, string> = {
@@ -41,7 +43,8 @@ const categoryImageMap: Record<string, string> = {
   Respiratory: conditionImageAssets.asthma,
   Hearing: conditionImageAssets.tinnitus,
   Skin: conditionImageAssets.eczema,
-  'Chronic Pain / Fatigue': conditionImageAssets.chronicPain
+  'Chronic Pain / Fatigue': conditionImageAssets.chronicPain,
+  Custom: conditionImageAssets.customCondition
 }
 
 /** Best fallback for custom conditions that do not match a category yet */

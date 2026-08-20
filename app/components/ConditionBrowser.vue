@@ -526,7 +526,17 @@ const filteredConditions = computed(() => {
   const listOrder = new Map(props.listOrderKeys.map((key, index) => [key, index]))
 
   return [...results].sort((a, b) => {
-    return (listOrder.get(a.key) ?? Number.MAX_SAFE_INTEGER) - (listOrder.get(b.key) ?? Number.MAX_SAFE_INTEGER)
+    const orderA = listOrder.get(a.key) ?? Number.MAX_SAFE_INTEGER
+    const orderB = listOrder.get(b.key) ?? Number.MAX_SAFE_INTEGER
+
+    if (orderA !== orderB) {
+      return orderA - orderB
+    }
+
+    // Custom rows stay above catalog when not yet pinned in list order.
+    const aCustom = a.category === 'Custom' ? 0 : 1
+    const bCustom = b.category === 'Custom' ? 0 : 1
+    return aCustom - bCustom
   })
 })
 

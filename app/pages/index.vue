@@ -4604,7 +4604,8 @@ function reloadAppPage() {
 }
 
 function buildConditionBrowserListOrder(trackedKeys: string[]) {
-  const trackedFirst: string[] = []
+  const catalogTracked: string[] = []
+  const customTracked: string[] = []
   const trackedSet = new Set<string>()
 
   for (const storedKey of trackedKeys) {
@@ -4615,14 +4616,26 @@ function buildConditionBrowserListOrder(trackedKeys: string[]) {
     }
 
     trackedSet.add(resolvedKey)
-    trackedFirst.push(resolvedKey)
+
+    if (isCustomTrackedConditionKey(resolvedKey)) {
+      customTracked.push(resolvedKey)
+    } else {
+      catalogTracked.push(resolvedKey)
+    }
   }
 
   const rest = conditionCatalog
     .map((condition) => condition.key)
     .filter((key) => !trackedSet.has(key))
 
-  return [...trackedFirst, ...rest]
+  return [...customTracked, ...catalogTracked, ...rest]
+}
+
+function prependConditionBrowserListOrderKey(key: string) {
+  conditionBrowserListOrder.value = [
+    key,
+    ...conditionBrowserListOrder.value.filter((existingKey) => existingKey !== key)
+  ]
 }
 
 function openConditionBrowser() {
@@ -4776,10 +4789,12 @@ function addCustomDraftCondition(label: string) {
 
   if (isDemoMode || !isPro.value) {
     draftSelectedKeys.value = [key]
+    prependConditionBrowserListOrderKey(key)
     return
   }
 
   draftSelectedKeys.value = [key, ...draftSelectedKeys.value]
+  prependConditionBrowserListOrderKey(key)
 }
 
 async function confirmConditionOnboarding() {
@@ -4794,6 +4809,13 @@ async function confirmConditionOnboarding() {
     draftSelectedKeys.value = keysToSave
     await completeOnboarding(keysToSave)
     await syncFreeConditionWithTrackedKeys(keysToSave)
+
+    for (const key of keysToSave) {
+      if (isCustomTrackedConditionKey(key)) {
+        promoteHomeConditionOrderKey(key)
+      }
+    }
+
     isConditionBrowserOpen.value = false
   } catch (error) {
     trackedConditionsError.value = getErrorMessage(error)
@@ -4815,6 +4837,13 @@ async function finishConditionBrowser() {
 
     await updateTrackedConditions(keysToSave)
     await syncFreeConditionWithTrackedKeys(keysToSave)
+
+    for (const key of keysToSave) {
+      if (isCustomTrackedConditionKey(key)) {
+        promoteHomeConditionOrderKey(key)
+      }
+    }
+
     isConditionBrowserOpen.value = false
   } catch (error) {
     trackedConditionsError.value = getErrorMessage(error)
