@@ -12,6 +12,7 @@ import {
   drawVerticalBarChart,
 } from '../utils/symptomReportCharts'
 import { drawEntryLogSection } from '../utils/symptomReportEntryLog'
+import type { EntryRevisionRecord } from '../utils/entryEditHistory'
 import { getLogoFormat, loadReportLogoDataUrl, reportBranding } from '../utils/reportBranding'
 import type { LoggingCadence } from '../utils/loggingCadence'
 import { PDF_EXPORT_CERTIFICATION_TEXT } from '../utils/pdfExportCertification'
@@ -29,11 +30,13 @@ import { collectMedicationsFromEntries } from '../utils/entryMedications'
 type SymptomEntryRecord = {
   id: string
   condition_label: string
+  condition_key?: string | null
   source?: string | null
   severity?: number | null
   occurred_at?: string | null
   created_at?: string | null
   updated_at?: string | null
+  edit_count?: number | null
   summary?: string | null
   impact?: string | null
   details?: Record<string, unknown> | null
@@ -53,6 +56,7 @@ type PdfExportOptions = VeteranSignatureInfo & {
   loggingCadence?: LoggingCadence
   weeklyLogDay?: number
   reportVariant?: 'veteran' | 'family'
+  entryRevisionsByEntryId?: Record<string, EntryRevisionRecord[]>
 }
 
 function resolveTypedSignatureName(signatureInfo: VeteranSignatureInfo) {
@@ -330,7 +334,8 @@ export function useSymptomPdfExport() {
       conditionLabel = null,
       loggingCadence = 'weekly',
       weeklyLogDay = 0,
-      reportVariant
+      reportVariant,
+      entryRevisionsByEntryId
     } = options
     const showAdvancedCharts = includeCharts ?? includeAdvancedCharts
     const signatureInfo = { veteranName, veteranEmail }
@@ -653,7 +658,8 @@ export function useSymptomPdfExport() {
         weeklyLogDay,
         reportMode: entryLogIncludesCharts ? 'full' : 'entries-only',
         reportVariant,
-        includeAdvancedCharts: showAdvancedCharts
+        includeAdvancedCharts: showAdvancedCharts,
+        entryRevisionsByEntryId
       }
     )
 
