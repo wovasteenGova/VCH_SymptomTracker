@@ -851,7 +851,7 @@
               class="home-carousel-footer mb-2 shrink-0 pt-3"
               :class="{
                 'has-mobile-log-space': isMobileCarouselLayout && (homeSharedTransitionActive || !isHomeOverviewSlide),
-                'pointer-events-none': historyExpanded
+                'pointer-events-none': historyExpanded || historyPanelAnimating
               }"
             >
               <Transition name="home-log-btn">
@@ -930,7 +930,10 @@
           @pointercancel="handleHistoryPointerCancel"
           @transitionend="handleHistoryPanelTransitionEnd"
         >
-          <div class="history-panel-handle flex w-full shrink-0 cursor-grab flex-col items-center py-3 active:cursor-grabbing">
+          <div
+            class="history-panel-handle flex w-full shrink-0 cursor-grab touch-none flex-col items-center py-3 active:cursor-grabbing"
+            @click.stop.prevent
+          >
             <span class="h-1.5 w-14 rounded-full bg-muted" />
           </div>
 
@@ -3226,7 +3229,9 @@ const historyPanelClass = computed(() => [
 ])
 
 const isConditionSlideEntryEnabled = computed(() => {
-  return !historyExpanded.value && !conditionSlideEntryBlocked.value
+  return !historyExpanded.value
+    && !conditionSlideEntryBlocked.value
+    && !historyPanelAnimating.value
 })
 
 const homeCarouselSlideCount = computed(() => homeConditions.value.length + 1)
@@ -6894,6 +6899,15 @@ function handleHistoryPointerMove(event: PointerEvent) {
   }
 }
 
+function blockConditionDuringHistorySheetGesture() {
+  lockHistoryEntryActivation(HISTORY_TRANSITION_LOCK_MS)
+  blockConditionSlideEntry(HISTORY_TRANSITION_LOCK_MS)
+  suppressConditionTap = true
+  window.setTimeout(() => {
+    suppressConditionTap = false
+  }, HISTORY_TRANSITION_LOCK_MS)
+}
+
 function handleHistoryPointerUp(event: PointerEvent) {
   if (historyPointerId !== event.pointerId) {
     return
@@ -6905,12 +6919,13 @@ function handleHistoryPointerUp(event: PointerEvent) {
   }
 
   if (!historyPointerStartedOnInteractive) {
+    event.preventDefault()
+
     const delta = historyPointerDeltaY
 
     if (Math.abs(delta) < HISTORY_DRAG_ACTIVATE_PX) {
       if (!historyPointerDidChangeState) {
-        lockHistoryEntryActivation()
-        blockConditionSlideEntry(HISTORY_ENTRY_ACTIVATION_LOCK_MS)
+        blockConditionDuringHistorySheetGesture()
         if (historyExpanded.value) {
           collapseHistorySheet()
         } else {
@@ -6918,12 +6933,10 @@ function handleHistoryPointerUp(event: PointerEvent) {
         }
       }
     } else if (delta > HISTORY_DRAG_SNAP_PX) {
-      lockHistoryEntryActivation()
-      blockConditionSlideEntry(HISTORY_ENTRY_ACTIVATION_LOCK_MS)
+      blockConditionDuringHistorySheetGesture()
       expandHistorySheet()
     } else if (delta < -HISTORY_DRAG_SNAP_PX) {
-      lockHistoryEntryActivation()
-      blockConditionSlideEntry(HISTORY_ENTRY_ACTIVATION_LOCK_MS)
+      blockConditionDuringHistorySheetGesture()
       collapseHistorySheet()
     }
   }
@@ -6964,8 +6977,8 @@ function blockConditionSlideEntry(durationMs = HISTORY_ENTRY_ACTIVATION_LOCK_MS)
   }, durationMs)
 }
 
-function lockHistoryEntryActivation() {
-  historyEntryActivationLockUntil = Date.now() + HISTORY_ENTRY_ACTIVATION_LOCK_MS
+function lockHistoryEntryActivation(durationMs = HISTORY_ENTRY_ACTIVATION_LOCK_MS) {
+  historyEntryActivationLockUntil = Date.now() + durationMs
 }
 
 function isHistoryEntryActivationLocked() {
