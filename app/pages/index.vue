@@ -309,34 +309,35 @@
         >
           <template #main>
             <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-              <Transition
-                name="workspace-panel"
-                mode="out-in"
-              >
               <ConditionBrowser
-                v-if="showConditionBrowser"
+                v-if="showConditionBrowser && !showDesktopConditionBrowserOverlay"
                 key="condition-browser"
                 ref="conditionBrowserRef"
                 class="flex min-h-0 flex-1 flex-col overflow-hidden bg-default dark:bg-default"
-                  :mode="needsOnboarding ? 'onboarding' : 'manage'"
-                  :conditions="conditionPickerOptions"
-                  :selected-keys="draftSelectedKeys"
-                  :list-order-keys="conditionBrowserListOrder"
-                  :locked-keys="[]"
-                  :restricted-keys="mentalHealthRestrictedKeys"
-                  :show-pro-limit="false"
-                  :saving="isSavingTrackedConditions"
-                  :error="trackedConditionsError"
-                  :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
-                  @toggle="toggleDraftCondition"
-                  @add-custom="addCustomDraftCondition"
-                  @restricted-select="handleRestrictedConditionSelect"
-                  @confirm="confirmConditionOnboarding"
-                  @done="finishConditionBrowser"
-                />
+                :mode="needsOnboarding ? 'onboarding' : 'manage'"
+                :conditions="conditionPickerOptions"
+                :selected-keys="draftSelectedKeys"
+                :list-order-keys="conditionBrowserListOrder"
+                :locked-keys="[]"
+                :restricted-keys="mentalHealthRestrictedKeys"
+                :show-pro-limit="false"
+                :saving="isSavingTrackedConditions"
+                :error="trackedConditionsError"
+                :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
+                @toggle="toggleDraftCondition"
+                @add-custom="addCustomDraftCondition"
+                @restricted-select="handleRestrictedConditionSelect"
+                @confirm="confirmConditionOnboarding"
+                @done="finishConditionBrowser"
+              />
 
+              <Transition
+                v-else
+                name="workspace-panel"
+                mode="out-in"
+              >
                 <TrackerEntryFlow
-                  v-else-if="isEntryOpen"
+                  v-if="isEntryOpen"
                   ref="desktopEntryFlowRef"
                   key="desktop-entry-flow"
                   variant="desktop"
@@ -402,6 +403,28 @@
                   @show-all-tips="openHomeTipsOverlay"
                 />
               </Transition>
+
+              <ConditionBrowser
+                v-if="showDesktopConditionBrowserOverlay"
+                key="condition-browser-overlay"
+                ref="conditionBrowserRef"
+                class="absolute inset-0 z-10 flex min-h-0 flex-col overflow-hidden bg-default dark:bg-default"
+                mode="manage"
+                :conditions="conditionPickerOptions"
+                :selected-keys="draftSelectedKeys"
+                :list-order-keys="conditionBrowserListOrder"
+                :locked-keys="[]"
+                :restricted-keys="mentalHealthRestrictedKeys"
+                :show-pro-limit="false"
+                :saving="isSavingTrackedConditions"
+                :error="trackedConditionsError"
+                :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
+                @toggle="toggleDraftCondition"
+                @add-custom="addCustomDraftCondition"
+                @restricted-select="handleRestrictedConditionSelect"
+                @confirm="confirmConditionOnboarding"
+                @done="finishConditionBrowser"
+              />
             </div>
           </template>
 
@@ -2724,6 +2747,14 @@ const showHomeWorkspaceLoader = computed(() =>
   !isEmbeddedPreview.value && !homeWorkspaceReady.value
 )
 
+/** Desktop manage-mode browser overlays the center panel instead of replacing it (avoids flash). */
+const showDesktopConditionBrowserOverlay = computed(() =>
+  isDesktopLayout.value
+  && isConditionBrowserOpen.value
+  && !needsOnboarding.value
+  && homeConditions.value.length > 0
+)
+
 const showConditionBrowser = computed(() => {
   if (!hasLoadedTrackedConditions.value && !trackedConditionKeys.value.length) {
     return false
@@ -4041,11 +4072,8 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     return
   }
 
-  // Different signed-in account — full bootstrap reset.
+  // Different signed-in account — refresh quietly (no fullscreen bootstrap loader).
   if (nextId && prevId) {
-    resetHomeWorkspaceReady()
-    resetTrackedConditionsLoadState()
-
     try {
       isAuthPanelOpen.value = false
       loadProfileDisplayName()
@@ -4055,8 +4083,8 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
       restoreCachedHomeConditionOrderKeys()
       await loadEntries()
       refreshEntryDraftPreview()
-    } finally {
-      markHomeWorkspaceReady()
+    } catch (error) {
+      entriesError.value = getErrorMessage(error)
     }
   }
 })
