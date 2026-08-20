@@ -116,7 +116,10 @@ export function useTrackedConditions() {
       return
     }
 
-    isLoading.value = true
+    const showBootstrapLoading = !hasLoadedTrackedConditions.value
+    if (showBootstrapLoading) {
+      isLoading.value = true
+    }
     loadError.value = ''
 
     try {
@@ -224,6 +227,12 @@ export function useTrackedConditions() {
     return conditionKeyFromLabel(label)
   }
 
+  function resetTrackedConditionsLoadState() {
+    hasLoadedTrackedConditions.value = false
+    isLoading.value = false
+    loadError.value = ''
+  }
+
   return {
     trackedConditionKeys,
     onboardingCompleted,
@@ -233,6 +242,7 @@ export function useTrackedConditions() {
     hasLoadedTrackedConditions,
     loadError,
     loadTrackedConditions,
+    resetTrackedConditionsLoadState,
     completeOnboarding,
     updateTrackedConditions,
     applyLocalState,

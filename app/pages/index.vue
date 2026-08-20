@@ -2502,6 +2502,7 @@ const {
   isLoading: isLoadingTrackedConditions,
   loadError: trackedConditionsLoadError,
   loadTrackedConditions,
+  resetTrackedConditionsLoadState,
   completeOnboarding,
   updateTrackedConditions,
   applyLocalState
@@ -3093,9 +3094,10 @@ const homeConditions = computed(() => {
 
 const isHomeBootstrapLoading = computed(() => {
   // Only show the in-page tank loader while the workspace is still bootstrapping.
-  // After markHomeWorkspaceReady(), auth hydration may refresh conditions quietly —
+  // After markHomeWorkspaceReady(), auth hydration may refresh conditions quietly -
   // without this guard that second fetch flashes the loader over the conditions UI.
-  return isLoadingTrackedConditions.value
+  return !hasLoadedTrackedConditions.value
+    && isLoadingTrackedConditions.value
     && !trackedConditionsLoadError.value
     && !homeWorkspaceReady.value
 })
@@ -4406,6 +4408,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
   }
 
   resetHomeWorkspaceReady()
+  resetTrackedConditionsLoadState()
 
   try {
     if (nextId) {
@@ -4934,6 +4937,7 @@ async function refreshTrackedConditions() {
 
 async function retryHomeLoad() {
   entriesError.value = ''
+  resetTrackedConditionsLoadState()
   resetHomeWorkspaceReady()
 
   try {
