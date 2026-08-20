@@ -101,3 +101,22 @@ onUnmounted(() => {
   window.visualViewport?.removeEventListener('scroll', updateAppHeight)
 })
 </script>
+
+<style>
+.app-splash-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.app-splash-fade-leave-to {
+  opacity: 0;
+}
+
+.tracker-app-shell:not(.tracker-app-shell--ready):not(.app-shell-embed) {
+  opacity: 0;
+}
+
+.tracker-app-shell--ready {
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+</style>
