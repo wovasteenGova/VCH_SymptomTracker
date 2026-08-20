@@ -1360,11 +1360,27 @@
               <p v-if="exportError" class="mt-2 text-sm font-medium text-red-600 dark:text-red-300" aria-live="assertive">
                 {{ exportError }}
               </p>
-              <p v-if="exportNotice" class="mt-2 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100" aria-live="polite">
-                <UIcon name="i-lucide-crown" class="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
+              <p
+                v-if="exportNotice"
+                class="mt-2 flex items-start gap-2 rounded-2xl border px-3 py-2 text-xs leading-5"
+                :class="isPro
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100'
+                  : 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'"
+                aria-live="polite"
+              >
+                <UIcon
+                  :name="isPro ? 'i-lucide-circle-check' : 'i-lucide-crown'"
+                  class="mt-0.5 size-3.5 shrink-0"
+                  :class="isPro ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'"
+                />
                 <span>
                   {{ exportNotice }}
-                  <NuxtLink to="/upgrade" data-history-interactive class="font-bold underline decoration-amber-600/60 underline-offset-2 hover:text-amber-800 dark:decoration-amber-300/60 dark:hover:text-amber-50">
+                  <NuxtLink
+                    v-if="!isPro"
+                    to="/upgrade"
+                    data-history-interactive
+                    class="font-bold underline decoration-amber-600/60 underline-offset-2 hover:text-amber-800 dark:decoration-amber-300/60 dark:hover:text-amber-50"
+                  >
                     Get Pro now
                   </NuxtLink>
                 </span>
