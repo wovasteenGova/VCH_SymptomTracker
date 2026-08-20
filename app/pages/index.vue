@@ -2980,7 +2980,12 @@ const homeConditions = computed(() => {
 })
 
 const isHomeBootstrapLoading = computed(() => {
-  return isLoadingTrackedConditions.value && !trackedConditionsLoadError.value
+  // Only show the in-page tank loader while the workspace is still bootstrapping.
+  // After markHomeWorkspaceReady(), auth hydration may refresh conditions quietly —
+  // without this guard that second fetch flashes the loader over the conditions UI.
+  return isLoadingTrackedConditions.value
+    && !trackedConditionsLoadError.value
+    && !homeWorkspaceReady.value
 })
 
 const showConditionBrowser = computed(() => {
