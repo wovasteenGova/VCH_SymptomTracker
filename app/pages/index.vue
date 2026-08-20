@@ -2087,7 +2087,7 @@ import { filterAndRankConditions } from '../utils/conditionSearch'
 import { getWeeklyLogCaution, type WeeklyLogCaution } from '../utils/loggingCadence'
 import { buildLoggingActivityMetrics } from '../utils/loggingActivityReport'
 import { buildSymptomDashboardMetrics } from '../utils/symptomDashboard'
-import { buildConditionPickerOptions, buildCustomConditionLabelsFromEntries, buildHomeVisitTips, conditionCatalog, getCatalogConditionByKey, isCustomTrackedConditionKey, isMentalHealthConditionKey, listMentalHealthConditionKeys, MENTAL_HEALTH_ONE_CONDITION_MESSAGE, normalizeConditionLabel, pickRandomHomeVisitTip, resolveCatalogConditionByStoredKey, resolveTrackedConditionByStoredKey, resolveTrackedConditionKey, VA_CRISIS_LINE_SHORT, type HomeVisitTip } from '../utils/conditionCatalog'
+import { buildConditionPickerOptions, buildCustomConditionLabelsFromEntries, buildHomeVisitTips, collectCustomConditionBrowserKeys, conditionCatalog, getCatalogConditionByKey, isCustomTrackedConditionKey, isMentalHealthConditionKey, listMentalHealthConditionKeys, mergeCustomConditionLabelMaps, MENTAL_HEALTH_ONE_CONDITION_MESSAGE, normalizeConditionLabel, pickRandomHomeVisitTip, resolveCatalogConditionByStoredKey, resolveTrackedConditionByStoredKey, resolveTrackedConditionKey, VA_CRISIS_LINE_SHORT, type HomeVisitTip } from '../utils/conditionCatalog'
 import { LOG_REMINDER_TEST_INTERVAL_MS, LOG_REMINDER_TEST_MODE } from '../utils/logReminders'
 import { conditionImageAssets } from '../utils/conditionImages'
 import { getSeverityEmoji } from '../utils/severityGuidance'
@@ -2566,11 +2566,78 @@ type HomeCondition = typeof conditionCatalog[number]
 
 const conditionPickerOptions = computed(() => buildConditionPickerOptions({
   trackedKeys: trackedConditionKeys.value,
-  extraKeys: draftSelectedKeys.value.filter((key) => isCustomTrackedConditionKey(key)),
+  extraKeys: collectCustomConditionBrowserKeys({
+    trackedKeys: trackedConditionKeys.value,
+    listOrderKeys: conditionBrowserListOrder.value,
+    draftKeys: draftSelectedKeys.value
+  }),
   customLabels: customConditionLabels.value
 }))
 
-const customConditionLabels = computed(() => buildCustomConditionLabelsFromEntries(savedEntries.value))
+const CUSTOM_CONDITION_LABELS_STORAGE_PREFIX = 'symptom-tracker-custom-condition-labels'
+
+function getCustomConditionLabelsStorageKey() {
+  return user.value?.id
+    ? `${CUSTOM_CONDITION_LABELS_STORAGE_PREFIX}:${user.value.id}`
+    : CUSTOM_CONDITION_LABELS_STORAGE_PREFIX
+}
+
+function readStoredCustomConditionLabels() {
+  if (!import.meta.client) {
+    return {} as Record<string, string>
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getCustomConditionLabelsStorageKey())
+    if (!raw) {
+      return {}
+    }
+
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {}
+    }
+
+    return parsed as Record<string, string>
+  } catch {
+    return {}
+  }
+}
+
+function writeStoredCustomConditionLabels(labels: Record<string, string>) {
+  if (!import.meta.client) {
+    return
+  }
+
+  window.localStorage.setItem(getCustomConditionLabelsStorageKey(), JSON.stringify(labels))
+}
+
+const persistedCustomConditionLabels = ref<Record<string, string>>(readStoredCustomConditionLabels())
+
+const customConditionLabels = computed(() => mergeCustomConditionLabelMaps(
+  persistedCustomConditionLabels.value,
+  buildCustomConditionLabelsFromEntries(savedEntries.value)
+))
+
+function rememberCustomConditionLabel(key: string, label: string) {
+  const trimmedKey = key.trim()
+  const trimmedLabel = label.trim()
+
+  if (!trimmedKey || !trimmedLabel) {
+    return
+  }
+
+  persistedCustomConditionLabels.value = {
+    ...persistedCustomConditionLabels.value,
+    [trimmedKey]: trimmedLabel
+  }
+  writeStoredCustomConditionLabels(persistedCustomConditionLabels.value)
+}
+
+function reloadPersistedCustomConditionLabels() {
+  persistedCustomConditionLabels.value = readStoredCustomConditionLabels()
+}
+
 const HOME_CONDITION_ORDER_STORAGE_PREFIX = 'symptom-tracker-home-condition-order'
 
 function getHomeConditionOrderStorageKey() {
@@ -3988,6 +4055,7 @@ onMounted(async () => {
     suppressHomeMotionOnMount.value = false
   })
   restoreCachedHomeConditionOrderKeys()
+  reloadPersistedCustomConditionLabels()
 
   nextTick(() => {
     rememberHomeOverviewHeaderHeight()
@@ -4048,6 +4116,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     loadProfileDisplayName()
     loadEntitlements()
     await loadAppWelcomeState()
+    reloadPersistedCustomConditionLabels()
     await refreshTrackedConditions()
     restoreCachedHomeConditionOrderKeys()
     await loadEntries()
@@ -4065,6 +4134,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     profileDisplayName.value = ''
     savedEntries.value = []
     homeConditionOrderKeys.value = []
+    persistedCustomConditionLabels.value = {}
     hasLoadedEntriesOnce.value = false
     closeEntryPanel(true, true)
     refreshEntryDraftPreview()
@@ -4079,6 +4149,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
       loadProfileDisplayName()
       loadEntitlements()
       await loadAppWelcomeState()
+      reloadPersistedCustomConditionLabels()
       await refreshTrackedConditions()
       restoreCachedHomeConditionOrderKeys()
       await loadEntries()
@@ -4662,6 +4733,11 @@ function toggleDraftCondition(key: string) {
   }
 
   if (draftSelectedKeys.value.includes(key)) {
+    // Custom rows stay in the list once added; a second tap should not hide them.
+    if (isCustomTrackedConditionKey(key)) {
+      return
+    }
+
     draftSelectedKeys.value = draftSelectedKeys.value.filter((existingKey) => existingKey !== key)
     return
   }
@@ -4787,6 +4863,8 @@ function addCustomDraftCondition(label: string) {
     return
   }
 
+  rememberCustomConditionLabel(key, trimmed)
+
   if (isDemoMode || !isPro.value) {
     draftSelectedKeys.value = [key]
     prependConditionBrowserListOrderKey(key)
@@ -4813,6 +4891,10 @@ async function confirmConditionOnboarding() {
     for (const key of keysToSave) {
       if (isCustomTrackedConditionKey(key)) {
         promoteHomeConditionOrderKey(key)
+        const label = persistedCustomConditionLabels.value[key]
+          || customConditionLabels.value[key]
+          || formatConditionKeyLabel(key)
+        rememberCustomConditionLabel(key, label)
       }
     }
 
@@ -4841,6 +4923,10 @@ async function finishConditionBrowser() {
     for (const key of keysToSave) {
       if (isCustomTrackedConditionKey(key)) {
         promoteHomeConditionOrderKey(key)
+        const label = persistedCustomConditionLabels.value[key]
+          || customConditionLabels.value[key]
+          || formatConditionKeyLabel(key)
+        rememberCustomConditionLabel(key, label)
       }
     }
 

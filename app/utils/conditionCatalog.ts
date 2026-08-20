@@ -841,6 +841,48 @@ export function buildCustomConditionLabelsFromEntries(
   return labels
 }
 
+export function mergeCustomConditionLabelMaps(
+  ...maps: Array<Record<string, string> | undefined>
+) {
+  const merged: Record<string, string> = {}
+
+  for (const map of maps) {
+    if (!map) {
+      continue
+    }
+
+    for (const [key, label] of Object.entries(map)) {
+      const trimmedKey = key?.trim()
+      const trimmedLabel = label?.trim()
+
+      if (trimmedKey && trimmedLabel) {
+        merged[trimmedKey] = trimmedLabel
+      }
+    }
+  }
+
+  return merged
+}
+
+/** Custom keys that should stay visible in the condition browser (even when deselected). */
+export function collectCustomConditionBrowserKeys(input: {
+  trackedKeys?: string[]
+  listOrderKeys?: string[]
+  draftKeys?: string[]
+}) {
+  const keys = new Set<string>()
+
+  for (const source of [input.trackedKeys, input.listOrderKeys, input.draftKeys]) {
+    for (const key of source ?? []) {
+      if (isCustomTrackedConditionKey(key)) {
+        keys.add(key)
+      }
+    }
+  }
+
+  return [...keys]
+}
+
 export function buildConditionPickerOptions(input: {
   catalog?: ConditionCatalogItem[]
   trackedKeys?: string[]

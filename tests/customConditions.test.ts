@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   buildCustomConditionItem,
   buildConditionPickerOptions,
+  collectCustomConditionBrowserKeys,
   isCustomTrackedConditionKey,
+  mergeCustomConditionLabelMaps,
   normalizeTrackedConditionKeys,
   resolveTrackedConditionByStoredKey,
   resolveTrackedConditionKey
@@ -46,5 +48,33 @@ describe('custom tracked conditions', () => {
 
     expect(options[0]?.title).toBe('Custom tinnitus')
     expect(options.some((option) => option.key === 'ptsd')).toBe(true)
+  })
+
+  it('keeps draft custom conditions visible when they are not selected', () => {
+    const extraKeys = collectCustomConditionBrowserKeys({
+      trackedKeys: ['ptsd'],
+      listOrderKeys: ['skin_flare_up', 'ptsd'],
+      draftKeys: []
+    })
+
+    const options = buildConditionPickerOptions({
+      trackedKeys: ['ptsd'],
+      extraKeys,
+      customLabels: { skin_flare_up: 'Skin flare-up' }
+    })
+
+    expect(extraKeys).toEqual(['skin_flare_up'])
+    expect(options.some((option) => option.key === 'skin_flare_up')).toBe(true)
+    expect(options.find((option) => option.key === 'skin_flare_up')?.title).toBe('Skin flare-up')
+  })
+
+  it('merges persisted and entry-derived custom labels', () => {
+    expect(mergeCustomConditionLabelMaps(
+      { skin_flare_up: 'Skin flare-up' },
+      { rare_issue: 'Rare issue' }
+    )).toEqual({
+      skin_flare_up: 'Skin flare-up',
+      rare_issue: 'Rare issue'
+    })
   })
 })
