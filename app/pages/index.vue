@@ -1,10 +1,15 @@
 <template>
+  <VchOpeningWorkspaceLoader
+    v-if="showHomeWorkspaceLoader"
+    full-screen
+    show-brand
+    :label="homeWorkspaceLoadingLabel"
+  />
   <main
     id="tracker-app-shell"
     class="app-shell relative overflow-hidden bg-default text-default transition-colors"
     :class="{
-      'app-shell-embed': isEmbeddedPreview,
-      'tracker-app-shell--ready': homeWorkspaceReady || isEmbeddedPreview
+      'app-shell-embed': isEmbeddedPreview
     }"
   >
     <section
@@ -576,20 +581,6 @@
                   @confirm="confirmConditionOnboarding"
                   @done="finishConditionBrowser"
                 />
-
-                <div
-                  v-else-if="isHomeBootstrapLoading"
-                  key="home-loading"
-                  class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-default px-6"
-                  role="status"
-                  aria-live="polite"
-                  aria-label="Loading"
-                >
-                  <VchLoader
-                    :width="280"
-                    show-brand
-                  />
-                </div>
 
                 <div
                   v-else-if="trackedConditionsLoadError && !homeConditions.length"
@@ -2700,16 +2691,14 @@ const homeConditions = computed(() => {
   })
 })
 
-const isHomeBootstrapLoading = computed(() => {
-  // Only show the in-page tank loader while the workspace is still bootstrapping.
-  // After markHomeWorkspaceReady(), auth hydration may refresh conditions quietly -
-  // without this guard that second fetch flashes the loader over the conditions UI.
-  return !isEntryOpen.value
-    && !hasLoadedTrackedConditions.value
-    && isLoadingTrackedConditions.value
-    && !trackedConditionsLoadError.value
-    && !homeWorkspaceReady.value
-})
+/** Single fullscreen tank loader while the home workspace bootstraps (Claim Builder pattern). */
+const showHomeWorkspaceLoader = computed(() =>
+  !isEmbeddedPreview.value && !homeWorkspaceReady.value
+)
+
+const homeWorkspaceLoadingLabel = computed(() =>
+  isAuthLoading.value ? 'Making sure things run smoothly' : 'Setting up workspace'
+)
 
 const showConditionBrowser = computed(() => {
   if (!hasLoadedTrackedConditions.value && !trackedConditionKeys.value.length) {
