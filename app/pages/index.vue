@@ -308,13 +308,16 @@
           @add-custom="openConditionBrowserForCustom"
         >
           <template #main>
-            <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <Transition name="desktop-log-panel">
-                  <ConditionBrowser
-                    v-if="showConditionBrowser"
-                    key="condition-browser"
-                    ref="conditionBrowserRef"
-                    class="flex min-h-0 flex-1 flex-col overflow-hidden bg-default dark:bg-default"
+            <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+              <Transition
+                name="workspace-panel"
+                mode="out-in"
+              >
+              <ConditionBrowser
+                v-if="showConditionBrowser"
+                key="condition-browser"
+                ref="conditionBrowserRef"
+                class="flex min-h-0 flex-1 flex-col overflow-hidden bg-default dark:bg-default"
                   :mode="needsOnboarding ? 'onboarding' : 'manage'"
                   :conditions="conditionPickerOptions"
                   :selected-keys="draftSelectedKeys"
@@ -484,16 +487,14 @@
           </template>
         </TrackerDesktopWorkspace>
 
-        <Transition
+        <div
           v-else
-          mode="out-in"
-          :enter-active-class="suppressHomeMotionOnMount ? '' : 'transition duration-[550ms] ease-[cubic-bezier(0.22,1,0.36,1)]'"
-          :enter-from-class="suppressHomeMotionOnMount ? '' : 'translate-y-6 opacity-0'"
-          :enter-to-class="suppressHomeMotionOnMount ? '' : 'translate-y-0 opacity-100'"
-          leave-active-class="transition duration-[450ms] ease-[cubic-bezier(0.55,0,1,0.45)]"
-          leave-from-class="translate-y-0 opacity-100"
-          leave-to-class="translate-y-4 opacity-0"
+          class="relative flex min-h-0 flex-1 flex-col overflow-hidden"
         >
+          <Transition
+            name="workspace-panel"
+            mode="out-in"
+          >
           <section
             v-if="isEntryOpen"
             key="entry-workspace"
@@ -1252,7 +1253,8 @@
           </div>
         </section>
       </div>
-        </Transition>
+          </Transition>
+        </div>
       </div>
     </section>
 
@@ -7570,7 +7572,7 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
     persistEntryDraftNow()
   }
 
-  if (isEntryOpen.value) {
+  if (isEntryOpen.value && !isDesktopLayout.value) {
     transitionDirection.value = 'collapse'
   }
 
@@ -8187,31 +8189,36 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   box-shadow: 0 -12px 40px rgb(0 0 0 / 0.12);
 }
 
-.desktop-log-panel-enter-active,
-.desktop-log-panel-leave-active {
-  transition:
-    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 280ms ease;
-}
-
-.desktop-log-panel-enter-from {
-  opacity: 0;
-  transform: translateY(1.5rem);
-}
-
-.desktop-log-panel-leave-to {
-  opacity: 0;
-  transform: translateY(1.5rem);
-}
-
-.desktop-log-panel-enter-to,
-.desktop-log-panel-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .dark .home-history-panel.is-history-expanded {
   box-shadow: 0 -12px 40px rgb(0 0 0 / 0.35);
+}
+
+.workspace-panel-enter-active {
+  transition:
+    opacity 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.workspace-panel-leave-active {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.workspace-panel-enter-from,
+.workspace-panel-leave-to {
+  opacity: 0;
+  transform: translateY(0.375rem);
+}
+
+.workspace-panel-enter-to,
+.workspace-panel-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .home-carousel-stage.is-shared-transition {
@@ -8428,7 +8435,9 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   .home-tip-fade-enter-active,
   .home-tip-fade-leave-active,
   .home-log-btn-enter-active,
-  .home-log-btn-leave-active {
+  .home-log-btn-leave-active,
+  .workspace-panel-enter-active,
+  .workspace-panel-leave-active {
     transition-duration: 1ms;
     transition-delay: 0ms;
     animation-duration: 1ms;
