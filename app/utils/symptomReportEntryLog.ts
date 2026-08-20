@@ -1,5 +1,11 @@
 import type { jsPDF } from 'jspdf'
 import {
+  buildFieldEditHistory,
+  buildSymptomEntrySavePayloadFromReportEntry,
+  type EntryFieldRef,
+  type EntryRevisionRecord
+} from './entryEditHistory'
+import {
   formatReportEntryTimestamp,
   getEntryBackdateNote,
   type BackdateReportContext,
@@ -7,12 +13,15 @@ import {
 } from './reportBackfillNote'
 
 export type ReportEntryRecord = {
+  id?: string
   condition_label: string
+  condition_key?: string | null
   source?: string | null
   severity?: number | null
   occurred_at?: string | null
   created_at?: string | null
   updated_at?: string | null
+  edit_count?: number | null
   summary?: string | null
   impact?: string | null
   details?: Record<string, unknown> | null
@@ -40,6 +49,7 @@ export type EntryLogSectionOptions = BackdateReportContext & {
   reportMode?: 'full' | 'entries-only'
   reportVariant?: 'veteran' | 'family'
   includeAdvancedCharts?: boolean
+  entryRevisionsByEntryId?: Record<string, EntryRevisionRecord[]>
 }
 
 const skippedDetailKeys = new Set([
@@ -79,7 +89,13 @@ type EntryBlock = {
   label: string
   value: string
   lines: string[]
+  priorLines: string[][]
   kind: 'primary' | 'detail'
+}
+
+type EntryCardRevisionContext = {
+  revisions: EntryRevisionRecord[]
+  currentSnapshot: ReturnType<typeof buildSymptomEntrySavePayloadFromReportEntry>
 }
 
 type LayoutContext = {
@@ -234,45 +250,102 @@ function measureConditionIntroHeight(
   return height
 }
 
-function buildEntryBlocks(doc: jsPDF, entry: ReportEntryRecord, innerWidth: number) {
+function buildEntryRevisionContext(
+  entry: ReportEntryRecord,
+  entryRevisionsByEntryId?: Record<string, EntryRevisionRecord[]>
+): EntryCardRevisionContext | null {
+  if (!entry.id || !entryRevisionsByEntryId?.[entry.id]?.length) {
+    return null
+  }
+
+  return {
+    revisions: entryRevisionsByEntryId[entry.id],
+    currentSnapshot: buildSymptomEntrySavePayloadFromReportEntry(entry)
+  }
+}
+
+function buildEntryBlocks(
+  doc: jsPDF,
+  entry: ReportEntryRecord,
+  innerWidth: number,
+  revisionContext: EntryCardRevisionContext | null = null
+) {
   const blocks: EntryBlock[] = []
 
-  const addBlock = (label: string, value: string, kind: 'primary' | 'detail') => {
+  const addBlock = (
+    label: string,
+    field: EntryFieldRef,
+    kind: 'primary' | 'detail',
+    fallbackValue = ''
+  ) => {
+    const maxWidth = kind === 'detail' ? (innerWidth - 16) / 2 : innerWidth
+    const fontSize = kind === 'primary' ? 11 : 10
+    const history = revisionContext
+      ? buildFieldEditHistory(revisionContext.revisions, revisionContext.currentSnapshot, field)
+      : { priorValues: [], currentValue: fallbackValue }
+    const value = history.currentValue || fallbackValue
+
+    if (!value && !history.priorValues.length) {
+      return
+    }
+
     blocks.push({
       label,
       value,
       kind,
-      lines: wrapLines(doc, value, kind === 'detail' ? (innerWidth - 16) / 2 : innerWidth, kind === 'primary' ? 11 : 10)
+      priorLines: history.priorValues.map((priorValue) => wrapLines(doc, priorValue, maxWidth, fontSize)),
+      lines: value ? wrapLines(doc, value, maxWidth, fontSize) : []
     })
   }
 
-  if (entry.summary?.trim()) {
-    addBlock('What happened', entry.summary.trim(), 'primary')
-  }
+  addBlock('What happened', { kind: 'summary' }, 'primary', entry.summary?.trim() || '')
+  addBlock('Daily impact', { kind: 'impact' }, 'primary', entry.impact?.trim() || '')
 
-  if (entry.impact?.trim()) {
-    addBlock('Daily impact', entry.impact.trim(), 'primary')
-  }
-
+  const detailKeys = new Set<string>()
   const details = entry.details || {}
-  Object.entries(details).forEach(([key, value]) => {
-    if (skippedDetailKeys.has(key)) {
-      return
-    }
 
-    const normalized = normalizeDetailValue(value)
-    if (!normalized) {
-      return
+  Object.keys(details).forEach((key) => {
+    if (!skippedDetailKeys.has(key)) {
+      detailKeys.add(key)
     }
+  })
 
-    addBlock(humanizeDetailKey(key), normalized, 'detail')
+  if (revisionContext) {
+    revisionContext.revisions.forEach((revision) => {
+      Object.keys(revision.snapshot.details || {}).forEach((key) => {
+        if (!skippedDetailKeys.has(key)) {
+          detailKeys.add(key)
+        }
+      })
+    })
+  }
+
+  [...detailKeys].sort().forEach((key) => {
+    addBlock(
+      humanizeDetailKey(key),
+      { kind: 'detail', key },
+      'detail',
+      normalizeDetailValue(details[key])
+    )
   })
 
   return blocks
 }
 
 function measureBlockHeight(block: EntryBlock, lineHeight: number, labelHeight: number, gapAfter: number) {
-  return labelHeight + block.lines.length * lineHeight + gapAfter
+  let height = labelHeight
+
+  block.priorLines.forEach((priorLines) => {
+    height += priorLines.length * lineHeight
+  })
+
+  height += block.lines.length * lineHeight + gapAfter
+
+  return height
+}
+
+function measureHeaderRevisionHeight(priorValueCount: number) {
+  return priorValueCount * 13
 }
 
 const backdateNoteHeight = 34
@@ -367,6 +440,8 @@ function measureEntryHeight(
     edited?: boolean
     includeFamilyBadge?: boolean
     hideConditionTitle?: boolean
+    datePriorCount?: number
+    severityPriorCount?: number
   } = {}
 ) {
   const padding = 18
@@ -375,6 +450,9 @@ function measureEntryHeight(
   const badgeHeight = options.includeFamilyBadge ? ENTRY_TYPE_BADGE_HEIGHT + 10 : 0
   const headerHeight = options.hideConditionTitle ? 18 : 34
   let height = padding + headerHeight + badgeHeight + 12 + padding
+
+  height += measureHeaderRevisionHeight(options.datePriorCount || 0)
+  height += measureHeaderRevisionHeight(options.severityPriorCount || 0)
 
   if (options.edited) {
     height += 13
@@ -586,27 +664,107 @@ function drawBlockLines(
   })
 }
 
+function drawStruckLines(
+  ctx: LayoutContext,
+  lines: string[],
+  x: number,
+  fontSize: number,
+  lineHeight: number
+) {
+  const doc = ctx.doc
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(fontSize)
+  setText(doc, slate500)
+
+  lines.forEach((line) => {
+    doc.text(line, x, ctx.y)
+
+    const width = doc.getTextWidth(line)
+    const midY = ctx.y - fontSize * 0.35
+    setStroke(doc, slate500)
+    doc.setLineWidth(0.6)
+    doc.line(x, midY, x + width, midY)
+    doc.setLineWidth(0.5)
+
+    ctx.y += lineHeight
+  })
+}
+
+function drawRevisionHeaderValues(
+  ctx: LayoutContext,
+  x: number,
+  priorValues: string[],
+  currentValue: string,
+  fontSize: number,
+  currentColor: readonly [number, number, number] = slate900,
+  currentFont: 'normal' | 'bold' = 'bold'
+) {
+  priorValues.forEach((priorValue) => {
+    drawStruckLines(ctx, [priorValue], x, fontSize, 13)
+  })
+
+  if (currentValue) {
+    ctx.doc.setFont('helvetica', currentFont)
+    ctx.doc.setFontSize(fontSize)
+    setText(ctx.doc, currentColor)
+    ctx.doc.text(currentValue, x, ctx.y)
+    ctx.y += 16
+  }
+}
+
+function drawBlockContent(
+  ctx: LayoutContext,
+  block: EntryBlock,
+  x: number,
+  fontSize: number,
+  lineHeight: number
+) {
+  block.priorLines.forEach((priorLines) => {
+    drawStruckLines(ctx, priorLines, x, fontSize, lineHeight)
+  })
+
+  if (block.lines.length) {
+    drawBlockLines(ctx, block.lines, x, fontSize, lineHeight)
+  }
+}
+
 function drawEntryCard(
   ctx: LayoutContext,
   entry: ReportEntryRecord,
   index: number,
   backdateContext: BackdateReportContext = {},
-  options: { hideConditionTitle?: boolean } = {}
+  options: {
+    hideConditionTitle?: boolean
+    entryRevisionsByEntryId?: Record<string, EntryRevisionRecord[]>
+  } = {}
 ) {
   const padding = 18
   const innerX = ctx.x + padding
   const innerWidth = ctx.width - padding * 2
-  const blocks = buildEntryBlocks(ctx.doc, entry, innerWidth)
+  const revisionContext = buildEntryRevisionContext(entry, options.entryRevisionsByEntryId)
+  const blocks = buildEntryBlocks(ctx.doc, entry, innerWidth, revisionContext)
   const primaryBlocks = blocks.filter((block) => block.kind === 'primary')
   const detailBlocks = blocks.filter((block) => block.kind === 'detail')
   const backdateNote = getEntryBackdateNote(entry, backdateContext)
-  const edited = wasEntryEdited(entry)
+  const edited = wasEntryEdited(entry) || Boolean(revisionContext?.revisions.length)
   const includeFamilyBadge = shouldShowFamilyEntryBadge(ctx, entry)
+  const dateHistory = revisionContext
+    ? buildFieldEditHistory(revisionContext.revisions, revisionContext.currentSnapshot, { kind: 'occurred_at' })
+    : { priorValues: [], currentValue: formatReportEntryDate(entry.occurred_at || entry.created_at) }
+  const severityHistory = revisionContext
+    ? buildFieldEditHistory(revisionContext.revisions, revisionContext.currentSnapshot, { kind: 'severity' })
+    : {
+        priorValues: [],
+        currentValue: typeof entry.severity === 'number' ? `Severity ${entry.severity}/10` : 'Severity not recorded'
+      }
   const cardHeight = measureEntryHeight(blocks, {
     backdateNote,
     edited,
     includeFamilyBadge,
-    hideConditionTitle: options.hideConditionTitle
+    hideConditionTitle: options.hideConditionTitle,
+    datePriorCount: dateHistory.priorValues.length,
+    severityPriorCount: severityHistory.priorValues.length
   })
 
   ensureSpace(ctx, cardHeight + 14)
@@ -618,18 +776,15 @@ function drawEntryCard(
 
   ctx.y = cardY + padding
 
-  const dateLabel = formatReportEntryDate(entry.occurred_at || entry.created_at)
+  const dateLabel = dateHistory.currentValue || formatReportEntryDate(entry.occurred_at || entry.created_at)
 
   if (options.hideConditionTitle) {
-    ctx.doc.setFont('helvetica', 'bold')
-    ctx.doc.setFontSize(11)
-    setText(ctx.doc, slate900)
-    ctx.doc.text(dateLabel, innerX, ctx.y)
+    drawRevisionHeaderValues(ctx, innerX, dateHistory.priorValues, dateLabel, 11, slate900, 'bold')
 
     ctx.doc.setFont('helvetica', 'normal')
     ctx.doc.setFontSize(9.5)
     setText(ctx.doc, slate500)
-    ctx.doc.text(`Entry ${index + 1}`, ctx.x + ctx.width - padding, ctx.y, { align: 'right' })
+    ctx.doc.text(`Entry ${index + 1}`, ctx.x + ctx.width - padding, cardY + padding, { align: 'right' })
   } else {
     ctx.doc.setFont('helvetica', 'bold')
     ctx.doc.setFontSize(12.5)
@@ -640,23 +795,24 @@ function drawEntryCard(
     ctx.doc.setFontSize(10)
     setText(ctx.doc, slate500)
     ctx.doc.text(dateLabel, ctx.x + ctx.width - padding, ctx.y, { align: 'right' })
+    ctx.y += 16
   }
-
-  ctx.y += 16
 
   if (includeFamilyBadge) {
     drawFamilyEntryBadge(ctx, innerX, innerWidth)
   }
 
-  const severityLabel = typeof entry.severity === 'number' ? `Severity ${entry.severity}/10` : 'Severity not recorded'
-  ctx.doc.setFont('helvetica', 'normal')
-  ctx.doc.setFontSize(9.5)
-  setText(ctx.doc, slate500)
+  const severityLabel = severityHistory.currentValue
+    || (typeof entry.severity === 'number' ? `Severity ${entry.severity}/10` : 'Severity not recorded')
 
   if (options.hideConditionTitle) {
-    ctx.doc.text(severityLabel, innerX, ctx.y)
+    drawRevisionHeaderValues(ctx, innerX, severityHistory.priorValues, severityLabel, 9.5, slate500, 'normal')
   } else {
+    ctx.doc.setFont('helvetica', 'normal')
+    ctx.doc.setFontSize(9.5)
+    setText(ctx.doc, slate500)
     ctx.doc.text(`${severityLabel} · Entry ${index + 1}`, innerX, ctx.y)
+    ctx.y += 16
   }
 
   if (edited) {
@@ -664,7 +820,11 @@ function drawEntryCard(
     ctx.doc.setFont('helvetica', 'italic')
     ctx.doc.setFontSize(9)
     setText(ctx.doc, slate500)
-    ctx.doc.text(`Edited ${formatReportEntryDate(entry.updated_at)}`, innerX, ctx.y)
+    const editCount = Number(entry.edit_count) || revisionContext?.revisions.length || 0
+    const editNote = editCount
+      ? `Edited ${editCount} time${editCount === 1 ? '' : 's'} · last ${formatReportEntryDate(entry.updated_at)}`
+      : `Edited ${formatReportEntryDate(entry.updated_at)}`
+    ctx.doc.text(editNote, innerX, ctx.y)
   }
 
   ctx.y += 14
@@ -674,7 +834,7 @@ function drawEntryCard(
   primaryBlocks.forEach((block, blockIndex) => {
     drawBlockLabel(ctx, block.label, innerX, 8.5)
     ctx.y += 12
-    drawBlockLines(ctx, block.lines, innerX, 11, 15)
+    drawBlockContent(ctx, block, innerX, 11, 15)
     if (blockIndex < primaryBlocks.length - 1 || detailBlocks.length) {
       ctx.y += 8
     }
@@ -691,9 +851,9 @@ function drawEntryCard(
     const columnGap = 16
     const columnWidth = (innerWidth - columnGap) / 2
 
-    for (let index = 0; index < detailBlocks.length; index += 2) {
-      const left = detailBlocks[index]
-      const right = detailBlocks[index + 1]
+    for (let blockIndex = 0; blockIndex < detailBlocks.length; blockIndex += 2) {
+      const left = detailBlocks[blockIndex]
+      const right = detailBlocks[blockIndex + 1]
       const rowStartY = ctx.y
       let leftEndY = rowStartY
       let rightEndY = rowStartY
@@ -701,7 +861,7 @@ function drawEntryCard(
       drawBlockLabel(ctx, left.label, innerX, 7.5)
       leftEndY += 11
       ctx.y = leftEndY
-      drawBlockLines(ctx, left.lines, innerX, 10, 14)
+      drawBlockContent(ctx, left, innerX, 10, 14)
       leftEndY = ctx.y
 
       if (right) {
@@ -709,7 +869,7 @@ function drawEntryCard(
         drawBlockLabel(ctx, right.label, innerX + columnWidth + columnGap, 7.5)
         rightEndY += 11
         ctx.y = rightEndY
-        drawBlockLines(ctx, right.lines, innerX + columnWidth + columnGap, 10, 14)
+        drawBlockContent(ctx, right, innerX + columnWidth + columnGap, 10, 14)
         rightEndY = ctx.y
       }
 
@@ -765,6 +925,7 @@ export function drawEntryLogSection(
     : 28 + (showAdvancedChartsNote ? 16 : 0)
 
   const conditionGroups = groupEntriesByCondition(sortedEntries)
+  const entryRevisionsByEntryId = options.entryRevisionsByEntryId
 
   if (firstEntry && conditionGroups[0]) {
     const firstGroup = conditionGroups[0]
@@ -776,12 +937,21 @@ export function drawEntryLogSection(
       firstGroup.statement,
       formatConditionSourceSummary(veteranCount, familyCount)
     )
-    const firstBlocks = buildEntryBlocks(doc, firstEntry, width - 36)
+    const firstRevisionContext = buildEntryRevisionContext(firstEntry, entryRevisionsByEntryId)
+    const firstBlocks = buildEntryBlocks(doc, firstEntry, width - 36, firstRevisionContext)
+    const firstDateHistory = firstRevisionContext
+      ? buildFieldEditHistory(firstRevisionContext.revisions, firstRevisionContext.currentSnapshot, { kind: 'occurred_at' })
+      : { priorValues: [] }
+    const firstSeverityHistory = firstRevisionContext
+      ? buildFieldEditHistory(firstRevisionContext.revisions, firstRevisionContext.currentSnapshot, { kind: 'severity' })
+      : { priorValues: [] }
     const firstCardHeight = measureEntryHeight(firstBlocks, {
       backdateNote: getEntryBackdateNote(firstEntry, backdateContext),
-      edited: wasEntryEdited(firstEntry),
+      edited: wasEntryEdited(firstEntry) || Boolean(firstRevisionContext?.revisions.length),
       includeFamilyBadge: shouldShowFamilyEntryBadge(ctx, firstEntry),
-      hideConditionTitle: true
+      hideConditionTitle: true,
+      datePriorCount: firstDateHistory.priorValues.length,
+      severityPriorCount: firstSeverityHistory.priorValues.length
     })
     keepWithHeader = Math.min(firstGroupIntroHeight + firstCardHeight + 28, 360)
   }
@@ -807,7 +977,10 @@ export function drawEntryLogSection(
     drawConditionIntro(ctx, group.label, group.statement, group.entries)
 
     group.entries.forEach((entry, index) => {
-      drawEntryCard(ctx, entry, index, backdateContext, { hideConditionTitle: true })
+      drawEntryCard(ctx, entry, index, backdateContext, {
+        hideConditionTitle: true,
+        entryRevisionsByEntryId
+      })
     })
   })
 

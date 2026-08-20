@@ -376,7 +376,7 @@
               @show-all="desktopHistoryShowAll = true"
               @view-charts="openDesktopChartsForConditionKey"
               @open-entry="openEntryDetailsOverlay"
-              @edit-entry="openEntryForEdit"
+              @edit-entry="requestEntryEdit"
               @delete-entry="requestDeleteEntry"
               @open-export="openDesktopHistoryExport"
             >
@@ -1511,7 +1511,7 @@
                     data-history-interactive
                     class="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-accented/40 hover:text-highlighted"
                     :aria-label="`Edit ${entry.title}`"
-                    @click.stop="openEntryForEdit(entry.id)"
+                    @click.stop="requestEntryEdit(entry.id)"
                   >
                     <UIcon name="i-lucide-pencil" class="size-4" />
                   </button>
@@ -1836,6 +1836,87 @@
             Move to Deleted
           </button>
         </div>
+      </div>
+    </AppOverlayShell>
+  </Transition>
+
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <AppOverlayShell
+      v-if="isEditHistoryNoticeOpen"
+      backdrop-class="bg-black/55"
+      @dismiss="closeEditHistoryNotice"
+    >
+      <div class="app-overlay-panel app-overlay-panel--compact rounded-[1.75rem] bg-elevated p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="edit-history-notice-title">
+        <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
+          Editing logs
+        </p>
+        <h3 id="edit-history-notice-title" class="mt-2 text-xl font-bold text-highlighted">
+          Full history mode is on
+        </h3>
+        <p class="mt-3 text-sm leading-6 text-toned">
+          Signed PDF exports show crossed-out previous text plus your latest version so reviewers can see corrections clearly.
+        </p>
+        <p class="mt-3 text-sm leading-6 text-toned">
+          Each log can be edited up to
+          <span class="font-semibold text-highlighted">3 times</span>.
+          After that, log a new entry for additional changes.
+        </p>
+        <p
+          v-if="pendingEditRemainingEdits() < MAX_ENTRY_EDITS"
+          class="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100"
+        >
+          This log has {{ pendingEditRemainingEdits() }} edit{{ pendingEditRemainingEdits() === 1 ? '' : 's' }} remaining.
+        </p>
+
+        <button
+          type="button"
+          class="mt-5 w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-primary/90"
+          @click="confirmEditHistoryNotice"
+        >
+          I understand
+        </button>
+      </div>
+    </AppOverlayShell>
+  </Transition>
+
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <AppOverlayShell
+      v-if="isEntryEditLockedOpen"
+      backdrop-class="bg-black/55"
+      @dismiss="closeEntryEditLockedOverlay"
+    >
+      <div class="app-overlay-panel app-overlay-panel--compact rounded-[1.75rem] bg-elevated p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="entry-edit-locked-title">
+        <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
+          Edit limit reached
+        </p>
+        <h3 id="entry-edit-locked-title" class="mt-2 text-xl font-bold text-highlighted">
+          No more edits for this log
+        </h3>
+        <p class="mt-3 text-sm leading-6 text-toned">
+          This entry has already been edited 3 times. Log a new entry if you need to record additional detail.
+        </p>
+
+        <button
+          type="button"
+          class="mt-5 w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-primary/90"
+          @click="closeEntryEditLockedOverlay"
+        >
+          OK
+        </button>
       </div>
     </AppOverlayShell>
   </Transition>
@@ -2272,6 +2353,16 @@ import {
 } from '../utils/trackerToolbarUi'
 import { buildClaimBuilderUrl } from '../utils/claimBuilderLinks'
 import { mapEntryHistoryItem } from '../utils/entryDisplay'
+import {
+  getRemainingEntryEdits,
+  groupRevisionsByEntryId,
+  isEntryEditLocked,
+  MAX_ENTRY_EDITS
+} from '../utils/entryEditHistory'
+import {
+  acknowledgeEditHistoryNotice,
+  hasAcknowledgedEditHistoryNotice
+} from '../utils/editHistoryNotice'
 import {
   buildSymptomEntrySavePayload,
   buildSymptomEntrySavePayloadFromRecord,
@@ -2747,6 +2838,9 @@ const isUpgradePromptOpen = ref(false)
 const upgradePromptTitle = ref('Upgrade to Pro')
 const upgradePromptDescription = ref('')
 const isUpgradeCheckoutLoading = ref(false)
+const isEditHistoryNoticeOpen = ref(false)
+const isEntryEditLockedOpen = ref(false)
+const pendingEditAfterNoticeEntryId = ref<string | null>(null)
 const isConditionSlotOpen = ref(false)
 const pendingConditionSlotKey = ref('')
 const pendingConditionSlotLabel = ref('')
@@ -2788,6 +2882,8 @@ const shouldHideHistoryChrome = computed(() => (
   || Boolean(viewedHistoryEntryId.value)
   || (isShareLinkOpen.value && Boolean(shareLinkEntry.value))
   || isConditionSlotOpen.value
+  || isEditHistoryNoticeOpen.value
+  || isEntryEditLockedOpen.value
   || isPdfExportOverlayOpen.value
   || (isEmbeddedPreview && isEmbedProfileOpen.value)
 ))
@@ -4693,6 +4789,14 @@ async function exportEntriesPdf(conditionKeys: string[]) {
         ? user.value.user_metadata.full_name.trim()
         : '')
 
+    const exportEntryIds = [...veteranEntries, ...familyEntries]
+      .map((entry) => entry.id)
+      .filter((id): id is string => Boolean(id))
+    const { listRevisionsForEntries } = useSymptomEntries()
+    const revisions = await listRevisionsForEntries(exportEntryIds)
+    const revisionGroups = groupRevisionsByEntryId(revisions)
+    const entryRevisionsByEntryId = Object.fromEntries(revisionGroups.entries())
+
     const baseOptions = {
       veteranName: veteranName || null,
       veteranEmail: user.value?.email || null,
@@ -4700,7 +4804,8 @@ async function exportEntriesPdf(conditionKeys: string[]) {
       loggingCadence: loggingCadence.value,
       weeklyLogDay: weeklyLogDay.value,
       includeLoggingCharts: includeCharts,
-      includeAdvancedCharts: includeCharts && isPro.value
+      includeAdvancedCharts: includeCharts && isPro.value,
+      entryRevisionsByEntryId
     }
 
     if (veteranEntries.length) {
@@ -5316,12 +5421,20 @@ async function saveEntry() {
 
   try {
     const wasEditing = Boolean(editingEntryId.value)
-    const { createEntry, updateEntry } = useSymptomEntries()
+    const { createEntry, updateEntry, updateEntryWithRevision } = useSymptomEntries()
 
     let savedEntryId: string | null = null
 
     if (editingEntryId.value) {
-      await updateEntry(editingEntryId.value, payload)
+      const editingEntry = savedEntries.value.find((item) => item.id === editingEntryId.value)
+
+      if (editingEntry?.source === 'family') {
+        await updateEntry(editingEntryId.value, payload)
+      } else if (editingEntrySaveSnapshot.value) {
+        await updateEntryWithRevision(editingEntryId.value, editingEntrySaveSnapshot.value, payload)
+      } else {
+        await updateEntry(editingEntryId.value, payload)
+      }
     } else {
       const savedEntry = await createEntry(payload)
       savedEntryId = savedEntry?.id || null
@@ -5487,7 +5600,7 @@ function editViewedHistoryEntry() {
   }
 
   closeEntryDetailsOverlay()
-  openEntryForEdit(entryId)
+  requestEntryEdit(entryId)
 }
 
 function deleteViewedHistoryEntry() {
@@ -5547,6 +5660,8 @@ type AppOverlayKey =
   | 'home-tips'
   | 'condition-slot'
   | 'logging-cadence'
+  | 'edit-history-notice'
+  | 'entry-edit-locked'
 
 function closeAppOverlaysExcept(keep?: AppOverlayKey) {
   if (keep !== 'auth') {
@@ -5591,6 +5706,15 @@ function closeAppOverlaysExcept(keep?: AppOverlayKey) {
     isLoggingCadencePromptOpen.value = false
     weeklyLogCaution.value = null
     pendingCadenceEntryOptions.value = null
+  }
+
+  if (keep !== 'edit-history-notice') {
+    isEditHistoryNoticeOpen.value = false
+    pendingEditAfterNoticeEntryId.value = null
+  }
+
+  if (keep !== 'entry-edit-locked') {
+    isEntryEditLockedOpen.value = false
   }
 }
 
@@ -7447,6 +7571,81 @@ function handleNotificationStatusClick() {
     expanded: isMobileLayout.value,
     section: 'settings-reminders'
   })
+}
+
+function requestEntryEdit(entryId: string) {
+  if (isHistoryEntryActivationLocked()) {
+    return
+  }
+
+  if (needsAppWelcome.value) {
+    return
+  }
+
+  if (!user.value) {
+    openAuthPanel()
+    return
+  }
+
+  const entry = savedEntries.value.find((item) => item.id === entryId)
+  if (!entry) {
+    return
+  }
+
+  if (entry.source === 'family') {
+    openEntryForEdit(entryId)
+    return
+  }
+
+  if (isEntryEditLocked(entry.edit_count)) {
+    closeAppOverlaysExcept('entry-edit-locked')
+    isEntryEditLockedOpen.value = true
+    return
+  }
+
+  if (!hasAcknowledgedEditHistoryNotice(user.value.id)) {
+    pendingEditAfterNoticeEntryId.value = entryId
+    closeAppOverlaysExcept('edit-history-notice')
+    isEditHistoryNoticeOpen.value = true
+    return
+  }
+
+  openEntryForEdit(entryId)
+}
+
+function pendingEditRemainingEdits() {
+  const entryId = pendingEditAfterNoticeEntryId.value
+  if (!entryId) {
+    return MAX_ENTRY_EDITS
+  }
+
+  const entry = savedEntries.value.find((item) => item.id === entryId)
+  return getRemainingEntryEdits(entry?.edit_count)
+}
+
+function closeEditHistoryNotice() {
+  isEditHistoryNoticeOpen.value = false
+  pendingEditAfterNoticeEntryId.value = null
+}
+
+function confirmEditHistoryNotice() {
+  if (!user.value?.id) {
+    closeEditHistoryNotice()
+    return
+  }
+
+  acknowledgeEditHistoryNotice(user.value.id)
+  const entryId = pendingEditAfterNoticeEntryId.value
+  isEditHistoryNoticeOpen.value = false
+  pendingEditAfterNoticeEntryId.value = null
+
+  if (entryId) {
+    openEntryForEdit(entryId)
+  }
+}
+
+function closeEntryEditLockedOverlay() {
+  isEntryEditLockedOpen.value = false
 }
 
 function openEntryForEdit(entryId: string) {
