@@ -37,6 +37,9 @@ const supabaseAnonKey = env('SUPABASE_ANON_KEY')
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  // Dark backdrop only — the tank lives in app.html outside #__nuxt so Vue
+  // replacing this template does not restart the SVG animation.
+  spaLoadingTemplate: true,
   devtools: { enabled: false },
   devServer: {
     port: 3001
@@ -127,7 +130,13 @@ export default defineNuxtConfig({
     }
   },
   pwa: {
+    // Keep skipWaiting so push reminders can activate, but do not inject the
+    // default autoUpdate helper — it calls location.reload() on controllerchange
+    // and replayed the tank splash about a second after first paint.
     registerType: 'autoUpdate',
+    client: {
+      register: false
+    },
     includeAssets: ['brand/vch-symptom-tracker-logo.png', 'vch-logo.png', 'vch-logo-loader.svg', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png', 'notification-badge.png'],
     workbox: {
       importScripts: ['/log-reminder-handlers.js'],
