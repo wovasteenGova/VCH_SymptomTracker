@@ -18,7 +18,6 @@ watch([user, isAuthLoading], async ([nextUser, loading]) => {
       v-if="isAuthLoading"
       full-screen
       show-brand
-      label="Making sure things run smoothly"
     />
     <template v-if="!isAuthLoading">
     <section class="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-4 pt-4 sm:max-w-lg">

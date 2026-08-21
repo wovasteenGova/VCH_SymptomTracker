@@ -6,7 +6,6 @@
           <VchOpeningWorkspaceLoader
             :full-screen="false"
             show-brand
-            label="Verifying reset link"
           />
           <h1 class="text-xl font-bold text-white">Verifying reset link</h1>
           <p class="text-sm leading-6 text-slate-400">

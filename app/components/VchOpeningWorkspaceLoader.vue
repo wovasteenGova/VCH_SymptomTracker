@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { reportBranding } from '../utils/reportBranding'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   label?: string
   /** When false, sits in normal flow (e.g. inside a card). Default centers in the viewport. */
   fullScreen?: boolean
@@ -11,10 +12,22 @@ withDefaults(defineProps<{
    */
   showBrand?: boolean
 }>(), {
-  label: 'Setting up workspace',
+  label: '',
   fullScreen: true,
   showBrand: true
 })
+
+const statusLabel = computed(() => props.label.trim() || 'Loading')
+const stackClass = computed(() =>
+  props.fullScreen
+    ? 'w-[min(28rem,92vw)] max-w-[32rem]'
+    : 'w-full max-w-[15rem]'
+)
+const tankClass = computed(() =>
+  props.fullScreen
+    ? 'mx-auto w-full select-none'
+    : 'mx-auto w-full max-w-[240px] select-none'
+)
 </script>
 
 <template>
@@ -26,9 +39,12 @@ withDefaults(defineProps<{
       class="vch-opening-workspace-loader vch-opening-workspace-loader--fullscreen fixed inset-0 z-[80] flex h-dvh w-screen items-center justify-center bg-default px-4"
       role="status"
       aria-live="polite"
-      :aria-label="`${label}…`"
+      :aria-label="statusLabel"
     >
-      <div class="flex w-full max-w-[min(100%,22rem)] flex-col items-center justify-center gap-4">
+      <div
+        class="flex flex-col items-center justify-center gap-4"
+        :class="stackClass"
+      >
         <div
           v-if="showBrand"
           class="vch-opening-workspace-loader__brand flex items-center justify-center gap-3"
@@ -47,14 +63,14 @@ withDefaults(defineProps<{
           src="/vch-tank-loader.svg"
           alt=""
           aria-hidden="true"
-          class="vch-opening-workspace-loader__tank mx-auto w-full select-none"
+          :class="tankClass"
           decoding="async"
         >
-        <p class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted">
-          {{ label }}<span
-            class="vch-opening-workspace-loader__dots"
-            aria-hidden="true"
-          ><span>.</span><span>.</span><span>.</span></span>
+        <p
+          v-if="label"
+          class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted"
+        >
+          {{ label }}
         </p>
       </div>
     </div>
@@ -65,67 +81,39 @@ withDefaults(defineProps<{
     class="vch-opening-workspace-loader flex min-h-[12rem] w-full flex-col items-center justify-center gap-4 px-4 py-8"
     role="status"
     aria-live="polite"
-    :aria-label="`${label}…`"
+    :aria-label="statusLabel"
   >
     <div
-      v-if="showBrand"
-      class="vch-opening-workspace-loader__brand flex items-center justify-center gap-3"
+      class="flex flex-col items-center justify-center gap-4"
+      :class="stackClass"
     >
+      <div
+        v-if="showBrand"
+        class="vch-opening-workspace-loader__brand flex items-center justify-center gap-3"
+      >
+        <img
+          :src="reportBranding.logoPath"
+          :alt="reportBranding.organizationName"
+          class="size-11 shrink-0 rounded-full object-cover object-center ring-1 ring-default shadow-sm"
+          decoding="async"
+        >
+        <span class="text-[2rem] font-semibold leading-none tracking-[0.12em] text-default">
+          VCH
+        </span>
+      </div>
       <img
-        :src="reportBranding.logoPath"
-        :alt="reportBranding.organizationName"
-        class="size-11 shrink-0 rounded-full object-cover object-center ring-1 ring-default shadow-sm"
+        src="/vch-tank-loader.svg"
+        alt=""
+        aria-hidden="true"
+        :class="tankClass"
         decoding="async"
       >
-      <span class="text-[2rem] font-semibold leading-none tracking-[0.12em] text-default">
-        VCH
-      </span>
+      <p
+        v-if="label"
+        class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted"
+      >
+        {{ label }}
+      </p>
     </div>
-    <img
-      src="/vch-tank-loader.svg"
-      alt=""
-      aria-hidden="true"
-      class="vch-opening-workspace-loader__tank mx-auto w-full max-w-[min(100%,22rem)] select-none"
-      decoding="async"
-    >
-    <p class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted">
-      {{ label }}<span
-        class="vch-opening-workspace-loader__dots"
-        aria-hidden="true"
-      ><span>.</span><span>.</span><span>.</span></span>
-    </p>
   </div>
 </template>
-
-<style scoped>
-.vch-opening-workspace-loader__dots span {
-  animation: vch-opening-dot 1.2s linear infinite;
-  opacity: 0;
-}
-
-.vch-opening-workspace-loader__dots span:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.vch-opening-workspace-loader__dots span:nth-child(2) {
-  animation-delay: 0.25s;
-}
-
-.vch-opening-workspace-loader__dots span:nth-child(3) {
-  animation-delay: 0.5s;
-}
-
-@keyframes vch-opening-dot {
-  0%, 24% {
-    opacity: 0;
-  }
-
-  25%, 99% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-</style>

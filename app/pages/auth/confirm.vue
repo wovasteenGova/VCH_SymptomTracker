@@ -6,7 +6,6 @@
           <VchOpeningWorkspaceLoader
             :full-screen="false"
             show-brand
-            label="Confirming your email"
           />
           <h1 class="text-xl font-bold text-white">Confirming your email</h1>
           <p class="text-sm leading-6 text-slate-400">

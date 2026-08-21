@@ -8,7 +8,6 @@
     <VchOpeningWorkspaceLoader
       :full-screen="false"
       show-brand
-      label="Setting up workspace"
     />
 
     <VchOpeningWorkspaceLoader

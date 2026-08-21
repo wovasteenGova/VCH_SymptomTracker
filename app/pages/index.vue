@@ -3,7 +3,6 @@
     v-if="showHomeBootstrapLoader"
     full-screen
     show-brand
-    :label="homeBootstrapLabel"
   />
   <main
     id="tracker-app-shell"
@@ -2328,9 +2327,6 @@ const { isDesktopLayout, isMobileLayout, isMobileCarouselLayout, prefersDesktopC
 const { openSettingsPanel } = useTrackerSettingsPanelOpen()
 const homeBootstrapComplete = ref(isEmbeddedPreview.value)
 const showHomeBootstrapLoader = computed(() => !isEmbeddedPreview.value && !homeBootstrapComplete.value)
-const homeBootstrapLabel = computed(() =>
-  isAuthLoading.value ? 'Making sure things run smoothly' : 'Setting up workspace'
-)
 
 watch(isDesktopLayout, (desktop) => {
   if (desktop) {
