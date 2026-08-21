@@ -133,13 +133,15 @@ export default defineNuxtConfig({
     // Keep skipWaiting so push reminders can activate, but do not inject the
     // default autoUpdate helper — it calls location.reload() on controllerchange
     // and replayed the tank splash about a second after first paint.
-    registerType: 'autoUpdate',
+    registerType: 'prompt',
     client: {
       register: false
     },
     includeAssets: ['brand/vch-symptom-tracker-logo.png', 'vch-logo.png', 'vch-logo-loader.svg', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png', 'notification-badge.png'],
     workbox: {
       importScripts: ['/log-reminder-handlers.js'],
+      skipWaiting: false,
+      clientsClaim: false,
       // This is an authenticated server app, not an offline SPA shell. Keep the
       // reminder service worker active without replacing navigations or API/auth
       // responses with a cached root document.

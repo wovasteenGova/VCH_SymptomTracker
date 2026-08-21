@@ -58,7 +58,7 @@ useHead(() => ({
 const { showSubmissionToast } = useSubmissionToast()
 const supabase = useSupabaseClient()
 const route = useRoute()
-const { homeWorkspaceReady, splashDismissed } = useHomeWorkspaceReady()
+const { homeWorkspaceReady, splashDismissed, allowVueSplashFallback } = useHomeWorkspaceReady()
 
 const waitsForHomeBootstrap = computed(() => route.path === '/')
 const nonHomeSplashVisible = ref(true)
@@ -68,6 +68,7 @@ const showVueSplash = computed(() => shouldShowVueAppSplash({
   isClient: import.meta.client,
   staticSplashPresent: staticSplashPresent.value,
   splashDismissed: splashDismissed.value,
+  allowVueFallback: allowVueSplashFallback.value,
   isHomeRoute: waitsForHomeBootstrap.value,
   homeWorkspaceReady: homeWorkspaceReady.value,
   nonHomeSplashVisible: nonHomeSplashVisible.value
