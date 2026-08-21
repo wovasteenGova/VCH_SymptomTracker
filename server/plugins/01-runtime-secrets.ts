@@ -21,21 +21,27 @@ function safeSet(target: Record<string, unknown>, key: string, value: string) {
   }
 }
 
+function forceSet(target: Record<string, unknown>, key: string, value: string) {
+  if (!value) return
+  try {
+    target[key] = value
+  } catch {
+    // Frozen prerender config — ignore.
+  }
+}
+
 function patchSecrets(config: Record<string, unknown>) {
   safeSet(config, 'stripeSecretKey', readEnv('STRIPE_SECRET_KEY', 'NUXT_STRIPE_SECRET_KEY'))
   safeSet(config, 'stripeWebhookSecret', readEnv('STRIPE_WEBHOOK_SECRET', 'NUXT_STRIPE_WEBHOOK_SECRET'))
-  safeSet(config, 'supabaseServiceKey', readEnv(
+  const serviceKey = readEnv(
     'SUPABASE_SERVICE_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',
     'NUXT_SUPABASE_SERVICE_KEY',
     'NUXT_SUPABASE_SECRET_KEY'
-  ))
-  safeSet(config, 'supabaseServiceRoleKey', readEnv(
-    'SUPABASE_SERVICE_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY',
-    'NUXT_SUPABASE_SERVICE_KEY',
-    'NUXT_SUPABASE_SECRET_KEY'
-  ))
+  )
+  // Always prefer live Render env over any stale build-time value in runtimeConfig.
+  forceSet(config, 'supabaseServiceKey', serviceKey)
+  forceSet(config, 'supabaseServiceRoleKey', serviceKey)
   safeSet(config, 'vapidPrivateKey', readEnv('VAPID_PRIVATE_KEY', 'NUXT_VAPID_PRIVATE_KEY'))
   safeSet(config, 'reminderCronSecret', readEnv('REMINDER_CRON_SECRET', 'NUXT_REMINDER_CRON_SECRET'))
 }

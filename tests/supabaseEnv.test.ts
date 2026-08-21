@@ -55,6 +55,15 @@ test('resolveSupabaseEnv reads SUPABASE_SERVICE_KEY from process.env', () => {
   })
 })
 
+test('resolveSupabaseEnv prefers SUPABASE_SERVICE_KEY over SUPABASE_SERVICE_ROLE_KEY', () => {
+  withEnv({
+    SUPABASE_SERVICE_KEY: 'service-key',
+    SUPABASE_SERVICE_ROLE_KEY: 'stale-role-key'
+  }, () => {
+    assert.equal(resolveSupabaseEnv().serviceKey, 'service-key')
+  })
+})
+
 test('resolveSupabaseEnv accepts SUPABASE_SERVICE_ROLE_KEY as an alias', () => {
   withEnv({
     SUPABASE_SERVICE_ROLE_KEY: 'role-key'

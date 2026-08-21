@@ -1,5 +1,6 @@
 import { getSupabaseConfigError, resolveSupabaseEnv } from '../utils/supabaseEnv'
 import { getSupabasePublicConfig } from '../utils/supabasePublicConfig'
+import { describeServiceRoleKey, inspectSupabaseKey } from '../utils/supabaseKeyInspect'
 import { isStripePriceId } from '../utils/subscriptionCheckoutSession'
 
 export default defineEventHandler(() => {
@@ -24,11 +25,16 @@ export default defineEventHandler(() => {
     && hasValidProPriceId
     && env.serviceKey
   )
+  const serviceKeyCheck = describeServiceRoleKey(env.serviceKey, env.anonKey)
+  const serviceKeyRole = inspectSupabaseKey(env.serviceKey).role
 
   if (isProduction) {
     return {
-      ok: !configError && stripeConfigured && checkoutReady,
-      hasServiceKey: Boolean(env.serviceKey)
+      ok: !configError && stripeConfigured && checkoutReady && serviceKeyCheck.ok,
+      hasServiceKey: Boolean(env.serviceKey),
+      serviceKeyRole,
+      serviceKeyValid: serviceKeyCheck.ok,
+      serviceKeyIssue: serviceKeyCheck.ok ? null : serviceKeyCheck.reason
     }
   }
 

@@ -12,11 +12,13 @@ function getTrackerUrl() {
 }
 
 function getServiceRoleKey() {
-  const config = useRuntimeConfig()
   const env = resolveSupabaseEnv()
-  return String(
-    config.supabaseServiceRoleKey || config.supabaseServiceKey || env.serviceKey || ''
-  ).trim()
+  if (env.serviceKey) {
+    return env.serviceKey
+  }
+
+  const config = useRuntimeConfig()
+  return String(config.supabaseServiceRoleKey || config.supabaseServiceKey || '').trim()
 }
 
 function getAnonKey() {
