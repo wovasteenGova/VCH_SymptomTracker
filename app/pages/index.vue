@@ -1,10 +1,15 @@
 <template>
+  <VchOpeningWorkspaceLoader
+    v-if="showHomeBootstrapLoader"
+    full-screen
+    show-brand
+    :label="homeBootstrapLabel"
+  />
   <main
     id="tracker-app-shell"
     class="tracker-app-shell app-shell relative overflow-hidden bg-default text-default transition-colors"
     :class="{
-      'app-shell-embed': isEmbeddedPreview,
-      'tracker-app-shell--ready': homeWorkspaceReady || isEmbeddedPreview
+      'app-shell-embed': isEmbeddedPreview
     }"
   >
     <section
@@ -2089,7 +2094,6 @@ import TrackerEntryFlow from '../components/tracker/TrackerEntryFlow.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
-import { useHomeWorkspaceReady } from '../composables/useHomeWorkspaceReady'
 
 const {
   user,
@@ -2321,8 +2325,12 @@ const {
   enableRemindersWithPermission
 } = useLogReminders()
 const { isDesktopLayout, isMobileLayout, isMobileCarouselLayout, prefersDesktopCarouselChrome, isEmbeddedPreview } = useTrackerLayout()
-const { homeWorkspaceReady, markHomeWorkspaceReady } = useHomeWorkspaceReady()
 const { openSettingsPanel } = useTrackerSettingsPanelOpen()
+const homeBootstrapComplete = ref(isEmbeddedPreview.value)
+const showHomeBootstrapLoader = computed(() => !isEmbeddedPreview.value && !homeBootstrapComplete.value)
+const homeBootstrapLabel = computed(() =>
+  isAuthLoading.value ? 'Making sure things run smoothly' : 'Setting up workspace'
+)
 
 watch(isDesktopLayout, (desktop) => {
   if (desktop) {
@@ -3986,7 +3994,7 @@ watch(isConditionPickerOpen, (open) => {
 })
 
 onMounted(async () => {
-  const shouldShowBootstrapLoader = !homeWorkspaceReady.value
+  const shouldAwaitBootstrap = !homeBootstrapComplete.value
 
   if (import.meta.client) {
     const { hash, search } = window.location
@@ -3997,7 +4005,7 @@ onMounted(async () => {
       || search.includes('token_hash=')
 
     if (hasAuthPayload) {
-      markHomeWorkspaceReady()
+      homeBootstrapComplete.value = true
 
       if (linkType === 'recovery') {
         window.location.replace(`/auth/reset-password${search}${hash}`)
@@ -4015,7 +4023,7 @@ onMounted(async () => {
   if (!homeGreetingWord.value) {
     homeGreetingWord.value = Math.random() < 0.5 ? 'Hello' : 'Hey'
   }
-  if (shouldShowBootstrapLoader) {
+  if (shouldAwaitBootstrap) {
     await loadAppWelcomeState()
     await refreshTrackedConditions()
   } else {
@@ -4041,7 +4049,7 @@ onMounted(async () => {
   window.addEventListener('resize', homeConditionsMaxScrollResizeListener)
 
   if (user.value) {
-    if (shouldShowBootstrapLoader) {
+    if (shouldAwaitBootstrap) {
       loadProfileDisplayName()
       loadEntitlements()
       await loadEntries()
@@ -4063,7 +4071,7 @@ onMounted(async () => {
     demoReady.value = true
   }
 
-  markHomeWorkspaceReady()
+  homeBootstrapComplete.value = true
 })
 
 onBeforeUnmount(() => {
@@ -4084,7 +4092,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
   }
 
   // Auth token refresh / hydration after the first bootstrap — refresh quietly.
-  if (!prevId && nextId && homeWorkspaceReady.value) {
+  if (!prevId && nextId && homeBootstrapComplete.value) {
     loadProfileDisplayName()
     loadEntitlements()
     await loadAppWelcomeState()
@@ -4097,11 +4105,11 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
   }
 
   // Skip until the first bootstrap finishes; onMounted owns that path.
-  if (!homeWorkspaceReady.value) {
+  if (!homeBootstrapComplete.value) {
     return
   }
 
-  // Signed out — clear data without blanking the shell (avoids tank-loader flash).
+  // Signed out — clear data without replaying the opening loader.
   if (!nextId && prevId) {
     profileDisplayName.value = ''
     savedEntries.value = []
@@ -4635,7 +4643,7 @@ async function retryHomeLoad() {
   } catch (error) {
     entriesError.value = getErrorMessage(error)
   } finally {
-    markHomeWorkspaceReady()
+    homeBootstrapComplete.value = true
   }
 }
 

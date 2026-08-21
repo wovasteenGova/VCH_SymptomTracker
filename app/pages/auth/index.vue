@@ -14,10 +14,13 @@ watch([user, isAuthLoading], async ([nextUser, loading]) => {
 
 <template>
   <main class="flex h-dvh min-h-0 flex-col overflow-hidden bg-default text-default">
-    <div v-if="isAuthLoading" class="grid flex-1 place-items-center p-8">
-      <VchLoader :width="240" show-brand />
-    </div>
-    <template v-else>
+    <VchOpeningWorkspaceLoader
+      v-if="isAuthLoading"
+      full-screen
+      show-brand
+      label="Making sure things run smoothly"
+    />
+    <template v-if="!isAuthLoading">
     <section class="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-4 pt-4 sm:max-w-lg">
       <header class="sticky top-0 z-40 -mx-4 flex shrink-0 items-center gap-3 border-b border-default/60 bg-default/95 px-4 pb-4 pt-4 backdrop-blur-md">
         <NuxtLink

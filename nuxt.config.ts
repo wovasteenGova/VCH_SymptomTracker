@@ -37,9 +37,6 @@ const supabaseAnonKey = env('SUPABASE_ANON_KEY')
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  // One splash only: the HTML tank in app.html. Nuxt's SPA template would be a
-  // second overlay after reload, which is not how hub/builder do this.
-  spaLoadingTemplate: false,
   devtools: { enabled: false },
   devServer: {
     port: 3001
@@ -131,8 +128,7 @@ export default defineNuxtConfig({
   },
   pwa: {
     // Keep skipWaiting so push reminders can activate, but do not inject the
-    // default autoUpdate helper — it calls location.reload() on controllerchange
-    // and replayed the tank splash about a second after first paint.
+    // default autoUpdate helper — it calls location.reload() on controllerchange.
     registerType: 'prompt',
     client: {
       register: false

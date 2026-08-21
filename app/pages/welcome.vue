@@ -72,8 +72,8 @@
               <TrackerLivePreview />
               <template #fallback>
                 <div class="grid h-full place-items-center">
-                  <VchLoader
-                    :width="720"
+                  <VchOpeningWorkspaceLoader
+                    :full-screen="false"
                     show-brand
                   />
                 </div>

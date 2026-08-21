@@ -37,8 +37,11 @@
             v-if="isLoading || isCompletingCheckout"
             class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center"
           >
-            <VchLoader :width="240" />
-            <p class="text-sm text-slate-300">{{ loadingMessage }}</p>
+            <VchOpeningWorkspaceLoader
+              :full-screen="false"
+              :show-brand="false"
+              :label="loadingMessage"
+            />
           </div>
 
           <div

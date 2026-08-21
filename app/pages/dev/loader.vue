@@ -1,20 +1,25 @@
 <template>
-  <main class="flex min-h-dvh flex-col items-center justify-center gap-10 bg-slate-950 p-6 text-white">
-    <div class="text-center">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Preview</p>
-      <h1 class="mt-1 text-2xl font-bold">VCH tank loader</h1>
-    </div>
+  <main class="mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-6 py-12">
+    <header>
+      <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Dev</p>
+      <h1 class="mt-1 text-2xl font-bold">Opening workspace loader</h1>
+    </header>
 
-    <VchLoader :width="320" />
+    <VchOpeningWorkspaceLoader
+      :full-screen="false"
+      show-brand
+      label="Setting up workspace"
+    />
 
-    <VchLoader :width="200" label="Saving entry..." />
+    <VchOpeningWorkspaceLoader
+      :full-screen="false"
+      :show-brand="false"
+      label="Saving entry"
+    />
 
-    <p class="max-w-md text-center text-sm leading-6 text-slate-400">
-      Dev preview page — not linked from the app. Use
-      <code class="rounded bg-slate-900 px-1.5 py-0.5 text-slate-300">&lt;VchLoader /&gt;</code>
-      in this project, or copy
-      <code class="rounded bg-slate-900 px-1.5 py-0.5 text-slate-300">public/vch-tank-loader.svg</code>
-      into the VCH site and show it with a plain img tag.
+    <p class="text-sm text-muted">
+      Same component ClaimBuilder uses:
+      <code class="rounded bg-elevated px-1.5 py-0.5">&lt;VchOpeningWorkspaceLoader /&gt;</code>
     </p>
   </main>
 </template>

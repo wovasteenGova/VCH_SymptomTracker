@@ -3,7 +3,11 @@
     <section class="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
       <div class="rounded-4xl border border-slate-800 bg-slate-900 p-6">
         <div v-if="status === 'loading'" class="space-y-4 text-center">
-          <VchLoader :width="240" />
+          <VchOpeningWorkspaceLoader
+            :full-screen="false"
+            show-brand
+            label="Verifying reset link"
+          />
           <h1 class="text-xl font-bold text-white">Verifying reset link</h1>
           <p class="text-sm leading-6 text-slate-400">
             Checking your secure password reset session.

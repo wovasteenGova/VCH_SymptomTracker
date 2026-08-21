@@ -9,9 +9,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { isIosWebKitBrowser, resolveMobileViewport } from './utils/mobileViewport'
-import { dismissTrackerStaticSplash } from './utils/trackerSplash'
 
 const { themeId } = useClaimColorTheme()
 
@@ -24,19 +23,6 @@ useHead(() => ({
 
 const { showSubmissionToast } = useSubmissionToast()
 const supabase = useSupabaseClient()
-const route = useRoute()
-const { homeWorkspaceReady } = useHomeWorkspaceReady()
-const waitsForHomeBootstrap = computed(() => route.path === '/')
-
-function dismissBootSplash() {
-  dismissTrackerStaticSplash()
-}
-
-watch(homeWorkspaceReady, (ready) => {
-  if (ready) {
-    dismissBootSplash()
-  }
-}, { immediate: true })
 
 const CHECKOUT_SUCCESS_TOAST_KEY = 'symptom-tracker-checkout-success-toast'
 let visualBaselineHeight = 0
@@ -84,10 +70,6 @@ function updateAppHeight() {
 }
 
 onMounted(async () => {
-  if (!waitsForHomeBootstrap.value) {
-    dismissBootSplash()
-  }
-
   updateAppHeight()
   if (import.meta.client && window.sessionStorage.getItem(CHECKOUT_SUCCESS_TOAST_KEY)) {
     window.sessionStorage.removeItem(CHECKOUT_SUCCESS_TOAST_KEY)
@@ -120,14 +102,3 @@ onUnmounted(() => {
   window.visualViewport?.removeEventListener('scroll', updateAppHeight)
 })
 </script>
-
-<style>
-.tracker-app-shell:not(.tracker-app-shell--ready):not(.app-shell-embed) {
-  opacity: 0;
-}
-
-.tracker-app-shell--ready {
-  opacity: 1;
-  transition: opacity 0.45s ease;
-}
-</style>

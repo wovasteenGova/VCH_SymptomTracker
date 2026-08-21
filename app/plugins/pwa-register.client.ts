@@ -1,7 +1,6 @@
 /**
  * Register the reminder SW without reloading the tab.
- * Old vite-pwa autoUpdate helpers called location.reload() on controllerchange,
- * which replayed the tank splash (clearing site data looked like a "cookie" fix).
+ * Old vite-pwa autoUpdate helpers called location.reload() on controllerchange.
  */
 export default defineNuxtPlugin(() => {
   if (!import.meta.client || !import.meta.env.PROD) {
