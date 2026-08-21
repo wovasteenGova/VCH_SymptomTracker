@@ -30,6 +30,45 @@ function forceSet(target: Record<string, unknown>, key: string, value: string) {
   }
 }
 
+function patchPublicSupabase(config: Record<string, unknown>) {
+  const publicConfig = config.public as Record<string, unknown> | undefined
+  if (!publicConfig) return
+
+  const supabaseUrl = readEnv(
+    'SUPABASE_URL',
+    'NUXT_PUBLIC_SUPABASE_URL',
+    'NUXT_SUPABASE_URL'
+  )
+  const anonKey = readEnv(
+    'SUPABASE_ANON_KEY',
+    'SUPABASE_KEY',
+    'NUXT_PUBLIC_SUPABASE_ANON_KEY',
+    'NUXT_PUBLIC_SUPABASE_KEY',
+    'NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+    'NUXT_SUPABASE_KEY'
+  )
+
+  if (supabaseUrl) {
+    forceSet(publicConfig, 'supabaseUrl', supabaseUrl)
+  }
+
+  if (anonKey) {
+    forceSet(publicConfig, 'supabaseAnonKey', anonKey)
+    forceSet(publicConfig, 'supabasePublishableKey', anonKey)
+    forceSet(publicConfig, 'supabaseKey', anonKey)
+  }
+
+  const moduleConfig = publicConfig.supabase as Record<string, unknown> | undefined
+  if (moduleConfig) {
+    if (supabaseUrl) {
+      forceSet(moduleConfig, 'url', supabaseUrl)
+    }
+    if (anonKey) {
+      forceSet(moduleConfig, 'key', anonKey)
+    }
+  }
+}
+
 function patchSecrets(config: Record<string, unknown>) {
   safeSet(config, 'stripeSecretKey', readEnv('STRIPE_SECRET_KEY', 'NUXT_STRIPE_SECRET_KEY'))
   safeSet(config, 'stripeWebhookSecret', readEnv('STRIPE_WEBHOOK_SECRET', 'NUXT_STRIPE_WEBHOOK_SECRET'))
@@ -42,6 +81,7 @@ function patchSecrets(config: Record<string, unknown>) {
   // Always prefer live Render env over any stale build-time value in runtimeConfig.
   forceSet(config, 'supabaseServiceKey', serviceKey)
   forceSet(config, 'supabaseServiceRoleKey', serviceKey)
+  patchPublicSupabase(config)
   safeSet(config, 'vapidPrivateKey', readEnv('VAPID_PRIVATE_KEY', 'NUXT_VAPID_PRIVATE_KEY'))
   safeSet(config, 'reminderCronSecret', readEnv('REMINDER_CRON_SECRET', 'NUXT_REMINDER_CRON_SECRET'))
 }

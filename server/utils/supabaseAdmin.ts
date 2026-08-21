@@ -22,21 +22,27 @@ function getServiceRoleKey() {
 }
 
 function getAnonKey() {
-  const config = useRuntimeConfig()
   const env = resolveSupabaseEnv()
+  if (env.anonKey) {
+    return env.anonKey
+  }
+
+  const config = useRuntimeConfig()
   return String(
     config.public.supabaseAnonKey
     || config.public.supabasePublishableKey
     || config.public.supabaseKey
-    || env.anonKey
     || ''
   ).trim()
 }
 
 export function getSupabaseAdmin() {
+  const env = resolveSupabaseEnv()
   const supabaseUrl = getTrackerUrl()
   const serviceRoleKey = getServiceRoleKey()
-  const check = describeServiceRoleKey(serviceRoleKey, getAnonKey())
+  // Compare against live Render env — not build-baked public config, which can
+  // still hold an old anon JWT from when SUPABASE_SERVICE_KEY was mis-set.
+  const check = describeServiceRoleKey(serviceRoleKey, env.anonKey || getAnonKey())
 
   if (!supabaseUrl || !check.ok) {
     throw createError({
