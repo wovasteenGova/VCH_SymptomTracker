@@ -75,61 +75,8 @@ export function assertSupabasePublicConfig(event?: H3Event) {
   return resolved
 }
 
-export function previewSupabaseKey(key: string) {
-  if (!key) {
-    return null
-  }
-
-  if (key.startsWith('sb_publishable_')) {
-    return `sb_publishable_...${key.slice(-8)}`
-  }
-
-  return `${key.slice(0, 16)}...${key.slice(-8)}`
-}
-
-export function inspectSupabaseKey(key: string) {
-  if (!key) {
-    return {
-      format: 'missing' as const,
-      role: null,
-      projectRef: null
-    }
-  }
-
-  if (key.startsWith('sb_publishable_')) {
-    return {
-      format: 'publishable' as const,
-      role: 'anon',
-      projectRef: null
-    }
-  }
-
-  const parts = key.split('.')
-
-  if (parts.length !== 3) {
-    return {
-      format: 'unknown' as const,
-      role: null,
-      projectRef: null
-    }
-  }
-
-  try {
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as {
-      role?: string
-      ref?: string
-    }
-
-    return {
-      format: 'legacy_jwt' as const,
-      role: payload.role || null,
-      projectRef: payload.ref || null
-    }
-  } catch {
-    return {
-      format: 'unknown' as const,
-      role: null,
-      projectRef: null
-    }
-  }
-}
+export {
+  describeServiceRoleKey,
+  inspectSupabaseKey,
+  previewSupabaseKey
+} from './supabaseKeyInspect'

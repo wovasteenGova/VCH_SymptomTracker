@@ -24,6 +24,7 @@ export function resolveSupabaseEnv(): SupabaseEnv {
   const serviceKey = readEnv('SUPABASE_SERVICE_KEY')
     || readEnv('SUPABASE_SERVICE_ROLE_KEY')
     || readEnv('NUXT_SUPABASE_SERVICE_KEY')
+    || readEnv('NUXT_SUPABASE_SECRET_KEY')
 
   return { url, anonKey, serviceKey }
 }
