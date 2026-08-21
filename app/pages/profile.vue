@@ -452,8 +452,8 @@
                     placeholder="Select branch"
                     :size="settingsInputSize"
                     color="primary"
-                    :ui="serviceBranchSelectUi"
-                    :content="serviceBranchSelectContent"
+                    :ui="settingsSelectMenuUi"
+                    :content="settingsSelectMenuContent"
                     @update:model-value="onServiceBranchChange"
                   />
                 </div>
@@ -837,6 +837,8 @@
                 class="w-full"
                 color="neutral"
                 size="xl"
+                :ui="settingsSelectMenuUi"
+                :content="settingsSelectMenuContent"
               />
             </div>
 
@@ -1731,12 +1733,12 @@ const projectSettingsExpanded = ref(false)
 const serviceBranchItems: Array<{ label: string, value: string }> = [
   ...SERVICE_BRANCH_OPTIONS
 ]
-const serviceBranchSelectUi = {
+const settingsSelectMenuUi = {
   base: 'w-full',
-  content: 'z-[120] min-w-72 max-w-96',
+  content: 'z-[130] min-w-72 max-w-96',
   itemLabel: 'whitespace-normal truncate-none'
 }
-const serviceBranchSelectContent = {
+const settingsSelectMenuContent = {
   align: 'start' as const,
   side: 'bottom' as const,
   sideOffset: 4,

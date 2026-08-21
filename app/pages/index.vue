@@ -3396,18 +3396,22 @@ type ExportableCondition = {
 }
 
 const exportableConditions = computed((): ExportableCondition[] => {
-  const groups = new Map<string, { label: string, count: number }>()
+  const groups = new Map<string, { label: string, count: number, lastActivityAt: number }>()
 
   for (const entry of savedEntries.value) {
     const resolvedCondition = resolveCatalogConditionByStoredKey(entry.condition_key || entry.condition_label)
     const key = resolvedCondition?.key || entry.condition_key || conditionKey(entry.condition_label)
     const label = resolvedCondition?.title || normalizeConditionLabel(entry.condition_label || formatConditionKeyLabel(key))
+    const activityAt = new Date(entry.updated_at || entry.created_at || entry.occurred_at || 0).getTime()
     const existing = groups.get(key)
 
     if (existing) {
       existing.count += 1
+      if (activityAt > existing.lastActivityAt) {
+        existing.lastActivityAt = activityAt
+      }
     } else {
-      groups.set(key, { label, count: 1 })
+      groups.set(key, { label, count: 1, lastActivityAt: activityAt })
     }
   }
 
@@ -3415,9 +3419,11 @@ const exportableConditions = computed((): ExportableCondition[] => {
     .map(([key, data]) => ({
       key,
       label: data.label,
-      entryCount: data.count
+      entryCount: data.count,
+      lastActivityAt: data.lastActivityAt
     }))
-    .sort((a, b) => a.label.localeCompare(b.label))
+    .sort((a, b) => b.lastActivityAt - a.lastActivityAt)
+    .map(({ key, label, entryCount }) => ({ key, label, entryCount }))
 })
 
 
