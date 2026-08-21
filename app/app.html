@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html {{ HTML_ATTRS }}>
   <head>
-    <script>
-      (function () {
-        var path = window.location.pathname
-        if (path === '/' || path === '') {
-          document.documentElement.classList.add('tracker-booting')
-        }
-      })()
-    </script>
     <style>
       #tracker-static-splash {
         display: none;
@@ -20,7 +12,10 @@
         padding: 1rem;
       }
 
-      html.tracker-booting #tracker-static-splash {
+      /* Visibility lives on this node, not html.tracker-booting.
+         Color-mode / Unhead replace <html class> (e.g. "dark") and used to
+         hide this tank, then Vue painted a second one. */
+      #tracker-static-splash.is-active {
         display: grid;
       }
 
@@ -71,10 +66,6 @@
     {{ HEAD }}
   </head>
   <body {{ BODY_ATTRS }}>
-    <!--
-      Lives outside {{ APP }} / #__nuxt so Vue mount does not destroy it.
-      That restart is what made the tank SVG play twice on load.
-    -->
     <div id="tracker-static-splash" aria-hidden="true">
       <div class="tracker-static-splash-inner">
         <div class="tracker-static-splash-brand">
@@ -94,6 +85,19 @@
         >
       </div>
     </div>
+    <script>
+      (function () {
+        var splash = document.getElementById('tracker-static-splash')
+        if (!splash) return
+        var path = window.location.pathname
+        if (path === '/' || path === '') {
+          splash.classList.add('is-active')
+          window.__trackerStaticSplashActive = true
+        } else {
+          splash.remove()
+        }
+      })()
+    </script>
     {{ APP }}
   </body>
 </html>

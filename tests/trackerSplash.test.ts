@@ -2,34 +2,40 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { shouldShowVueAppSplash } from '../app/utils/trackerSplash.ts'
 
-test('Vue splash stays off when the HTML tank is already on screen', () => {
+test('Vue splash stays off on first load even if the HTML tank is missing', () => {
   assert.equal(shouldShowVueAppSplash({
     isClient: true,
-    staticSplashPresent: true,
+    staticSplashPresent: false,
     splashDismissed: false,
+    allowVueFallback: false,
     isHomeRoute: true,
     homeWorkspaceReady: false,
     nonHomeSplashVisible: true
   }), false)
 })
 
-test('Vue splash is a client-only fallback when the HTML tank is missing', () => {
+test('Vue splash stays off when the HTML tank is already on screen', () => {
   assert.equal(shouldShowVueAppSplash({
     isClient: true,
-    staticSplashPresent: false,
+    staticSplashPresent: true,
     splashDismissed: false,
-    isHomeRoute: true,
-    homeWorkspaceReady: false,
-    nonHomeSplashVisible: true
-  }), true)
-  assert.equal(shouldShowVueAppSplash({
-    isClient: false,
-    staticSplashPresent: false,
-    splashDismissed: false,
+    allowVueFallback: true,
     isHomeRoute: true,
     homeWorkspaceReady: false,
     nonHomeSplashVisible: true
   }), false)
+})
+
+test('Vue splash is allowed only after an explicit retry fallback', () => {
+  assert.equal(shouldShowVueAppSplash({
+    isClient: true,
+    staticSplashPresent: false,
+    splashDismissed: false,
+    allowVueFallback: true,
+    isHomeRoute: true,
+    homeWorkspaceReady: false,
+    nonHomeSplashVisible: true
+  }), true)
 })
 
 test('Vue splash does not replay after bootstrap already dismissed it', () => {
@@ -37,6 +43,7 @@ test('Vue splash does not replay after bootstrap already dismissed it', () => {
     isClient: true,
     staticSplashPresent: false,
     splashDismissed: true,
+    allowVueFallback: true,
     isHomeRoute: true,
     homeWorkspaceReady: false,
     nonHomeSplashVisible: true
@@ -48,6 +55,7 @@ test('home splash hides once the workspace is ready', () => {
     isClient: true,
     staticSplashPresent: false,
     splashDismissed: false,
+    allowVueFallback: true,
     isHomeRoute: true,
     homeWorkspaceReady: true,
     nonHomeSplashVisible: true

@@ -1,6 +1,7 @@
 /**
- * Register the reminder service worker without the vite-pwa autoUpdate reload.
- * `controllerchange` + location.reload() was replaying the tank splash.
+ * Register the reminder SW without reloading the tab.
+ * Old vite-pwa autoUpdate helpers called location.reload() on controllerchange,
+ * which replayed the tank splash (clearing site data looked like a "cookie" fix).
  */
 export default defineNuxtPlugin(() => {
   if (!import.meta.client || !import.meta.env.PROD) {
@@ -11,7 +12,11 @@ export default defineNuxtPlugin(() => {
     return
   }
 
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // Intentionally empty — never reload for a new worker.
+  })
+
   void navigator.serviceWorker.register('/sw.js').catch(() => {
-    // Ignore — push reminders still work after a later visit if registration fails here.
+    // Push reminders still work after a later visit if registration fails here.
   })
 })
