@@ -1,8 +1,8 @@
 <template>
-  <UApp>
+  <ClientOnly>
     <Transition name="app-splash-fade">
       <div
-        v-if="showAppSplash"
+        v-if="showVueSplash"
         class="app-splash-overlay bg-default"
         role="status"
         aria-live="polite"
@@ -27,6 +27,8 @@
         </div>
       </div>
     </Transition>
+  </ClientOnly>
+  <UApp>
     <NuxtRouteAnnouncer />
     <NuxtPage />
     <SubmissionToast />
@@ -38,6 +40,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { isIosWebKitBrowser, resolveMobileViewport } from './utils/mobileViewport'
+import {
+  dismissTrackerStaticSplash,
+  isTrackerStaticSplashPresent,
+  shouldShowVueAppSplash
+} from './utils/trackerSplash'
 
 const { themeId } = useClaimColorTheme()
 
@@ -51,24 +58,38 @@ useHead(() => ({
 const { showSubmissionToast } = useSubmissionToast()
 const supabase = useSupabaseClient()
 const route = useRoute()
-const { homeWorkspaceReady } = useHomeWorkspaceReady()
+const { homeWorkspaceReady, splashDismissed } = useHomeWorkspaceReady()
 
 const waitsForHomeBootstrap = computed(() => route.path === '/')
 const nonHomeSplashVisible = ref(true)
+const staticSplashPresent = computed(() => isTrackerStaticSplashPresent())
 
-const showAppSplash = computed(() => {
-  if (waitsForHomeBootstrap.value) {
-    return !homeWorkspaceReady.value
-  }
+const showVueSplash = computed(() => shouldShowVueAppSplash({
+  isClient: import.meta.client,
+  staticSplashPresent: staticSplashPresent.value,
+  splashDismissed: splashDismissed.value,
+  isHomeRoute: waitsForHomeBootstrap.value,
+  homeWorkspaceReady: homeWorkspaceReady.value,
+  nonHomeSplashVisible: nonHomeSplashVisible.value
+}))
 
-  return nonHomeSplashVisible.value
-})
+function dismissBootSplash() {
+  splashDismissed.value = true
+  nonHomeSplashVisible.value = false
+  dismissTrackerStaticSplash()
+}
 
 watch(homeWorkspaceReady, (ready) => {
-  if (ready && waitsForHomeBootstrap.value) {
-    nonHomeSplashVisible.value = false
+  if (ready) {
+    dismissBootSplash()
   }
 })
+
+watch(splashDismissed, (dismissed) => {
+  if (dismissed) {
+    dismissTrackerStaticSplash()
+  }
+}, { immediate: true })
 
 const CHECKOUT_SUCCESS_TOAST_KEY = 'symptom-tracker-checkout-success-toast'
 let visualBaselineHeight = 0
@@ -117,7 +138,7 @@ function updateAppHeight() {
 
 onMounted(async () => {
   if (!waitsForHomeBootstrap.value) {
-    nonHomeSplashVisible.value = false
+    dismissBootSplash()
   }
 
   updateAppHeight()
