@@ -2321,7 +2321,7 @@ const {
   enableRemindersWithPermission
 } = useLogReminders()
 const { isDesktopLayout, isMobileLayout, isMobileCarouselLayout, prefersDesktopCarouselChrome, isEmbeddedPreview } = useTrackerLayout()
-const { homeWorkspaceReady, markHomeWorkspaceReady, resetHomeWorkspaceReady } = useHomeWorkspaceReady()
+const { homeWorkspaceReady, markHomeWorkspaceReady } = useHomeWorkspaceReady()
 const { openSettingsPanel } = useTrackerSettingsPanelOpen()
 
 watch(isDesktopLayout, (desktop) => {
@@ -4625,7 +4625,6 @@ async function refreshTrackedConditions() {
 async function retryHomeLoad() {
   entriesError.value = ''
   resetTrackedConditionsLoadState()
-  resetHomeWorkspaceReady()
 
   try {
     await refreshTrackedConditions()

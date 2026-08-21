@@ -50,6 +50,19 @@ test('Vue splash does not replay after bootstrap already dismissed it', () => {
   }), false)
 })
 
+test('Vue splash stays off after the boot splash has already been locked off', () => {
+  assert.equal(shouldShowVueAppSplash({
+    isClient: true,
+    staticSplashPresent: false,
+    splashDismissed: false,
+    allowVueFallback: true,
+    isHomeRoute: true,
+    homeWorkspaceReady: false,
+    nonHomeSplashVisible: true,
+    bootSplashLockedOff: true
+  }), false)
+})
+
 test('home splash hides once the workspace is ready', () => {
   assert.equal(shouldShowVueAppSplash({
     isClient: true,

@@ -37,9 +37,9 @@ const supabaseAnonKey = env('SUPABASE_ANON_KEY')
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  // Dark backdrop only — the tank lives in app.html outside #__nuxt so Vue
-  // replacing this template does not restart the SVG animation.
-  spaLoadingTemplate: true,
+  // One splash only: the HTML tank in app.html. Nuxt's SPA template would be a
+  // second overlay after reload, which is not how hub/builder do this.
+  spaLoadingTemplate: false,
   devtools: { enabled: false },
   devServer: {
     port: 3001

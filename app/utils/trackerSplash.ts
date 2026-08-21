@@ -1,9 +1,9 @@
 export const TRACKER_STATIC_SPLASH_ID = 'tracker-static-splash'
-export const TRACKER_STATIC_SPLASH_FADE_MS = 500
 
 declare global {
   interface Window {
     __trackerStaticSplashActive?: boolean
+    __trackerBootSplashDone?: boolean
   }
 }
 
@@ -15,32 +15,47 @@ export function isTrackerStaticSplashPresent() {
   return Boolean(document.getElementById(TRACKER_STATIC_SPLASH_ID))
 }
 
+export function isBootSplashLockedOff() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return window.__trackerBootSplashDone === true
+}
+
+/**
+ * Hide the HTML tank immediately. Do not fade: a 500ms leaving class can
+ * snap back to opacity 1 after cookies/theme hydrate, which looks like a
+ * second tank on top of an already-visible page.
+ */
 export function dismissTrackerStaticSplash() {
   if (typeof document === 'undefined') {
     return
   }
 
-  document.documentElement.classList.remove('tracker-booting')
-
   if (typeof window !== 'undefined') {
     window.__trackerStaticSplashActive = false
+    window.__trackerBootSplashDone = true
   }
+
+  document.documentElement.classList.remove('tracker-booting')
 
   const splash = document.getElementById(TRACKER_STATIC_SPLASH_ID)
 
-  if (!splash || splash.classList.contains('tracker-static-splash--leaving')) {
+  if (!splash) {
     return
   }
 
-  splash.classList.add('tracker-static-splash--leaving')
-  window.setTimeout(() => {
-    splash.remove()
-  }, TRACKER_STATIC_SPLASH_FADE_MS)
+  splash.style.setProperty('opacity', '0', 'important')
+  splash.style.setProperty('display', 'none', 'important')
+  splash.style.setProperty('pointer-events', 'none', 'important')
+  splash.setAttribute('aria-hidden', 'true')
+  splash.remove()
 }
 
 /**
- * First home load uses the HTML tank only. Vue may paint a tank only after
- * an explicit retry (allowVueFallback), never because cookies/theme remounted.
+ * Vue must never paint a second tank. First load uses the HTML splash only.
+ * Kept as a guard so a future overlay cannot replay after bootstrap.
  */
 export function shouldShowVueAppSplash(input: {
   isClient: boolean
@@ -50,8 +65,13 @@ export function shouldShowVueAppSplash(input: {
   isHomeRoute: boolean
   homeWorkspaceReady: boolean
   nonHomeSplashVisible: boolean
+  bootSplashLockedOff?: boolean
 }) {
-  if (!input.isClient || input.splashDismissed || !input.allowVueFallback) {
+  if (!input.isClient || input.splashDismissed || input.bootSplashLockedOff) {
+    return false
+  }
+
+  if (!input.allowVueFallback) {
     return false
   }
 

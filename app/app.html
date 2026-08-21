@@ -12,9 +12,7 @@
         padding: 1rem;
       }
 
-      /* Visibility lives on this node, not html.tracker-booting.
-         Color-mode / Unhead replace <html class> (e.g. "dark") and used to
-         hide this tank, then Vue painted a second one. */
+      /* Visibility lives on this node, not html.tracker-booting. */
       #tracker-static-splash.is-active {
         display: grid;
       }
@@ -57,16 +55,11 @@
         user-select: none;
       }
 
-      #tracker-static-splash.tracker-static-splash--leaving {
-        opacity: 0;
-        transition: opacity 0.5s ease;
-        pointer-events: none;
-      }
     </style>
     {{ HEAD }}
   </head>
   <body {{ BODY_ATTRS }}>
-    <div id="tracker-static-splash" aria-hidden="true">
+    <div id="tracker-static-splash" class="is-active" aria-hidden="true">
       <div class="tracker-static-splash-inner">
         <div class="tracker-static-splash-brand">
           <img
@@ -91,7 +84,6 @@
         if (!splash) return
         var path = window.location.pathname
         if (path === '/' || path === '') {
-          splash.classList.add('is-active')
           window.__trackerStaticSplashActive = true
         } else {
           splash.remove()
