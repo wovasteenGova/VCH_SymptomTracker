@@ -1,19 +1,47 @@
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseNodeOptions } from './supabaseNodeOptions'
+import { resolveSupabaseEnv } from './supabaseEnv'
+import { describeServiceRoleKey } from './supabaseKeyInspect'
 
 const TRACKER_SCHEMA = 'tracker'
 
-export function getSupabaseAdmin() {
+function getTrackerUrl() {
   const config = useRuntimeConfig()
-  const supabaseUrl = String(config.public.supabaseUrl || '').trim()
-  const serviceRoleKey = String(
-    config.supabaseServiceRoleKey || config.supabaseServiceKey || ''
-  ).trim()
+  const env = resolveSupabaseEnv()
+  return String(config.public.supabaseUrl || env.url || '').trim()
+}
 
-  if (!supabaseUrl || !serviceRoleKey) {
+function getServiceRoleKey() {
+  const config = useRuntimeConfig()
+  const env = resolveSupabaseEnv()
+  return String(
+    config.supabaseServiceRoleKey || config.supabaseServiceKey || env.serviceKey || ''
+  ).trim()
+}
+
+function getAnonKey() {
+  const config = useRuntimeConfig()
+  const env = resolveSupabaseEnv()
+  return String(
+    config.public.supabaseAnonKey
+    || config.public.supabasePublishableKey
+    || config.public.supabaseKey
+    || env.anonKey
+    || ''
+  ).trim()
+}
+
+export function getSupabaseAdmin() {
+  const supabaseUrl = getTrackerUrl()
+  const serviceRoleKey = getServiceRoleKey()
+  const check = describeServiceRoleKey(serviceRoleKey, getAnonKey())
+
+  if (!supabaseUrl || !check.ok) {
     throw createError({
       statusCode: 500,
-      message: 'Supabase service role is not configured on the server.'
+      message: check.reason === 'same_as_anon' || check.reason === 'anon_jwt'
+        ? 'SUPABASE_SERVICE_KEY is the anon/publishable key. Paste the VCH service_role or sb_secret_ key from Supabase → API Keys, then redeploy.'
+        : 'Supabase service role is not configured on the server.'
     })
   }
 

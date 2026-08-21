@@ -27,7 +27,8 @@ export default defineEventHandler(() => {
 
   if (isProduction) {
     return {
-      ok: !configError && stripeConfigured && checkoutReady
+      ok: !configError && stripeConfigured && checkoutReady,
+      hasServiceKey: Boolean(env.serviceKey)
     }
   }
 
