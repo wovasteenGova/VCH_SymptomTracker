@@ -428,7 +428,7 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
               :key="entryStep"
               class="flex min-h-0 flex-1 flex-col"
               :class="currentStepHasSliderField && currentStepFields.length === 1
-                ? 'justify-center px-1 py-4'
+                ? 'justify-start overflow-y-auto custom-scrollbar px-1 py-4'
                 : currentStepIsEpisodeDetailStep
                   ? 'mt-8 justify-start space-y-12 overflow-y-auto custom-scrollbar pt-2'
                   : 'mt-6 justify-start space-y-6 overflow-y-auto custom-scrollbar'"
@@ -464,9 +464,9 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
                   v-if="field.type === 'slider'"
                   data-step-swipe-block
                   data-demo-field="severity-slider"
-                  class="w-full space-y-5"
+                  class="flex w-full min-h-0 flex-1 flex-col"
                 >
-                  <div class="space-y-1 text-center">
+                  <div class="shrink-0 space-y-1 pb-5 text-center">
                     <p class="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                       How much did today affect you?
                     </p>
@@ -475,6 +475,7 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
                     </p>
                   </div>
 
+                  <div class="w-full space-y-5">
                   <div class="flex items-center justify-between text-xs font-semibold text-muted">
                     <span>Best day</span>
                     <span>Worst day</span>
@@ -523,6 +524,7 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
                         </p>
                       </div>
                     </Transition>
+                  </div>
                   </div>
                 </div>
 
