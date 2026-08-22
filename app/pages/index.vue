@@ -1992,7 +1992,6 @@ import { usePasskeys } from '../composables/usePasskeys'
 import { clearOAuthFlowMarker } from '../composables/useAuthEmailLink'
 import { useSymptomEntries } from '../composables/useSymptomEntries'
 import { useSymptomPdfExport } from '../composables/useSymptomPdfExport'
-import { useDeletedEntryArchive } from '../composables/useDeletedEntryArchive'
 import { useUserProfiles } from '../composables/useUserProfiles'
 import { useEntitlements } from '../composables/useEntitlements'
 import { useAppWelcome } from '../composables/useAppWelcome'
@@ -2288,6 +2287,8 @@ const entriesError = ref('')
 const savedEntries = ref<any[]>([])
 const hasLoadedEntriesOnce = ref(false)
 let entriesLoadPromise: Promise<void> | null = null
+let entriesLoadOwnerId: string | null = null
+let entriesLoadSequence = 0
 const homeConditionOrderKeys = ref<string[]>([])
 const conditionBrowserListOrder = ref<string[]>([])
 const conditionBrowserRef = ref<{ focusCustomConditionInput?: () => void } | null>(null)
@@ -2404,7 +2405,6 @@ const selectedSearchCondition = ref<null | {
 }>(null)
 
 const { downloadEntriesPdf, downloadCpExamPdf } = useSymptomPdfExport()
-const { archiveDeletedEntry } = useDeletedEntryArchive()
 const {
   isMonthlyBackupReminderVisible,
   dismissMonthlyBackupReminder,
@@ -3837,10 +3837,11 @@ function refreshEntryDraftPreview() {
   entryDraftPreview.value = null
 }
 
-function persistEntryDraftNow() {
+function persistEntryDraftNow(expectedOwnerId = user.value?.id ?? null) {
   if (isRestoringEntryDraft.value || editingEntryId.value) {
     return
   }
+  if ((user.value?.id ?? null) !== expectedOwnerId) return
 
   const snapshot = buildEntryDraftSnapshot({
     entryStep: entryStep.value,
@@ -3852,12 +3853,12 @@ function persistEntryDraftNow() {
   })
 
   if (!snapshot) {
-    clearEntryDraft(user.value?.id)
+    clearEntryDraft(expectedOwnerId)
     refreshEntryDraftPreview()
     return
   }
 
-  writeEntryDraft(user.value?.id, snapshot)
+  writeEntryDraft(expectedOwnerId, snapshot)
   refreshEntryDraftPreview()
 }
 
@@ -3870,8 +3871,9 @@ function scheduleEntryDraftSave() {
     clearTimeout(entryDraftSaveTimer)
   }
 
+  const expectedOwnerId = user.value?.id ?? null
   entryDraftSaveTimer = setTimeout(() => {
-    persistEntryDraftNow()
+    persistEntryDraftNow(expectedOwnerId)
   }, 800)
 }
 
@@ -4077,6 +4079,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  cancelEntryDraftSave()
   document.removeEventListener('visibilitychange', handleLogReminderVisibilityChange)
 
   if (homeConditionsMaxScrollResizeListener) {
@@ -4092,6 +4095,11 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
   if (nextId === prevId) {
     return
   }
+
+  cancelEntryDraftSave()
+  entriesLoadSequence += 1
+  entriesLoadPromise = null
+  entriesLoadOwnerId = null
 
   // Auth token refresh / hydration after the first bootstrap — refresh quietly.
   if (!prevId && nextId && homeBootstrapComplete.value) {
@@ -4920,7 +4928,8 @@ async function finishConditionBrowser() {
 }
 
 async function loadEntries() {
-  if (!user.value) {
+  const expectedOwnerId = user.value?.id ?? null
+  if (!expectedOwnerId) {
     savedEntries.value = []
     homeConditionOrderKeys.value = []
     hasLoadedEntriesOnce.value = false
@@ -4930,9 +4939,12 @@ async function loadEntries() {
     return
   }
 
-  if (entriesLoadPromise) {
+  if (entriesLoadPromise && entriesLoadOwnerId === expectedOwnerId) {
     return entriesLoadPromise
   }
+
+  const requestSequence = ++entriesLoadSequence
+  entriesLoadOwnerId = expectedOwnerId
 
   entriesLoadPromise = (async () => {
     if (!hasLoadedEntriesOnce.value) {
@@ -4942,14 +4954,19 @@ async function loadEntries() {
 
     try {
       const { listEntries } = useSymptomEntries()
-      savedEntries.value = await listEntries()
+      const entries = await listEntries()
+      if (user.value?.id !== expectedOwnerId || requestSequence !== entriesLoadSequence) return
+      savedEntries.value = entries
       syncSubmissionSeenState(savedEntries.value)
       refreshMonthlyBackupReminder()
       await refreshTrackedConditions()
       syncHomeConditionOrderKeys()
     } catch (error) {
-      entriesError.value = getErrorMessage(error)
+      if (user.value?.id === expectedOwnerId && requestSequence === entriesLoadSequence) {
+        entriesError.value = getErrorMessage(error)
+      }
     } finally {
+      if (user.value?.id !== expectedOwnerId || requestSequence !== entriesLoadSequence) return
       isLoadingEntries.value = false
       hasLoadedEntriesOnce.value = true
       scheduleLogReminderCheck()
@@ -4959,7 +4976,10 @@ async function loadEntries() {
   try {
     await entriesLoadPromise
   } finally {
-    entriesLoadPromise = null
+    if (requestSequence === entriesLoadSequence) {
+      entriesLoadPromise = null
+      entriesLoadOwnerId = null
+    }
   }
 }
 
@@ -5194,7 +5214,7 @@ async function saveEntry() {
 
   try {
     const wasEditing = Boolean(editingEntryId.value)
-    const { createEntry, updateEntry, updateEntryWithRevision } = useSymptomEntries()
+    const { createEntry, updateEntryWithRevision } = useSymptomEntries()
 
     let savedEntryId: string | null = null
 
@@ -5202,11 +5222,11 @@ async function saveEntry() {
       const editingEntry = savedEntries.value.find((item) => item.id === editingEntryId.value)
 
       if (editingEntry?.source === 'family') {
-        await updateEntry(editingEntryId.value, payload)
+        throw new Error('Signed family observations cannot be rewritten. Ask the supporter to submit a new observation instead.')
       } else if (editingEntrySaveSnapshot.value) {
         await updateEntryWithRevision(editingEntryId.value, editingEntrySaveSnapshot.value, payload)
       } else {
-        await updateEntry(editingEntryId.value, payload)
+        throw new Error('The original entry snapshot is unavailable. Close the editor and try again.')
       }
     } else {
       const savedEntry = await createEntry(payload)
@@ -5257,8 +5277,6 @@ async function archiveEntry(id: string) {
   }
 
   try {
-    archiveDeletedEntry(user.value.id, entry)
-
     const { deleteEntry } = useSymptomEntries()
     await deleteEntry(id)
     await loadEntries()
@@ -7299,7 +7317,7 @@ function requestEntryEdit(entryId: string) {
   }
 
   if (entry.source === 'family') {
-    openEntryForEdit(entryId)
+    entriesError.value = 'Signed family observations are read-only. The supporter can submit a new observation if something changed.'
     return
   }
 

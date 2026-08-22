@@ -1,4 +1,5 @@
-import { getSupabasePublicConfig, inspectSupabaseKey, previewSupabaseKey } from '../utils/supabasePublicConfig'
+import { getSupabasePublicConfig } from '../utils/supabasePublicConfig'
+import { inspectSupabaseKey, previewSupabaseKey } from '../utils/supabaseKeyInspect'
 import { getSupabaseConfigError, resolveSupabaseEnv } from '../utils/supabaseEnv'
 import { getReminderCronSecret, getVapidPrivateKey, getVapidPublicKey } from '../utils/pushReminderAuth'
 import { isStripePriceId } from '../utils/subscriptionCheckoutSession'

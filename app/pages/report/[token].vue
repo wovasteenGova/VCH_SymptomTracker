@@ -674,6 +674,13 @@ function getStepFieldErrors(step: number): ObservationFieldErrors {
 
     if (!form.value.observed_at) {
       errors.observed_at = 'Choose when you observed this.'
+    } else {
+      const observedAt = new Date(form.value.observed_at)
+      if (Number.isNaN(observedAt.getTime())) {
+        errors.observed_at = 'Choose a valid date and time.'
+      } else if (observedAt.getTime() > Date.now() + 60_000) {
+        errors.observed_at = 'The observation time cannot be in the future.'
+      }
     }
   }
 
@@ -951,13 +958,19 @@ async function submitObservation() {
     return
   }
 
+  const observedAt = new Date(form.value.observed_at)
+  if (Number.isNaN(observedAt.getTime()) || observedAt.getTime() > Date.now() + 60_000) {
+    submitError.value = 'The observation time must be valid and cannot be in the future.'
+    return
+  }
+
   isSubmitting.value = true
   submitError.value = ''
 
   const { error } = await trackerDb.rpc('submit_supporter_observation', {
     link_token: token,
     condition_label: form.value.condition_label,
-    observed_at: new Date(form.value.observed_at).toISOString(),
+    observed_at: observedAt.toISOString(),
     severity: severityValue.value,
     impact: form.value.impact,
     notes: form.value.notes || null,

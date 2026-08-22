@@ -1,8 +1,10 @@
 import { useRoute, useState } from '#imports'
 import { useMediaQuery } from '@vueuse/core'
 import { computed, inject, onMounted } from 'vue'
-
-export type TrackerLayoutMode = 'auto' | 'desktop' | 'mobile'
+import {
+  resolveTrackerLayoutState,
+  type TrackerLayoutMode
+} from '../utils/trackerLayoutState'
 
 export const TRACKER_LAYOUT_STORAGE_KEY = 'symptom-tracker-layout-mode'
 export const TRACKER_EMBED_KEY = Symbol('tracker-embed')
@@ -24,41 +26,6 @@ function readStoredLayoutMode(): TrackerLayoutMode {
   }
 
   return 'auto'
-}
-
-export function resolveTrackerLayoutState(input: {
-  isEmbeddedPreview: boolean
-  forceDesktopFromQuery: boolean
-  layoutMode: TrackerLayoutMode
-  matchesWideViewport: boolean
-}) {
-  const isWideDesktopWorkspace = (() => {
-    if (input.isEmbeddedPreview || input.forceDesktopFromQuery) {
-      return true
-    }
-
-    if (input.layoutMode === 'mobile') {
-      return false
-    }
-
-    if (!input.matchesWideViewport) {
-      return false
-    }
-
-    return input.layoutMode === 'desktop' || input.layoutMode === 'auto'
-  })()
-
-  const isMobileCarouselLayout = !isWideDesktopWorkspace && !input.isEmbeddedPreview
-
-  const prefersDesktopCarouselChrome = !isWideDesktopWorkspace
-    && !input.isEmbeddedPreview
-    && input.layoutMode === 'desktop'
-
-  return {
-    isWideDesktopWorkspace,
-    isMobileCarouselLayout,
-    prefersDesktopCarouselChrome
-  }
 }
 
 export function useTrackerLayout() {

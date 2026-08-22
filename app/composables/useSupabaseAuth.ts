@@ -5,6 +5,7 @@ import { useTrackerAuthRedirects } from '../utils/authRedirects'
 import { AUTH_NOTICES, AUTH_VALIDATION, normalizeAuthEmail, validateAuthEmailField } from '../utils/authNotices'
 import { assertAuthEmailCooldown, formatAuthEmailCooldownMessage, isAuthEmailCooldownMessage, markAuthEmailSent } from '../utils/authEmailCooldown'
 import { clearOAuthFlowMarker, markOAuthFlowStarted } from './useAuthEmailLink'
+import { clearLocalSymptomData } from '../utils/localSymptomPrivacy'
 
 type AuthFailure = {
   message?: string
@@ -485,6 +486,7 @@ export function useSupabaseAuth() {
 
   async function signOut() {
     authError.value = ''
+    const signedOutUserId = user.value?.id ?? null
 
     let error: unknown
 
@@ -500,11 +502,13 @@ export function useSupabaseAuth() {
       throw error
     }
 
+    clearLocalSymptomData(signedOutUserId)
     user.value = null
   }
 
   async function signOutEverywhere() {
     authError.value = ''
+    const signedOutUserId = user.value?.id ?? null
 
     let error: unknown
 
@@ -516,6 +520,7 @@ export function useSupabaseAuth() {
     }
 
     await clearLocalAuthSession()
+    clearLocalSymptomData(signedOutUserId)
     user.value = null
 
     if (error && !isBenignSignOutError(error)) {

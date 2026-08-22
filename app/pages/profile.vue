@@ -1402,7 +1402,6 @@ import { useSupabaseAuth } from '../composables/useSupabaseAuth'
 import { usePasskeys, type TrackerPasskey } from '../composables/usePasskeys'
 import { useUserProfiles } from '../composables/useUserProfiles'
 import { useSymptomEntries } from '../composables/useSymptomEntries'
-import { useDeletedEntryArchive } from '../composables/useDeletedEntryArchive'
 import { useEntitlements } from '../composables/useEntitlements'
 import { useAppWelcome } from '../composables/useAppWelcome'
 import {
@@ -1417,7 +1416,8 @@ import {
   formatTimezoneLabel,
   LOG_REMINDER_HOUR_OPTIONS
 } from '../utils/logReminders'
-import { useTrackerLayout, TRACKER_CLOSE_EMBED_PROFILE_KEY, TRACKER_CLOSE_SETTINGS_KEY, type TrackerLayoutMode } from '../composables/useTrackerLayout'
+import { useTrackerLayout, TRACKER_CLOSE_EMBED_PROFILE_KEY, TRACKER_CLOSE_SETTINGS_KEY } from '../composables/useTrackerLayout'
+import type { TrackerLayoutMode } from '../utils/trackerLayoutState'
 import type { SettingsSection } from '../composables/useSettingsSectionNav'
 import { mapEntryHistoryItem } from '../utils/entryDisplay'
 import { copyToClipboard } from '../utils/copyToClipboard'
@@ -1535,14 +1535,13 @@ const {
   deleteSupporterProfile
 } = useUserProfiles()
 const { showSubmissionToast } = useSubmissionToast()
-const { createEntry, listEntries, deleteAllEntries } = useSymptomEntries()
 const {
+  listEntries,
   listDeletedEntries,
-  removeDeletedEntry,
-  takeDeletedEntry,
-  archiveDeletedEntry,
-  clearDeletedEntriesForUser
-} = useDeletedEntryArchive()
+  restoreEntry,
+  purgeDeletedEntry,
+  deleteAllEntries
+} = useSymptomEntries()
 const {
   isPro,
   isClaimBuilderPro,
@@ -1802,6 +1801,7 @@ const projectSettingsHasDetails = computed(() =>
 let profileSaveTimer: ReturnType<typeof setTimeout> | undefined
 let serviceSaveTimer: ReturnType<typeof setTimeout> | undefined
 let savedLabelTimer: ReturnType<typeof setTimeout> | undefined
+let profileLoadSequence = 0
 const isCreatingSupporter = ref(false)
 const isRestoringEntryId = ref<string | null>(null)
 const isDeletingSupporterId = ref<string | null>(null)
@@ -1957,8 +1957,13 @@ function applySupporterLinkQuery() {
 }
 
 watch(user, (currentUser) => {
+  profileLoadSequence += 1
+  if (profileSaveTimer) clearTimeout(profileSaveTimer)
+  if (serviceSaveTimer) clearTimeout(serviceSaveTimer)
+  profileSaveTimer = undefined
+  serviceSaveTimer = undefined
   if (currentUser) {
-    loadProfilePage()
+    void loadProfilePage(currentUser.id)
   } else {
     deletedEntries.value = []
     supporterProfiles.value = []
@@ -1972,17 +1977,20 @@ watch(user, (currentUser) => {
 
 watch(isAuthLoading, (loading) => {
   if (!loading && user.value) {
-    loadProfilePage()
+    void loadProfilePage(user.value.id)
   }
 })
 
-function loadDeletedEntries() {
+async function loadDeletedEntries(expectedUserId = user.value?.id ?? null) {
   if (!user.value) {
     deletedEntries.value = []
     return
   }
 
-  deletedEntries.value = listDeletedEntries(user.value.id)
+  const entries = await listDeletedEntries()
+  if (expectedUserId && user.value?.id === expectedUserId) {
+    deletedEntries.value = entries
+  }
 }
 
 function chooseLayoutMode(mode: TrackerLayoutMode) {
@@ -1990,21 +1998,26 @@ function chooseLayoutMode(mode: TrackerLayoutMode) {
   markAutoSaveSaved()
 }
 
-async function loadProfilePage() {
+async function loadProfilePage(expectedUserId = user.value?.id ?? null) {
+  if (!expectedUserId) return
+  const requestSequence = ++profileLoadSequence
   pageError.value = ''
   isHydratingProfile.value = true
-  loadDeletedEntries()
-  loadPasskeys()
 
   try {
+    await loadDeletedEntries(expectedUserId)
+    void loadPasskeys()
     const [profile, supporters, entries] = await Promise.all([
       getProfile(),
       listSupporterProfiles(),
       listEntries().catch(() => [])
     ])
 
+    if (user.value?.id !== expectedUserId || requestSequence !== profileLoadSequence) return
+
     await loadEntitlements()
     await loadAppWelcomeState()
+    if (user.value?.id !== expectedUserId || requestSequence !== profileLoadSequence) return
 
     activeLogCount.value = entries.length
     profileForm.value.full_name = profile?.full_name || user.value?.user_metadata?.full_name || ''
@@ -2015,10 +2028,14 @@ async function loadProfilePage() {
     supporterProfiles.value = supporters
     await refreshPushReminderStatus()
   } catch (error) {
-    pageError.value = getErrorMessage(error)
+    if (user.value?.id === expectedUserId && requestSequence === profileLoadSequence) {
+      pageError.value = getErrorMessage(error)
+    }
   } finally {
-    profileInitialized.value = true
-    isHydratingProfile.value = false
+    if (user.value?.id === expectedUserId && requestSequence === profileLoadSequence) {
+      profileInitialized.value = true
+      isHydratingProfile.value = false
+    }
   }
 }
 
@@ -2051,8 +2068,9 @@ function scheduleProfileAutoSave() {
     clearTimeout(profileSaveTimer)
   }
 
+  const expectedUserId = user.value.id
   profileSaveTimer = setTimeout(() => {
-    saveProfile()
+    if (user.value?.id === expectedUserId) void saveProfile(expectedUserId)
   }, 650)
 }
 
@@ -2092,12 +2110,14 @@ function scheduleServiceAutoSave() {
     clearTimeout(serviceSaveTimer)
   }
 
+  const expectedUserId = user.value.id
   serviceSaveTimer = setTimeout(() => {
-    void saveServiceProfile()
+    if (user.value?.id === expectedUserId) void saveServiceProfile(expectedUserId)
   }, 650)
 }
 
-async function saveServiceProfile() {
+async function saveServiceProfile(expectedUserId = user.value?.id ?? null) {
+  if (!expectedUserId || user.value?.id !== expectedUserId) return
   isSavingProfile.value = true
   pageError.value = ''
 
@@ -2118,7 +2138,8 @@ async function saveServiceProfile() {
   }
 
   try {
-    await upsertProfile(normalized.patch)
+    if (user.value?.id !== expectedUserId) return
+    await upsertProfile(normalized.patch, expectedUserId)
     markAutoSaveSaved()
   } catch (error) {
     autoSaveState.value = 'error'
@@ -2142,7 +2163,8 @@ onUnmounted(() => {
   }
 })
 
-async function saveProfile() {
+async function saveProfile(expectedUserId = user.value?.id ?? null) {
+  if (!expectedUserId || user.value?.id !== expectedUserId) return
   isSavingProfile.value = true
   pageError.value = ''
 
@@ -2150,7 +2172,7 @@ async function saveProfile() {
     await upsertProfile({
       full_name: profileForm.value.full_name,
       display_name: profileForm.value.full_name
-    })
+    }, expectedUserId)
     markAutoSaveSaved()
   } catch (error) {
     autoSaveState.value = 'error'
@@ -2192,7 +2214,14 @@ async function toggleLogReminders() {
   }
 
   if (remindersEnabled.value) {
-    await disableReminders()
+    const result = await disableReminders()
+    if (!result?.ok) {
+      showSubmissionToast({
+        message: result?.message || 'Could not turn off reminders. Please try again.',
+        tone: 'error'
+      })
+      return
+    }
     await refreshPushReminderStatus()
     showSubmissionToast({ message: 'VCH reminders turned off.' })
     return
@@ -2441,7 +2470,7 @@ async function restoreDeletedEntry(entryId: string) {
   pageError.value = ''
   isRestoringEntryId.value = entryId
 
-  const archivedEntry = takeDeletedEntry(user.value.id, entryId)
+  const archivedEntry = deletedEntries.value.find(entry => entry.id === entryId)
   if (!archivedEntry) {
     isRestoringEntryId.value = null
     return
@@ -2452,23 +2481,13 @@ async function restoreDeletedEntry(entryId: string) {
     delete restoredEntry.deleted_at
 
     if (!canTrackCondition(restoredEntry.condition_key || 'unknown')) {
-      archiveDeletedEntry(user.value.id, archivedEntry)
-      loadDeletedEntries()
       pageError.value = `Free plan includes ${FREE_CONDITION_LIMIT} conditions. Upgrade to Pro to restore entries for other conditions.`
       return
     }
 
-    await createEntry({
-      condition_key: restoredEntry.condition_key,
-      condition_label: restoredEntry.condition_label,
-      severity: restoredEntry.severity,
-      occurred_at: restoredEntry.occurred_at,
-      summary: restoredEntry.summary,
-      impact: restoredEntry.impact,
-      details: restoredEntry.details || {}
-    })
+    await restoreEntry(entryId)
 
-    loadDeletedEntries()
+    await loadDeletedEntries(user.value.id)
     showSubmissionToast('Entry restored.')
   } catch (error) {
     pageError.value = getErrorMessage(error)
@@ -2497,15 +2516,19 @@ function cancelPurgeDeletedEntry() {
   pendingPurgeEntry.value = null
 }
 
-function confirmPurgeDeletedEntry() {
+async function confirmPurgeDeletedEntry() {
   if (!pendingPurgeEntry.value || !user.value) {
     return
   }
 
-  removeDeletedEntry(user.value.id, pendingPurgeEntry.value.id)
-  pendingPurgeEntry.value = null
-  loadDeletedEntries()
-  showSubmissionToast('Deleted entry removed permanently.')
+  try {
+    await purgeDeletedEntry(pendingPurgeEntry.value.id)
+    pendingPurgeEntry.value = null
+    await loadDeletedEntries(user.value.id)
+    showSubmissionToast('Deleted entry removed permanently.')
+  } catch (error) {
+    pageError.value = getErrorMessage(error)
+  }
 }
 
 function openDeleteAllLogsModal() {
@@ -2544,8 +2567,7 @@ async function confirmDeleteAllLogs() {
     }
 
     await deleteAllEntries()
-    clearDeletedEntriesForUser(user.value.id)
-    loadDeletedEntries()
+    await loadDeletedEntries(user.value.id)
     activeLogCount.value = 0
     closeDeleteAllLogsModal()
     showSubmissionToast('All logs deleted.')

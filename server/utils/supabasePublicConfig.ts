@@ -74,9 +74,3 @@ export function assertSupabasePublicConfig(event?: H3Event) {
 
   return resolved
 }
-
-export {
-  describeServiceRoleKey,
-  inspectSupabaseKey,
-  previewSupabaseKey
-} from './supabaseKeyInspect'

@@ -418,8 +418,6 @@ export function useLogReminders() {
     }
 
     isReminderTogglePending.value = true
-    setRemindersEnabled(false)
-    hasRegisteredPushSubscription.value = false
 
     try {
       await disablePushSubscription()
@@ -429,8 +427,14 @@ export function useLogReminders() {
         reminderEveningHour: reminderEveningHour.value,
         reminderTimezone: reminderTimezone.value
       })
-    } catch {
-      // Local disable still applies even if Supabase sync fails.
+      setRemindersEnabled(false)
+      hasRegisteredPushSubscription.value = false
+      return { ok: true as const }
+    } catch (error) {
+      return {
+        ok: false as const,
+        message: error instanceof Error ? error.message : 'Could not turn off reminders.'
+      }
     } finally {
       isReminderTogglePending.value = false
     }

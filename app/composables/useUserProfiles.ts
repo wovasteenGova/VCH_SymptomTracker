@@ -90,8 +90,11 @@ export function useUserProfiles() {
     return data
   }
 
-  async function upsertProfile(payload: UserProfilePayload) {
+  async function upsertProfile(payload: UserProfilePayload, expectedUserId?: string) {
     const userId = await getUserId()
+    if (expectedUserId && userId !== expectedUserId) {
+      throw new Error('Your account changed before these profile settings could be saved.')
+    }
     const upsertPayload = {
       user_id: userId,
       ...payload,

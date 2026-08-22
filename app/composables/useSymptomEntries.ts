@@ -1,6 +1,7 @@
 import { useSupabaseClient } from '#imports'
 import { type EntryRevisionRecord, type EntryRevisionSnapshot, normalizeRevisionRecords } from '../utils/entryEditHistory'
 import { useTrackerDb } from './useTrackerDb'
+import { readDeletedEntriesForUser, writeDeletedEntriesForUser } from './useDeletedEntryArchive'
 
 type SymptomEntryPayload = {
   condition_key: string
@@ -32,6 +33,13 @@ async function getAccessToken(supabase: ReturnType<typeof useSupabaseClient>) {
   return data.session?.access_token || null
 }
 
+function isMissingDeletedAtColumn(error: unknown) {
+  const message = error && typeof error === 'object' && 'message' in error
+    ? String((error as { message?: unknown }).message)
+    : ''
+  return /deleted_at/i.test(message) && /column|schema cache/i.test(message)
+}
+
 export function useSymptomEntries() {
   const supabase = useSupabaseClient()
   const trackerDb = useTrackerDb()
@@ -50,6 +58,13 @@ export function useSymptomEntries() {
     throw new Error('Please sign in before saving symptom entries.')
   }
 
+  async function assertRequestOwner(expectedUserId: string) {
+    const currentUserId = await getUserId()
+    if (currentUserId !== expectedUserId) {
+      throw new Error('Your account changed while this request was running. Please try again.')
+    }
+  }
+
   async function listEntries() {
     const userId = await getUserId()
 
@@ -57,12 +72,39 @@ export function useSymptomEntries() {
       .from('symptom_entries')
       .select('*')
       .eq('user_id', userId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (error) {
-      throw error
+      if (!isMissingDeletedAtColumn(error)) throw error
+      const fallback = await trackerDb
+        .from('symptom_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      if (fallback.error) throw fallback.error
+      await assertRequestOwner(userId)
+      return fallback.data || []
     }
 
+    await assertRequestOwner(userId)
+    return data || []
+  }
+
+  async function listDeletedEntries() {
+    const userId = await getUserId()
+    const { data, error } = await trackerDb
+      .from('symptom_entries')
+      .select('*')
+      .eq('user_id', userId)
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false })
+
+    if (error) {
+      if (isMissingDeletedAtColumn(error)) return readDeletedEntriesForUser(userId)
+      throw error
+    }
+    await assertRequestOwner(userId)
     return data || []
   }
 
@@ -72,11 +114,11 @@ export function useSymptomEntries() {
     const { data, error } = await trackerDb
       .from('symptom_entries')
       .insert({
+        ...payload,
         user_id: userId,
         source: 'veteran',
         entry_status: 'complete',
-        edit_count: 0,
-        ...payload
+        edit_count: 0
       })
       .select()
       .single()
@@ -89,6 +131,7 @@ export function useSymptomEntries() {
   }
 
   async function updateEntry(id: string, payload: Partial<SymptomEntryPayload>) {
+    const userId = await getUserId()
     const { data, error } = await trackerDb
       .from('symptom_entries')
       .update({
@@ -96,6 +139,9 @@ export function useSymptomEntries() {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
+      .eq('user_id', userId)
+      .eq('source', 'veteran')
+      .eq('entry_status', 'draft')
       .select()
       .single()
 
@@ -173,13 +219,98 @@ export function useSymptomEntries() {
   }
 
   async function deleteEntry(id: string) {
+    const userId = await getUserId()
+    const { data: existingEntry } = await trackerDb
+      .from('symptom_entries')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .maybeSingle()
+    const { error } = await trackerDb
+      .from('symptom_entries')
+      .update({
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      if (!isMissingDeletedAtColumn(error)) throw error
+      if (existingEntry) {
+        writeDeletedEntriesForUser(userId, [{
+          ...existingEntry,
+          deleted_at: new Date().toISOString()
+        }, ...readDeletedEntriesForUser(userId)])
+      }
+      const fallback = await trackerDb
+        .from('symptom_entries')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+      if (fallback.error) throw fallback.error
+    }
+  }
+
+  async function restoreEntry(id: string) {
+    const userId = await getUserId()
+    const { data, error } = await trackerDb
+      .from('symptom_entries')
+      .update({
+        deleted_at: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      if (!isMissingDeletedAtColumn(error)) throw error
+      const archived = readDeletedEntriesForUser(userId).find(entry => entry.id === id)
+      if (!archived) throw new Error('Deleted entry not found.')
+      const { data: restored, error: restoreError } = await trackerDb
+        .from('symptom_entries')
+        .insert({
+          user_id: userId,
+          source: archived.source === 'family' ? 'family' : 'veteran',
+          entry_status: archived.entry_status || 'complete',
+          edit_count: archived.edit_count || 0,
+          condition_key: archived.condition_key,
+          condition_label: archived.condition_label,
+          severity: archived.severity,
+          occurred_at: archived.occurred_at,
+          summary: archived.summary,
+          impact: archived.impact,
+          details: archived.details || {}
+        })
+        .select()
+        .single()
+      if (restoreError) throw restoreError
+      writeDeletedEntriesForUser(
+        userId,
+        readDeletedEntriesForUser(userId).filter(entry => entry.id !== id)
+      )
+      return restored
+    }
+    return data
+  }
+
+  async function purgeDeletedEntry(id: string) {
+    const userId = await getUserId()
     const { error } = await trackerDb
       .from('symptom_entries')
       .delete()
       .eq('id', id)
+      .eq('user_id', userId)
+      .not('deleted_at', 'is', null)
 
     if (error) {
-      throw error
+      if (!isMissingDeletedAtColumn(error)) throw error
+      writeDeletedEntriesForUser(
+        userId,
+        readDeletedEntriesForUser(userId).filter(entry => entry.id !== id)
+      )
     }
   }
 
@@ -194,15 +325,19 @@ export function useSymptomEntries() {
     if (error) {
       throw error
     }
+    writeDeletedEntriesForUser(userId, [])
   }
 
   return {
     listEntries,
+    listDeletedEntries,
     createEntry,
     updateEntry,
     updateEntryWithRevision,
     listRevisionsForEntries,
     deleteEntry,
+    restoreEntry,
+    purgeDeletedEntry,
     deleteAllEntries
   }
 }

@@ -21,7 +21,7 @@ describe('tracker toolbar actions', () => {
       index.indexOf('LAY_REPORTING_ACTION.tooltip')
     )
     expect(toolbar).toContain('openClaimBuilder')
-    expect(toolbar).toContain('Open ClaimBuilder')
+    expect(toolbar).toContain('{{ CLAIMBUILDER_ACTION.label }}')
     expect(index.indexOf('CLAIMBUILDER_ACTION.tooltip')).toBeLessThan(index.indexOf('LAY_REPORTING_ACTION.tooltip'))
   })
 })

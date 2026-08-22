@@ -234,7 +234,7 @@ defineExpose({
               </p>
             </div>
 
-            <div class="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+            <div class="flex shrink-0 items-center gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
               <button
                 v-if="entry.conditionKey"
                 type="button"
@@ -245,6 +245,7 @@ defineExpose({
                 <UIcon name="i-lucide-chart-line" class="size-3.5" />
               </button>
               <button
+                v-if="entry.source !== 'Family'"
                 type="button"
                 :class="['grid size-8 place-items-center rounded-full hover:bg-accented hover:text-highlighted', td.iconMuted]"
                 :aria-label="`Edit ${entry.title}`"

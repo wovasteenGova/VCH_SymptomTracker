@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import test from 'node:test'
+import { test } from 'vitest'
 import { describeServiceRoleKey, inspectSupabaseKey } from '../server/utils/supabaseKeyInspect.ts'
 
 function jwtForRole(role: string) {

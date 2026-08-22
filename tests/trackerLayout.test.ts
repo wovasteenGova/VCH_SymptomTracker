@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveTrackerLayoutState } from '../app/composables/useTrackerLayout'
+import { resolveTrackerLayoutState } from '../app/utils/trackerLayoutState'
 
 describe('tracker layout breakpoints', () => {
   it('uses the phone carousel when desktop mode is forced on a narrow viewport', () => {
