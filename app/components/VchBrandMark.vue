@@ -55,9 +55,12 @@ function goHome() {
       <img
         :src="reportBranding.logoPath"
         :alt="reportBranding.organizationName"
+        width="44"
+        height="44"
         class="size-full object-cover object-center transition group-hover/logo:opacity-90"
-        loading="lazy"
-        decoding="async"
+        loading="eager"
+        decoding="sync"
+        fetchpriority="high"
       >
     </button>
 

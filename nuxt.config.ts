@@ -119,6 +119,7 @@ export default defineNuxtConfig({
         { name: 'twitter:card', content: 'summary' }
       ],
       link: [
+        { rel: 'preload', as: 'image', href: '/brand/vch-symptom-tracker-logo.png', type: 'image/png', fetchpriority: 'high' },
         { rel: 'icon', type: 'image/png', href: '/brand/vch-symptom-tracker-logo.png' },
         { rel: 'shortcut icon', type: 'image/png', href: '/brand/vch-symptom-tracker-logo.png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
