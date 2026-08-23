@@ -15,15 +15,18 @@ export function buildSymptomEntrySavePayload(options: {
   entryTitle: string
   severity: number
   entryForm: Record<string, string>
+  /** Preserve the stored key when editing an existing entry. */
+  conditionKey?: string | null
 }): SymptomEntrySavePayload {
-  const { entryTitle, severity, entryForm } = options
+  const { entryTitle, severity, entryForm, conditionKey } = options
   const details = { ...entryForm }
   const occurredAt = entryForm.date_and_time
     ? new Date(entryForm.date_and_time).toISOString()
     : null
+  const resolvedConditionKey = conditionKey?.trim() || conditionKeyFromLabel(entryTitle)
 
   return {
-    condition_key: conditionKeyFromLabel(entryTitle),
+    condition_key: resolvedConditionKey,
     condition_label: entryTitle,
     severity,
     occurred_at: occurredAt,
@@ -36,7 +39,7 @@ export function buildSymptomEntrySavePayload(options: {
 export function buildSymptomEntrySavePayloadFromRecord(
   entry: Record<string, unknown>,
   entryTitle: string,
-  options: { customName?: string | null } = {}
+  options: { customName?: string | null, conditionKey?: string | null } = {}
 ): SymptomEntrySavePayload {
   const details = {
     ...((entry.details as Record<string, string>) || {})
@@ -61,7 +64,9 @@ export function buildSymptomEntrySavePayloadFromRecord(
   return buildSymptomEntrySavePayload({
     entryTitle,
     severity: (entry.severity as number | null | undefined) ?? 5,
-    entryForm: details
+    entryForm: details,
+    conditionKey: options.conditionKey
+      ?? (typeof entry.condition_key === 'string' ? entry.condition_key : null)
   })
 }
 

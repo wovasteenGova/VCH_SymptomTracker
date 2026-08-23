@@ -2273,6 +2273,7 @@ const entryDraftPreview = ref<{ title: string, timeLabel: string } | null>(null)
 const isRestoringEntryDraft = ref(false)
 const entryStep = ref(0)
 const editingEntryId = ref<string | null>(null)
+const editingEntryConditionKey = ref<string | null>(null)
 const editingEntryConditionLabel = ref<string | null>(null)
 const editingEntrySaveSnapshot = ref<SymptomEntrySavePayload | null>(null)
 const severityValue = ref(5)
@@ -3627,7 +3628,7 @@ const activeEntryFields = computed(() => {
     fields = getEntryFieldsForSearchCondition(selectedSearchCondition.value)
   } else {
     const customName = entryForm.value.condition_name?.trim()
-    if (customName) {
+    if (customName && !isEditingEntry.value) {
       fields = [
         {
           label: 'Condition name',
@@ -3897,6 +3898,7 @@ function restoreEntryDraftSnapshot(snapshot: EntryDraftSnapshot) {
   historyExpanded.value = false
   transitionDirection.value = 'expand'
   editingEntryId.value = null
+  editingEntryConditionKey.value = null
   editingEntryConditionLabel.value = null
   entryError.value = ''
   entryStep.value = snapshot.entryStep
@@ -5200,7 +5202,8 @@ async function saveEntry() {
   const payload = buildSymptomEntrySavePayload({
     entryTitle: entryTitle.value,
     severity: severityValue.value,
-    entryForm: entryForm.value
+    entryForm: entryForm.value,
+    conditionKey: editingEntryConditionKey.value
   })
 
   if (editingEntryId.value && editingEntrySaveSnapshot.value && symptomEntrySavePayloadsEqual(editingEntrySaveSnapshot.value, payload)) {
@@ -5236,9 +5239,18 @@ async function saveEntry() {
     hasActiveDraft.value = false
     clearPersistedEntryDraft()
     editingEntrySaveSnapshot.value = null
+    const preservedEditingConditionKey = editingEntryConditionKey.value
     closeEntryPanel(true)
     await loadEntries()
-    await syncHomeConditionsAfterEntrySave(payload.condition_key)
+    if (!wasEditing) {
+      await syncHomeConditionsAfterEntrySave(payload.condition_key)
+    } else if (
+      preservedEditingConditionKey
+      && isCustomTrackedConditionKey(preservedEditingConditionKey)
+      && payload.condition_label
+    ) {
+      rememberCustomConditionLabel(preservedEditingConditionKey, payload.condition_label)
+    }
     await loadEntitlements()
 
     if (!wasEditing && savedEntryId) {
@@ -6728,6 +6740,7 @@ function changeEntryCondition(condition: { title: string, category: string, desc
 
   selectedSearchCondition.value = condition
   editingEntryConditionLabel.value = null
+  editingEntryConditionKey.value = null
 
   if (entryForm.value.condition_name) {
     delete entryForm.value.condition_name
@@ -6763,6 +6776,7 @@ function applyCustomEntryCondition() {
 
   selectedSearchCondition.value = null
   editingEntryConditionLabel.value = null
+  editingEntryConditionKey.value = null
   entryForm.value.condition_name = customName
   entryStep.value = 0
   isConditionPickerOpen.value = false
@@ -7199,8 +7213,20 @@ function resolvePendingEntryConditionKey(options: {
   return ''
 }
 
-function resolveEntryConditionLabel(label: string) {
-  const normalizedLabel = normalizeConditionLabel(label)
+function resolveEntryConditionLabel(entry: { condition_key?: string | null, condition_label?: string | null }) {
+  const storedKey = entry.condition_key?.trim() || ''
+  const storedLabel = entry.condition_label?.trim() || ''
+  const catalogMatch = resolveCatalogConditionByStoredKey(storedKey || storedLabel)
+
+  if (catalogMatch) {
+    return {
+      searchCondition: catalogMatch,
+      conditionLabel: null as string | null,
+      customName: null as string | null
+    }
+  }
+
+  const normalizedLabel = normalizeConditionLabel(storedLabel)
   const searchMatch = conditionResults.find((condition) => condition.title === normalizedLabel)
   if (searchMatch) {
     return {
@@ -7218,10 +7244,14 @@ function resolveEntryConditionLabel(label: string) {
     }
   }
 
+  const customLabel = storedLabel
+    || customConditionLabels.value[storedKey]
+    || formatConditionKeyLabel(storedKey)
+
   return {
     searchCondition: null,
     conditionLabel: null,
-    customName: normalizedLabel
+    customName: customLabel
   }
 }
 
@@ -7390,8 +7420,9 @@ function openEntryForEdit(entryId: string) {
     return
   }
 
-  const resolved = resolveEntryConditionLabel(entry.condition_label)
+  const resolved = resolveEntryConditionLabel(entry)
   editingEntryId.value = entryId
+  editingEntryConditionKey.value = entry.condition_key?.trim() || null
   editingEntryConditionLabel.value = resolved.conditionLabel
   selectedSearchCondition.value = resolved.searchCondition
   customConditionInput.value = ''
@@ -7423,7 +7454,10 @@ function openEntryForEdit(entryId: string) {
   editingEntrySaveSnapshot.value = buildSymptomEntrySavePayloadFromRecord(
     entry,
     entryTitleForSnapshot,
-    { customName: resolved.customName }
+    {
+      customName: resolved.customName,
+      conditionKey: entry.condition_key
+    }
   )
 }
 
@@ -7645,6 +7679,7 @@ function openEntryPanelInner(options: {
   entryStep.value = 0
   resetEntryForm()
   editingEntryId.value = null
+  editingEntryConditionKey.value = null
   editingEntryConditionLabel.value = null
   selectedSearchCondition.value = options.condition ?? null
   hasActiveDraft.value = true
@@ -7750,6 +7785,7 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
     }
 
     editingEntryId.value = null
+    editingEntryConditionKey.value = null
     editingEntryConditionLabel.value = null
     editingEntrySaveSnapshot.value = null
     selectedSearchCondition.value = null
@@ -7776,6 +7812,7 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
     refreshEntryDraftPreview()
   } else {
     editingEntryId.value = null
+    editingEntryConditionKey.value = null
     editingEntryConditionLabel.value = null
     editingEntrySaveSnapshot.value = null
     selectedSearchCondition.value = null
