@@ -858,23 +858,22 @@
                 'pointer-events-none': historyExpanded || historyPanelAnimating
               }"
             >
-              <Transition name="home-log-btn">
-                <div
-                  v-if="isMobileCarouselLayout && !prefersDesktopCarouselChrome && !isHomeOverviewSlide && !historyExpanded && isConditionSlideEntryEnabled"
-                  key="condition-log-btn"
-                  class="mt-4 flex w-full justify-center"
+              <div
+                v-if="isMobileCarouselLayout && !prefersDesktopCarouselChrome && !isHomeOverviewSlide && !historyExpanded"
+                class="mt-4 flex w-full justify-center"
+              >
+                <button
+                  type="button"
+                  class="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-bold text-white shadow-xl transition hover:opacity-90 active:scale-[0.98] disabled:opacity-100"
+                  :class="{ 'pointer-events-none': !isConditionSlideEntryEnabled }"
+                  :disabled="!isConditionSlideEntryEnabled"
+                  :aria-label="`Log ${activeCondition.title} entry`"
+                  @click.stop="startEntryFromCurrentSlide"
                 >
-                  <button
-                    type="button"
-                    class="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-bold text-white shadow-xl transition hover:opacity-90 active:scale-[0.98]"
-                    :aria-label="`Log ${activeCondition.title} entry`"
-                    @click.stop="startEntryFromCurrentSlide"
-                  >
-                    <UIcon name="i-lucide-plus" class="size-5" />
-                    Log {{ activeCondition.title }}
-                  </button>
-                </div>
-              </Transition>
+                  <UIcon name="i-lucide-plus" class="size-5" />
+                  Log {{ activeCondition.title }}
+                </button>
+              </div>
 
               <div
                 v-if="prefersDesktopCarouselChrome && !historyExpanded"
@@ -8257,21 +8256,6 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   transform: translateY(-0.35rem);
 }
 
-.home-log-btn-enter-active {
-  transition:
-    opacity var(--home-log-ms, 650ms) var(--home-ease, cubic-bezier(0.22, 1, 0.36, 1))
-    var(--home-log-delay-ms, 0ms);
-}
-
-.home-log-btn-leave-active {
-  transition: opacity var(--home-log-ms, 650ms) var(--home-ease, cubic-bezier(0.22, 1, 0.36, 1));
-}
-
-.home-log-btn-enter-from,
-.home-log-btn-leave-to {
-  opacity: 0;
-}
-
 .home-state-fade-enter-active,
 .home-state-fade-leave-active {
   transition: none;
@@ -8637,8 +8621,6 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   .home-carousel-tip,
   .home-tip-fade-enter-active,
   .home-tip-fade-leave-active,
-  .home-log-btn-enter-active,
-  .home-log-btn-leave-active,
   .workspace-panel-enter-active,
   .workspace-panel-leave-active {
     transition-duration: 1ms;
