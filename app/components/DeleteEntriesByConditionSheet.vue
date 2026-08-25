@@ -37,7 +37,7 @@ function entryCountLabel(group: DeletableConditionGroup) {
 
 <template>
   <AppOverlayShell
-    :z-index="130"
+    :z-index="120"
     @dismiss="emit('dismiss')"
   >
     <div
@@ -68,7 +68,7 @@ function entryCountLabel(group: DeletableConditionGroup) {
         </button>
       </div>
 
-      <div class="no-scrollbar min-h-40 flex-1 overflow-y-auto px-5 py-4">
+      <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4">
         <div
           v-if="loading"
           class="rounded-2xl px-4 py-10 text-center text-sm text-muted"

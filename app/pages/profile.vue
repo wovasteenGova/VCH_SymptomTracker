@@ -1778,7 +1778,6 @@ const supporterForm = ref({
 })
 const supporterProfiles = useState<any[]>('profile-page-supporters', () => [])
 const deletedEntries = ref<any[]>([])
-const profileCachedActiveEntries = useState<any[]>('profile-page-active-entries', () => [])
 const createdLink = ref('')
 const createdLinkCopied = ref(false)
 const linkedEntryId = ref<string | null>(null)
@@ -2006,7 +2005,6 @@ watch(user, (currentUser) => {
     profileForm.value.full_name = ''
     serviceDraft.value = { ...EMPTY_VETERAN_SERVICE_PROFILE }
     activeLogCount.value = 0
-    profileCachedActiveEntries.value = []
     profileInitialized.value = false
     clearPasskeys()
   }
@@ -2057,7 +2055,6 @@ async function loadProfilePage(expectedUserId = user.value?.id ?? null) {
     if (user.value?.id !== expectedUserId || requestSequence !== profileLoadSequence) return
 
     activeLogCount.value = entries.length
-    profileCachedActiveEntries.value = entries
     profileForm.value.full_name = profile?.full_name || user.value?.user_metadata?.full_name || ''
     if (autoSaveState.value !== 'saving') {
       serviceDraft.value = readVeteranServiceProfileFromRow(profile as Record<string, unknown> | null)
@@ -2583,14 +2580,9 @@ async function openDeleteEntriesModal() {
 
   deleteEntriesError.value = ''
   selectedDeleteConditionKeys.value = []
+  deletableConditionGroups.value = []
   isDeleteEntriesModalOpen.value = true
-
-  deletableConditionGroups.value = buildDeletableConditionGroups({
-    activeEntries: profileCachedActiveEntries.value,
-    deletedEntries: deletedEntries.value
-  })
-
-  isLoadingDeleteEntriesModal.value = deletableConditionGroups.value.length === 0
+  isLoadingDeleteEntriesModal.value = true
 
   try {
     const [activeEntries, deletedEntriesList] = await Promise.all([
@@ -2598,7 +2590,6 @@ async function openDeleteEntriesModal() {
       listDeletedEntries()
     ])
 
-    profileCachedActiveEntries.value = activeEntries
     deletedEntries.value = deletedEntriesList
     deletableConditionGroups.value = buildDeletableConditionGroups({
       activeEntries,
@@ -2651,7 +2642,6 @@ async function confirmDeleteSelectedEntries() {
       loadDeletedEntries(user.value.id),
       listEntries().then((entries) => {
         activeLogCount.value = entries.length
-        profileCachedActiveEntries.value = entries
       })
     ])
 
