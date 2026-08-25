@@ -294,6 +294,23 @@ button:disabled,
   max-width: 32rem;
 }
 
+/* Settings FAQ / contact / delete-entries — full frame, not History inset. */
+.app-overlay-shell[data-settings-support-overlay] {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+.app-overlay-shell[data-settings-support-overlay] .app-overlay-panel {
+  --app-overlay-panel-max-height: min(
+    80dvh,
+    calc(
+      100dvh
+      - env(safe-area-inset-top, 0px)
+      - env(safe-area-inset-bottom, 0px)
+      - 2rem
+    )
+  );
+}
+
 .app-shell-embed {
   height: 100%;
   max-height: 100%;

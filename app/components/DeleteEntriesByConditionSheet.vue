@@ -37,16 +37,18 @@ function entryCountLabel(group: DeletableConditionGroup) {
 
 <template>
   <AppOverlayShell
-    :z-index="120"
+    settings-support-overlay
+    :z-index="130"
+    backdrop-class="bg-black/55 backdrop-blur-[2px]"
     @dismiss="emit('dismiss')"
   >
     <div
-      class="app-overlay-panel app-overlay-panel--stack app-overlay-panel--lg w-full overflow-hidden rounded-[1.75rem] border border-default bg-elevated shadow-2xl"
+      class="app-overlay-panel app-overlay-panel--stack app-overlay-panel--lg flex max-h-[min(92dvh,42rem)] w-full flex-col overflow-hidden rounded-[1.75rem] border border-default bg-elevated shadow-2xl lg:max-h-[min(80dvh,42rem)]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="delete-entries-by-condition-title"
     >
-      <div class="flex items-start justify-between gap-4 border-b border-default px-5 py-4">
+      <div class="flex shrink-0 items-start justify-between gap-4 border-b border-default px-5 py-4">
         <div class="min-w-0">
           <p class="text-xs font-bold uppercase tracking-[0.16em] text-red-300/80">
             Delete entries
@@ -117,7 +119,7 @@ function entryCountLabel(group: DeletableConditionGroup) {
         </div>
       </div>
 
-      <div class="border-t border-default px-5 py-4">
+      <div class="shrink-0 border-t border-default px-5 py-4">
         <p
           v-if="!loading && conditions.length && !selectedKeys.length"
           class="mb-3 text-xs font-medium text-amber-700 dark:text-amber-200"
