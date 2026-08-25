@@ -4723,9 +4723,8 @@ function toggleDraftCondition(key: string) {
   }
 
   if (draftSelectedKeys.value.includes(key)) {
-    // Custom rows stay in the list once added; a second tap should not hide them.
     if (isCustomTrackedConditionKey(key)) {
-      return
+      prependConditionBrowserListOrderKey(key)
     }
 
     draftSelectedKeys.value = draftSelectedKeys.value.filter((existingKey) => existingKey !== key)
