@@ -120,6 +120,20 @@
         <p class="mt-2 text-xs leading-5 text-toned">
           Not in the list? Type your condition and tap Add to track it on your home screen.
         </p>
+        <button
+          v-if="inactiveCustomConditionCount > 0"
+          type="button"
+          class="mt-3 flex w-full items-center justify-between gap-3 rounded-xl border border-default bg-default px-3 py-2.5 text-left text-sm font-semibold text-highlighted transition hover:bg-accented/40"
+          @click="emit('openInactiveCustom')"
+        >
+          <span class="inline-flex min-w-0 items-center gap-2">
+            <UIcon name="i-lucide-archive" class="size-4 shrink-0 text-muted" />
+            <span class="truncate">Removed custom conditions</span>
+          </span>
+          <span class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-bold text-toned">
+            {{ inactiveCustomConditionCount }}
+          </span>
+        </button>
       </div>
 
     </div>
@@ -425,6 +439,8 @@ const props = defineProps<{
 
   demoSearchQuery?: string
 
+  inactiveCustomConditionCount?: number
+
 }>()
 
 
@@ -442,6 +458,8 @@ const emit = defineEmits<{
   confirm: []
 
   done: []
+
+  openInactiveCustom: []
 
 }>()
 

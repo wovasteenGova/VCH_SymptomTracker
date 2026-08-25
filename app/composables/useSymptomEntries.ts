@@ -1,5 +1,7 @@
 import { useSupabaseClient } from '#imports'
 import { type EntryRevisionRecord, type EntryRevisionSnapshot, normalizeRevisionRecords } from '../utils/entryEditHistory'
+import { resolveCatalogConditionByStoredKey, resolveTrackedConditionKey } from '../utils/conditionCatalog'
+import { conditionKeyFromLabel } from '../utils/subscription'
 import { useTrackerDb } from './useTrackerDb'
 import { readDeletedEntriesForUser, writeDeletedEntriesForUser } from './useDeletedEntryArchive'
 
@@ -314,6 +316,27 @@ export function useSymptomEntries() {
     }
   }
 
+  async function deleteEntriesForConditionKey(conditionKey: string) {
+    const normalizedTarget = resolveTrackedConditionKey(conditionKey) ?? conditionKey.trim()
+    if (!normalizedTarget) {
+      return 0
+    }
+
+    const entries = await listEntries()
+    const matching = entries.filter((entry) => {
+      const resolved = resolveCatalogConditionByStoredKey(entry.condition_key || entry.condition_label || '')
+      const entryKey = resolved?.key || entry.condition_key?.trim() || conditionKeyFromLabel(entry.condition_label || '')
+      const normalizedEntryKey = resolveTrackedConditionKey(entryKey) ?? entryKey
+      return normalizedEntryKey === normalizedTarget
+    })
+
+    for (const entry of matching) {
+      await deleteEntry(entry.id)
+    }
+
+    return matching.length
+  }
+
   async function deleteAllEntries() {
     const userId = await getUserId()
 
@@ -336,6 +359,7 @@ export function useSymptomEntries() {
     updateEntryWithRevision,
     listRevisionsForEntries,
     deleteEntry,
+    deleteEntriesForConditionKey,
     restoreEntry,
     purgeDeletedEntry,
     deleteAllEntries
