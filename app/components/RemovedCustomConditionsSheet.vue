@@ -4,10 +4,12 @@ import type { InactiveCustomCondition } from '../utils/inactiveCustomConditions'
 defineProps<{
   items: InactiveCustomCondition[]
   deletingKey?: string | null
+  restoringKey?: string | null
 }>()
 
 const emit = defineEmits<{
   dismiss: []
+  restore: [item: InactiveCustomCondition]
   delete: [item: InactiveCustomCondition]
 }>()
 </script>
@@ -32,7 +34,8 @@ const emit = defineEmits<{
             Not on home
           </h3>
           <p class="mt-1 text-sm leading-6 text-toned">
-            These custom conditions are off your home screen. Delete their logs here if you no longer need them.
+            These custom conditions are off your home screen. Restore puts one back on home.
+            Remove name deletes only the saved custom label — your logs stay in History.
           </p>
         </div>
         <button
@@ -52,7 +55,7 @@ const emit = defineEmits<{
         >
           <p class="font-bold text-highlighted">Nothing here</p>
           <p class="mt-2 text-sm leading-6 text-toned">
-            Removed custom conditions with saved logs will show up here.
+            Custom conditions you remove from home will show up here.
           </p>
         </div>
 
@@ -78,24 +81,45 @@ const emit = defineEmits<{
               </p>
             </div>
 
-            <button
-              type="button"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:opacity-50"
-              :disabled="Boolean(deletingKey)"
-              @click="emit('delete', item)"
-            >
-              <UIcon
-                v-if="deletingKey === item.key"
-                name="i-lucide-loader-circle"
-                class="size-3.5 animate-spin"
-              />
-              <UIcon
-                v-else
-                name="i-lucide-trash-2"
-                class="size-3.5"
-              />
-              {{ deletingKey === item.key ? 'Deleting...' : 'Delete' }}
-            </button>
+            <div class="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-primary/90 disabled:opacity-50"
+                :disabled="Boolean(deletingKey || restoringKey)"
+                @click="emit('restore', item)"
+              >
+                <UIcon
+                  v-if="restoringKey === item.key"
+                  name="i-lucide-loader-circle"
+                  class="size-3.5 animate-spin"
+                />
+                <UIcon
+                  v-else
+                  name="i-lucide-house-plus"
+                  class="size-3.5"
+                />
+                {{ restoringKey === item.key ? 'Restoring...' : 'Restore' }}
+              </button>
+
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:opacity-50"
+                :disabled="Boolean(deletingKey || restoringKey)"
+                @click="emit('delete', item)"
+              >
+                <UIcon
+                  v-if="deletingKey === item.key"
+                  name="i-lucide-loader-circle"
+                  class="size-3.5 animate-spin"
+                />
+                <UIcon
+                  v-else
+                  name="i-lucide-tag-x"
+                  class="size-3.5"
+                />
+                {{ deletingKey === item.key ? 'Removing...' : 'Remove name' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>

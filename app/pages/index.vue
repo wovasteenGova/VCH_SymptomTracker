@@ -1502,7 +1502,9 @@
     v-if="isRemovedCustomConditionsOpen"
     :items="inactiveCustomConditions"
     :deleting-key="deletingInactiveCustomKey"
+    :restoring-key="restoringInactiveCustomKey"
     @dismiss="closeRemovedCustomConditionsSheet"
+    @restore="restoreInactiveCustom"
     @delete="requestDeleteInactiveCustom"
   />
 
@@ -1521,19 +1523,20 @@
     >
       <div class="app-overlay-panel app-overlay-panel--compact rounded-[1.75rem] bg-elevated p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="delete-inactive-custom-title">
         <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
-          Delete custom condition logs
+          Remove saved name
         </p>
         <h3 id="delete-inactive-custom-title" class="mt-2 text-xl font-bold text-highlighted">
-          Delete logs for {{ pendingDeleteInactiveCustom.label }}?
+          Remove saved name for {{ pendingDeleteInactiveCustom.label }}?
         </h3>
         <p class="mt-3 text-sm leading-6 text-toned">
-          <template v-if="pendingDeleteInactiveCustom.entryCount > 0">
-            {{ pendingDeleteInactiveCustom.entryCount === 1 ? '1 log' : `${pendingDeleteInactiveCustom.entryCount} logs` }}
-            will move to <span class="font-semibold text-highlighted">Deleted</span> in your account settings. You can restore them later from <span class="font-semibold text-highlighted">Recovery</span>.
-          </template>
-          <template v-else>
-            This removes the saved custom label for <span class="font-semibold text-highlighted">{{ pendingDeleteInactiveCustom.label }}</span>. There are no logs to delete.
-          </template>
+          This removes the saved custom label only.
+          <span v-if="pendingDeleteInactiveCustom.entryCount > 0">
+            Your {{ pendingDeleteInactiveCustom.entryCount === 1 ? 'log' : `${pendingDeleteInactiveCustom.entryCount} logs` }}
+            stay in <span class="font-semibold text-highlighted">History</span>.
+          </span>
+          <span v-else>
+            There are no logs for this condition.
+          </span>
         </p>
 
         <div class="mt-5 grid grid-cols-2 gap-3">
@@ -1549,7 +1552,7 @@
             class="rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700"
             @click="confirmDeleteInactiveCustom"
           >
-            {{ pendingDeleteInactiveCustom.entryCount > 0 ? 'Move to Deleted' : 'Remove label' }}
+            Remove name
           </button>
         </div>
       </div>
@@ -2548,6 +2551,7 @@ const pendingDelete = ref<null | {
 const pendingDeleteInactiveCustom = ref<InactiveCustomCondition | null>(null)
 const isRemovedCustomConditionsOpen = ref(false)
 const deletingInactiveCustomKey = ref<string | null>(null)
+const restoringInactiveCustomKey = ref<string | null>(null)
 const viewedHistoryEntryId = ref<string | null>(null)
 const isShareLinkOpen = ref(false)
 const shareLinkEntry = ref<any | null>(null)
@@ -4749,6 +4753,10 @@ function openConditionBrowserForCustom() {
 }
 
 function toggleDraftCondition(key: string) {
+  void toggleDraftConditionAsync(key)
+}
+
+async function toggleDraftConditionAsync(key: string) {
   trackedConditionsError.value = ''
 
   if (mentalHealthRestrictedKeys.value.includes(key)) {
@@ -4762,6 +4770,15 @@ function toggleDraftCondition(key: string) {
     }
 
     draftSelectedKeys.value = draftSelectedKeys.value.filter((existingKey) => existingKey !== key)
+
+    if (
+      !needsOnboarding.value
+      && isConditionBrowserOpen.value
+      && isCustomTrackedConditionKey(key)
+      && user.value
+    ) {
+      await persistDraftTrackedConditions()
+    }
     return
   }
 
@@ -4780,6 +4797,29 @@ function toggleDraftCondition(key: string) {
   }
 
   draftSelectedKeys.value = [key, ...draftSelectedKeys.value]
+}
+
+async function persistDraftTrackedConditions() {
+  if (isSavingTrackedConditions.value) {
+    return
+  }
+
+  const keysToSave = resolveTrackedKeysToSave(draftSelectedKeys.value)
+  if (!validateDraftMentalHealthSelection(keysToSave)) {
+    return
+  }
+
+  isSavingTrackedConditions.value = true
+  trackedConditionsError.value = ''
+
+  try {
+    await updateTrackedConditions(keysToSave)
+    await syncFreeConditionWithTrackedKeys(keysToSave)
+  } catch (error) {
+    trackedConditionsError.value = getErrorMessage(error)
+  } finally {
+    isSavingTrackedConditions.value = false
+  }
 }
 
 function resolveTrackedKeysToSave(keys: string[]) {
@@ -5396,14 +5436,50 @@ function normalizeTrackedKeyForCompare(key: string) {
   return resolveTrackedConditionKey(key) ?? key.trim()
 }
 
-async function removeCustomFromTrackedKeys(conditionKey: string) {
-  const normalizedTarget = normalizeTrackedKeyForCompare(conditionKey)
-  const nextKeys = trackedConditionKeys.value.filter((key) => (
-    normalizeTrackedKeyForCompare(key) !== normalizedTarget
-  ))
+async function restoreInactiveCustom(item: InactiveCustomCondition) {
+  if (!user.value || restoringInactiveCustomKey.value || deletingInactiveCustomKey.value) {
+    return
+  }
 
-  if (nextKeys.length !== trackedConditionKeys.value.length) {
-    await updateTrackedConditions(nextKeys)
+  restoringInactiveCustomKey.value = item.key
+
+  try {
+    const normalizedKey = normalizeTrackedKeyForCompare(item.key)
+    const alreadyTracked = trackedConditionKeys.value.some((key) => (
+      normalizeTrackedKeyForCompare(key) === normalizedKey
+    ))
+
+    let nextKeys = [...trackedConditionKeys.value]
+
+    if (!alreadyTracked) {
+      nextKeys = isDemoMode || !isPro.value
+        ? [item.key]
+        : [item.key, ...trackedConditionKeys.value]
+    }
+
+    const keysToSave = resolveTrackedKeysToSave(nextKeys)
+    if (!validateDraftMentalHealthSelection(keysToSave)) {
+      return
+    }
+
+    await updateTrackedConditions(keysToSave)
+    await syncFreeConditionWithTrackedKeys(keysToSave)
+    await rememberCustomConditionLabel(item.key, item.label)
+    promoteHomeConditionOrderKey(item.key)
+
+    if (isConditionBrowserOpen.value) {
+      draftSelectedKeys.value = keysToSave
+      prependConditionBrowserListOrderKey(item.key)
+    }
+
+    showSubmissionToast(`${item.label} is back on your home screen.`)
+  } catch (error) {
+    showSubmissionToast({
+      message: getErrorMessage(error),
+      tone: 'error'
+    })
+  } finally {
+    restoringInactiveCustomKey.value = null
   }
 }
 
@@ -5417,26 +5493,13 @@ async function confirmDeleteInactiveCustom() {
   pendingDeleteInactiveCustom.value = null
 
   try {
-    const { deleteEntriesForConditionKey } = useSymptomEntries()
-    const deletedCount = await deleteEntriesForConditionKey(item.key)
-    await removeCustomFromTrackedKeys(item.key)
     await forgetCustomConditionLabel(item.key)
-    conditionBrowserListOrder.value = conditionBrowserListOrder.value.filter((key) => key !== item.key)
-    draftSelectedKeys.value = draftSelectedKeys.value.filter((key) => key !== item.key)
-    await loadEntries()
 
-    const logLabel = deletedCount === 1 ? '1 log' : `${deletedCount} logs`
-    showSubmissionToast({
-      message: deletedCount
-        ? `Moved ${logLabel} for ${item.label} to Deleted.`
-        : `Removed ${item.label} from your saved custom labels.`,
-      action: deletedCount
-        ? {
-          href: '/profile#settings-recovery',
-          label: 'Open Recovery'
-        }
-        : undefined
-    })
+    showSubmissionToast(
+      item.entryCount > 0
+        ? `Removed the saved name for ${item.label}. Your logs are still in History.`
+        : `Removed the saved name for ${item.label}.`
+    )
   } catch (error) {
     showSubmissionToast({
       message: getErrorMessage(error),

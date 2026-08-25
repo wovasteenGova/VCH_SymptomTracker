@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   customConditionLabelsChanged,
   mergeStoredCustomConditionLabels,
-  normalizeCustomConditionLabels
+  normalizeCustomConditionLabels,
+  shouldUploadLocalCustomConditionLabels
 } from '../app/utils/customConditionLabels'
 import {
   buildCustomConditionItem,
@@ -98,9 +99,18 @@ describe('custom tracked conditions', () => {
       { skin_flare_up: 'Remote label' },
       { skin_flare_up: 'Local label', rare_issue: 'Rare issue' }
     )).toEqual({
-      skin_flare_up: 'Local label',
+      skin_flare_up: 'Remote label',
       rare_issue: 'Rare issue'
     })
+  })
+
+  it('uploads local-only custom labels during migration', () => {
+    expect(shouldUploadLocalCustomConditionLabels({}, { rare_issue: 'Rare issue' })).toBe(true)
+    expect(shouldUploadLocalCustomConditionLabels({ rare_issue: 'Rare issue' }, { rare_issue: 'Rare issue' })).toBe(false)
+    expect(shouldUploadLocalCustomConditionLabels(
+      { skin_flare_up: 'Skin flare-up' },
+      { skin_flare_up: 'Local label', rare_issue: 'Rare issue' }
+    )).toBe(true)
   })
 
   it('detects custom label map changes', () => {

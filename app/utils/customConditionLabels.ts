@@ -37,5 +37,34 @@ export function mergeStoredCustomConditionLabels(
   remoteLabels: Record<string, string> | undefined,
   localLabels: Record<string, string> | undefined
 ) {
-  return mergeCustomConditionLabelMaps(remoteLabels, localLabels)
+  const remote = normalizeCustomConditionLabels(remoteLabels)
+  const local = normalizeCustomConditionLabels(localLabels)
+  const merged = { ...remote }
+
+  for (const [key, label] of Object.entries(local)) {
+    if (!merged[key]) {
+      merged[key] = label
+    }
+  }
+
+  return merged
+}
+
+/** True when local still has labels that never made it to the server (first-device migration). */
+export function shouldUploadLocalCustomConditionLabels(
+  remoteLabels: Record<string, string>,
+  localLabels: Record<string, string>
+) {
+  const remote = normalizeCustomConditionLabels(remoteLabels)
+  const local = normalizeCustomConditionLabels(localLabels)
+
+  if (!Object.keys(local).length) {
+    return false
+  }
+
+  if (!Object.keys(remote).length) {
+    return true
+  }
+
+  return Object.keys(local).some((key) => !remote[key])
 }

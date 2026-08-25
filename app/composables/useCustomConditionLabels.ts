@@ -3,8 +3,10 @@ import { inject, ref } from 'vue'
 import {
   customConditionLabelsChanged,
   mergeStoredCustomConditionLabels,
-  normalizeCustomConditionLabels
+  normalizeCustomConditionLabels,
+  shouldUploadLocalCustomConditionLabels
 } from '../utils/customConditionLabels'
+import { resolveTrackedConditionKey } from '../utils/conditionCatalog'
 import { useSupabaseAuth } from './useSupabaseAuth'
 import { useTrackerDb } from './useTrackerDb'
 import { TRACKER_DEMO_KEY } from './useTrackerLayout'
@@ -177,7 +179,7 @@ export function useCustomConditionLabels() {
       const mergedLabels = mergeStoredCustomConditionLabels(remoteLabels, localLabels)
       applyLocalLabels(mergedLabels, expectedOwnerId)
 
-      if (customConditionLabelsChanged(mergedLabels, remoteLabels)) {
+      if (shouldUploadLocalCustomConditionLabels(remoteLabels, localLabels)) {
         await persistCustomConditionLabels(mergedLabels, expectedOwnerId)
       }
     } catch (error) {
@@ -216,13 +218,26 @@ export function useCustomConditionLabels() {
   }
 
   async function forgetCustomConditionLabel(key: string) {
-    const trimmedKey = key.trim()
-    if (!trimmedKey || !persistedCustomConditionLabels.value[trimmedKey]) {
+    const normalizedTarget = resolveTrackedConditionKey(key) ?? key.trim()
+    if (!normalizedTarget) {
       return
     }
 
     const nextLabels = { ...persistedCustomConditionLabels.value }
-    delete nextLabels[trimmedKey]
+    let changed = false
+
+    for (const existingKey of Object.keys(nextLabels)) {
+      const normalizedExisting = resolveTrackedConditionKey(existingKey) ?? existingKey
+      if (normalizedExisting === normalizedTarget) {
+        delete nextLabels[existingKey]
+        changed = true
+      }
+    }
+
+    if (!changed) {
+      return
+    }
+
     await persistCustomConditionLabels(nextLabels)
   }
 
