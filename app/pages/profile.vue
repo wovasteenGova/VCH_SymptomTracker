@@ -1151,7 +1151,22 @@
         <section id="settings-danger" :class="settingsSectionClass(compact)">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-red-300/80">Data control</p>
-            <h2 class="mt-1 text-xl font-bold text-highlighted">Delete all logs</h2>
+            <h2 class="mt-1 text-xl font-bold text-highlighted">Delete entries</h2>
+            <p class="mt-2 text-sm leading-6 text-muted">
+              Remove logs for specific conditions. Active entries move to your Recovery bin; entries already in Recovery are removed permanently.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="mt-5 w-full rounded-2xl bg-red-950/35 px-4 py-3 text-sm font-bold text-red-200 ring-1 ring-red-900/50 transition hover:bg-red-950/55"
+            @click="openDeleteEntriesModal"
+          >
+            Delete entries
+          </button>
+
+          <div class="mt-8 border-t border-default/70 pt-8">
+            <h2 class="text-xl font-bold text-highlighted">Delete all logs</h2>
             <p class="mt-2 text-sm leading-6 text-muted">
               Permanently remove every symptom entry from your account, including items in your recovery bin. Your profile, plan, and condition picks stay saved.
             </p>
@@ -1161,15 +1176,15 @@
             <p v-else class="mt-3 text-xs leading-5 text-muted">
               No logs saved right now. You can still use this setting anytime you need a fresh start.
             </p>
-          </div>
 
-          <button
-            type="button"
-            class="mt-5 w-full rounded-2xl bg-red-950/50 px-4 py-3 text-sm font-bold text-red-300 ring-1 ring-red-900/60 transition hover:bg-red-950/70"
-            @click="openDeleteAllLogsModal"
-          >
-            Delete all logs
-          </button>
+            <button
+              type="button"
+              class="mt-5 w-full rounded-2xl bg-red-950/50 px-4 py-3 text-sm font-bold text-red-300 ring-1 ring-red-900/60 transition hover:bg-red-950/70"
+              @click="openDeleteAllLogsModal"
+            >
+              Delete all logs
+            </button>
+          </div>
         </section>
 
         <p v-if="pageError" class="px-1 py-3 text-sm font-medium text-red-600 dark:text-red-200">
@@ -1261,6 +1276,18 @@
         </div>
       </div>
     </Transition>
+
+    <DeleteEntriesByConditionSheet
+      v-if="isDeleteEntriesModalOpen"
+      :conditions="deletableConditionGroups"
+      :selected-keys="selectedDeleteConditionKeys"
+      :loading="isLoadingDeleteEntriesModal"
+      :deleting="isDeletingSelectedEntries"
+      :error="deleteEntriesError"
+      @dismiss="closeDeleteEntriesModal"
+      @toggle="toggleDeleteConditionSelection"
+      @confirm="confirmDeleteSelectedEntries"
+    />
 
     <Transition
       enter-active-class="transition duration-200 ease-out"
@@ -1420,6 +1447,7 @@ import { useTrackerLayout, TRACKER_CLOSE_EMBED_PROFILE_KEY, TRACKER_CLOSE_SETTIN
 import type { TrackerLayoutMode } from '../utils/trackerLayoutState'
 import type { SettingsSection } from '../composables/useSettingsSectionNav'
 import { mapEntryHistoryItem } from '../utils/entryDisplay'
+import { buildDeletableConditionGroups, type DeletableConditionGroup } from '../utils/deletableConditionGroups'
 import { copyToClipboard } from '../utils/copyToClipboard'
 import {
   PRO_LOCK_BODY_CLASS,
@@ -1540,7 +1568,8 @@ const {
   listDeletedEntries,
   restoreEntry,
   purgeDeletedEntry,
-  deleteAllEntries
+  deleteAllEntries,
+  removeAllEntriesForConditionKeys
 } = useSymptomEntries()
 const {
   isPro,
@@ -1820,6 +1849,12 @@ const deleteAllLogsPassword = ref('')
 const deleteAllLogsConfirmPhrase = ref('')
 const deleteAllLogsError = ref('')
 const isDeletingAllLogs = ref(false)
+const isDeleteEntriesModalOpen = ref(false)
+const isLoadingDeleteEntriesModal = ref(false)
+const isDeletingSelectedEntries = ref(false)
+const deleteEntriesError = ref('')
+const deletableConditionGroups = ref<DeletableConditionGroup[]>([])
+const selectedDeleteConditionKeys = ref<string[]>([])
 
 const usesPasswordLogin = computed(() => {
   return Boolean(user.value?.identities?.some((identity) => identity.provider === 'email'))
@@ -2536,6 +2571,91 @@ function openDeleteAllLogsModal() {
   deleteAllLogsConfirmPhrase.value = ''
   deleteAllLogsError.value = ''
   isDeleteAllLogsModalOpen.value = true
+}
+
+async function openDeleteEntriesModal() {
+  if (!user.value) {
+    return
+  }
+
+  deleteEntriesError.value = ''
+  selectedDeleteConditionKeys.value = []
+  deletableConditionGroups.value = []
+  isDeleteEntriesModalOpen.value = true
+  isLoadingDeleteEntriesModal.value = true
+
+  try {
+    const [activeEntries, deletedEntriesList] = await Promise.all([
+      listEntries(),
+      listDeletedEntries()
+    ])
+
+    deletableConditionGroups.value = buildDeletableConditionGroups({
+      activeEntries,
+      deletedEntries: deletedEntriesList
+    })
+  } catch (error) {
+    deleteEntriesError.value = getErrorMessage(error)
+  } finally {
+    isLoadingDeleteEntriesModal.value = false
+  }
+}
+
+function closeDeleteEntriesModal() {
+  if (isDeletingSelectedEntries.value) {
+    return
+  }
+
+  isDeleteEntriesModalOpen.value = false
+  deleteEntriesError.value = ''
+  selectedDeleteConditionKeys.value = []
+  deletableConditionGroups.value = []
+}
+
+function toggleDeleteConditionSelection(conditionKey: string) {
+  if (selectedDeleteConditionKeys.value.includes(conditionKey)) {
+    selectedDeleteConditionKeys.value = selectedDeleteConditionKeys.value.filter((key) => key !== conditionKey)
+    return
+  }
+
+  selectedDeleteConditionKeys.value = [...selectedDeleteConditionKeys.value, conditionKey]
+}
+
+async function confirmDeleteSelectedEntries() {
+  if (!user.value || !selectedDeleteConditionKeys.value.length || isDeletingSelectedEntries.value) {
+    return
+  }
+
+  isDeletingSelectedEntries.value = true
+  deleteEntriesError.value = ''
+  pageError.value = ''
+
+  try {
+    const selectedKeys = [...selectedDeleteConditionKeys.value]
+    const selectedLabels = deletableConditionGroups.value
+      .filter((group) => selectedKeys.includes(group.key))
+      .map((group) => group.label)
+
+    const result = await removeAllEntriesForConditionKeys(selectedKeys)
+    await Promise.all([
+      loadDeletedEntries(user.value.id),
+      listEntries().then((entries) => {
+        activeLogCount.value = entries.length
+      })
+    ])
+
+    closeDeleteEntriesModal()
+
+    showSubmissionToast(
+      selectedLabels.length === 1
+        ? `Removed ${result.totalCount} ${result.totalCount === 1 ? 'entry' : 'entries'} for ${selectedLabels[0]}.`
+        : `Removed ${result.totalCount} ${result.totalCount === 1 ? 'entry' : 'entries'} for ${selectedLabels.length} conditions.`
+    )
+  } catch (error) {
+    deleteEntriesError.value = getErrorMessage(error)
+  } finally {
+    isDeletingSelectedEntries.value = false
+  }
 }
 
 function closeDeleteAllLogsModal() {

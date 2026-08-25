@@ -42,6 +42,16 @@ function isMissingDeletedAtColumn(error: unknown) {
   return /deleted_at/i.test(message) && /column|schema cache/i.test(message)
 }
 
+function entryMatchesConditionKey(
+  entry: { condition_key?: string | null, condition_label?: string | null },
+  normalizedTarget: string
+) {
+  const resolved = resolveCatalogConditionByStoredKey(entry.condition_key || entry.condition_label || '')
+  const entryKey = resolved?.key || entry.condition_key?.trim() || conditionKeyFromLabel(entry.condition_label || '')
+  const normalizedEntryKey = resolveTrackedConditionKey(entryKey) ?? entryKey
+  return normalizedEntryKey === normalizedTarget
+}
+
 export function useSymptomEntries() {
   const supabase = useSupabaseClient()
   const trackerDb = useTrackerDb()
@@ -323,18 +333,51 @@ export function useSymptomEntries() {
     }
 
     const entries = await listEntries()
-    const matching = entries.filter((entry) => {
-      const resolved = resolveCatalogConditionByStoredKey(entry.condition_key || entry.condition_label || '')
-      const entryKey = resolved?.key || entry.condition_key?.trim() || conditionKeyFromLabel(entry.condition_label || '')
-      const normalizedEntryKey = resolveTrackedConditionKey(entryKey) ?? entryKey
-      return normalizedEntryKey === normalizedTarget
-    })
+    const matching = entries.filter((entry) => entryMatchesConditionKey(entry, normalizedTarget))
 
     for (const entry of matching) {
       await deleteEntry(entry.id)
     }
 
     return matching.length
+  }
+
+  async function purgeDeletedEntriesForConditionKey(conditionKey: string) {
+    const normalizedTarget = resolveTrackedConditionKey(conditionKey) ?? conditionKey.trim()
+    if (!normalizedTarget) {
+      return 0
+    }
+
+    const entries = await listDeletedEntries()
+    const matching = entries.filter((entry) => entryMatchesConditionKey(entry, normalizedTarget))
+
+    for (const entry of matching) {
+      await purgeDeletedEntry(entry.id)
+    }
+
+    return matching.length
+  }
+
+  async function removeAllEntriesForConditionKeys(conditionKeys: string[]) {
+    const uniqueKeys = [...new Set(
+      conditionKeys
+        .map((key) => resolveTrackedConditionKey(key) ?? key.trim())
+        .filter(Boolean)
+    )]
+
+    let archivedCount = 0
+    let purgedCount = 0
+
+    for (const key of uniqueKeys) {
+      archivedCount += await deleteEntriesForConditionKey(key)
+      purgedCount += await purgeDeletedEntriesForConditionKey(key)
+    }
+
+    return {
+      archivedCount,
+      purgedCount,
+      totalCount: archivedCount + purgedCount
+    }
   }
 
   async function deleteAllEntries() {
@@ -360,6 +403,8 @@ export function useSymptomEntries() {
     listRevisionsForEntries,
     deleteEntry,
     deleteEntriesForConditionKey,
+    purgeDeletedEntriesForConditionKey,
+    removeAllEntriesForConditionKeys,
     restoreEntry,
     purgeDeletedEntry,
     deleteAllEntries
