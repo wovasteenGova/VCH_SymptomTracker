@@ -2156,6 +2156,7 @@ import TrackerEntryFlow from '../components/tracker/TrackerEntryFlow.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
+import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
 
 const {
   user,
@@ -2204,6 +2205,13 @@ const {
   updateTrackedConditions,
   applyLocalState
 } = useTrackedConditions()
+const {
+  persistedCustomConditionLabels,
+  loadCustomConditionLabels,
+  rememberCustomConditionLabel,
+  forgetCustomConditionLabel,
+  resetCustomConditionLabels
+} = useCustomConditionLabels()
 const { showSubmissionToast } = useSubmissionToast()
 
 const profileDisplayName = useState('home-profile-display-name', () => '')
@@ -2623,46 +2631,6 @@ const conditionPickerOptions = computed(() => buildConditionPickerOptions({
   customLabels: customConditionLabels.value
 }))
 
-const CUSTOM_CONDITION_LABELS_STORAGE_PREFIX = 'symptom-tracker-custom-condition-labels'
-
-function getCustomConditionLabelsStorageKey() {
-  return user.value?.id
-    ? `${CUSTOM_CONDITION_LABELS_STORAGE_PREFIX}:${user.value.id}`
-    : CUSTOM_CONDITION_LABELS_STORAGE_PREFIX
-}
-
-function readStoredCustomConditionLabels() {
-  if (!import.meta.client) {
-    return {} as Record<string, string>
-  }
-
-  try {
-    const raw = window.localStorage.getItem(getCustomConditionLabelsStorageKey())
-    if (!raw) {
-      return {}
-    }
-
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return {}
-    }
-
-    return parsed as Record<string, string>
-  } catch {
-    return {}
-  }
-}
-
-function writeStoredCustomConditionLabels(labels: Record<string, string>) {
-  if (!import.meta.client) {
-    return
-  }
-
-  window.localStorage.setItem(getCustomConditionLabelsStorageKey(), JSON.stringify(labels))
-}
-
-const persistedCustomConditionLabels = ref<Record<string, string>>(readStoredCustomConditionLabels())
-
 const customConditionLabels = computed(() => mergeCustomConditionLabelMaps(
   persistedCustomConditionLabels.value,
   buildCustomConditionLabelsFromEntries(savedEntries.value)
@@ -2675,37 +2643,6 @@ const inactiveCustomConditions = computed(() => buildInactiveCustomConditions({
   entries: savedEntries.value,
   customLabels: customConditionLabels.value
 }))
-
-function rememberCustomConditionLabel(key: string, label: string) {
-  const trimmedKey = key.trim()
-  const trimmedLabel = label.trim()
-
-  if (!trimmedKey || !trimmedLabel) {
-    return
-  }
-
-  persistedCustomConditionLabels.value = {
-    ...persistedCustomConditionLabels.value,
-    [trimmedKey]: trimmedLabel
-  }
-  writeStoredCustomConditionLabels(persistedCustomConditionLabels.value)
-}
-
-function forgetCustomConditionLabel(key: string) {
-  const trimmedKey = key.trim()
-  if (!trimmedKey || !persistedCustomConditionLabels.value[trimmedKey]) {
-    return
-  }
-
-  const nextLabels = { ...persistedCustomConditionLabels.value }
-  delete nextLabels[trimmedKey]
-  persistedCustomConditionLabels.value = nextLabels
-  writeStoredCustomConditionLabels(nextLabels)
-}
-
-function reloadPersistedCustomConditionLabels() {
-  persistedCustomConditionLabels.value = readStoredCustomConditionLabels()
-}
 
 const HOME_CONDITION_ORDER_STORAGE_PREFIX = 'symptom-tracker-home-condition-order'
 
@@ -4120,17 +4057,20 @@ onMounted(async () => {
   }
   if (shouldAwaitBootstrap) {
     await loadAppWelcomeState()
-    await refreshTrackedConditions()
+    await Promise.all([
+      refreshTrackedConditions(),
+      loadCustomConditionLabels()
+    ])
   } else {
     void loadAppWelcomeState()
     void refreshTrackedConditions()
+    void loadCustomConditionLabels()
   }
 
   nextTick(() => {
     suppressHomeMotionOnMount.value = false
   })
   restoreCachedHomeConditionOrderKeys()
-  reloadPersistedCustomConditionLabels()
 
   nextTick(() => {
     rememberHomeOverviewHeaderHeight()
@@ -4197,8 +4137,10 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     loadProfileDisplayName()
     loadEntitlements()
     await loadAppWelcomeState()
-    reloadPersistedCustomConditionLabels()
-    await refreshTrackedConditions()
+    await Promise.all([
+      loadCustomConditionLabels(),
+      refreshTrackedConditions()
+    ])
     restoreCachedHomeConditionOrderKeys()
     await loadEntries()
     refreshEntryDraftPreview()
@@ -4215,7 +4157,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     profileDisplayName.value = ''
     savedEntries.value = []
     homeConditionOrderKeys.value = []
-    persistedCustomConditionLabels.value = {}
+    resetCustomConditionLabels()
     hasLoadedEntriesOnce.value = false
     closeEntryPanel(true, true)
     refreshEntryDraftPreview()
@@ -4230,8 +4172,10 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
       loadProfileDisplayName()
       loadEntitlements()
       await loadAppWelcomeState()
-      reloadPersistedCustomConditionLabels()
-      await refreshTrackedConditions()
+      await Promise.all([
+        loadCustomConditionLabels(),
+        refreshTrackedConditions()
+      ])
       restoreCachedHomeConditionOrderKeys()
       await loadEntries()
       refreshEntryDraftPreview()
@@ -4942,7 +4886,7 @@ function addCustomDraftCondition(label: string) {
     return
   }
 
-  rememberCustomConditionLabel(key, trimmed)
+  void rememberCustomConditionLabel(key, trimmed)
 
   if (isDemoMode || !isPro.value) {
     draftSelectedKeys.value = [key]
@@ -4973,7 +4917,7 @@ async function confirmConditionOnboarding() {
         const label = persistedCustomConditionLabels.value[key]
           || customConditionLabels.value[key]
           || formatConditionKeyLabel(key)
-        rememberCustomConditionLabel(key, label)
+        await rememberCustomConditionLabel(key, label)
       }
     }
 
@@ -5005,7 +4949,7 @@ async function finishConditionBrowser() {
         const label = persistedCustomConditionLabels.value[key]
           || customConditionLabels.value[key]
           || formatConditionKeyLabel(key)
-        rememberCustomConditionLabel(key, label)
+        await rememberCustomConditionLabel(key, label)
       }
     }
 
@@ -5332,12 +5276,15 @@ async function saveEntry() {
     await loadEntries()
     if (!wasEditing) {
       await syncHomeConditionsAfterEntrySave(payload.condition_key)
+      if (isCustomTrackedConditionKey(payload.condition_key) && payload.condition_label) {
+        await rememberCustomConditionLabel(payload.condition_key, payload.condition_label)
+      }
     } else if (
       preservedEditingConditionKey
       && isCustomTrackedConditionKey(preservedEditingConditionKey)
       && payload.condition_label
     ) {
-      rememberCustomConditionLabel(preservedEditingConditionKey, payload.condition_label)
+      await rememberCustomConditionLabel(preservedEditingConditionKey, payload.condition_label)
     }
     await loadEntitlements()
 
@@ -5445,6 +5392,21 @@ function cancelDeleteInactiveCustom() {
   pendingDeleteInactiveCustom.value = null
 }
 
+function normalizeTrackedKeyForCompare(key: string) {
+  return resolveTrackedConditionKey(key) ?? key.trim()
+}
+
+async function removeCustomFromTrackedKeys(conditionKey: string) {
+  const normalizedTarget = normalizeTrackedKeyForCompare(conditionKey)
+  const nextKeys = trackedConditionKeys.value.filter((key) => (
+    normalizeTrackedKeyForCompare(key) !== normalizedTarget
+  ))
+
+  if (nextKeys.length !== trackedConditionKeys.value.length) {
+    await updateTrackedConditions(nextKeys)
+  }
+}
+
 async function confirmDeleteInactiveCustom() {
   const item = pendingDeleteInactiveCustom.value
   if (!item || !user.value) {
@@ -5457,7 +5419,8 @@ async function confirmDeleteInactiveCustom() {
   try {
     const { deleteEntriesForConditionKey } = useSymptomEntries()
     const deletedCount = await deleteEntriesForConditionKey(item.key)
-    forgetCustomConditionLabel(item.key)
+    await removeCustomFromTrackedKeys(item.key)
+    await forgetCustomConditionLabel(item.key)
     conditionBrowserListOrder.value = conditionBrowserListOrder.value.filter((key) => key !== item.key)
     draftSelectedKeys.value = draftSelectedKeys.value.filter((key) => key !== item.key)
     await loadEntries()

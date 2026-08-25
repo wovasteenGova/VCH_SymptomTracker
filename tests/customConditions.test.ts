@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  customConditionLabelsChanged,
+  mergeStoredCustomConditionLabels,
+  normalizeCustomConditionLabels
+} from '../app/utils/customConditionLabels'
+import {
   buildCustomConditionItem,
   buildConditionPickerOptions,
   collectCustomConditionBrowserKeys,
@@ -76,5 +81,37 @@ describe('custom tracked conditions', () => {
       skin_flare_up: 'Skin flare-up',
       rare_issue: 'Rare issue'
     })
+  })
+
+  it('normalizes stored custom condition labels', () => {
+    expect(normalizeCustomConditionLabels({
+      skin_flare_up: ' Skin flare-up ',
+      '': 'Ignored',
+      invalid: 42
+    })).toEqual({
+      skin_flare_up: 'Skin flare-up'
+    })
+  })
+
+  it('merges remote and local custom labels with local winning conflicts', () => {
+    expect(mergeStoredCustomConditionLabels(
+      { skin_flare_up: 'Remote label' },
+      { skin_flare_up: 'Local label', rare_issue: 'Rare issue' }
+    )).toEqual({
+      skin_flare_up: 'Local label',
+      rare_issue: 'Rare issue'
+    })
+  })
+
+  it('detects custom label map changes', () => {
+    expect(customConditionLabelsChanged(
+      { skin_flare_up: 'Skin flare-up' },
+      { skin_flare_up: 'Skin flare-up' }
+    )).toBe(false)
+
+    expect(customConditionLabelsChanged(
+      { skin_flare_up: 'Skin flare-up' },
+      { skin_flare_up: 'Updated label' }
+    )).toBe(true)
   })
 })

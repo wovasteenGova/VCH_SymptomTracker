@@ -21,6 +21,7 @@ type UserProfilePayload = {
   reminder_hour?: number
   reminder_evening_hour?: number
   reminder_timezone?: string | null
+  custom_condition_labels?: Record<string, string>
 }
 type SupporterProfilePayload = {
   link_label?: string | null
