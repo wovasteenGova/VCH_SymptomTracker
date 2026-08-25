@@ -300,9 +300,11 @@
                 :saving="isSavingTrackedConditions"
                 :error="trackedConditionsError"
                 :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
+                :inactive-custom-condition-count="inactiveCustomConditions.length"
                 @toggle="toggleDraftCondition"
                 @add-custom="addCustomDraftCondition"
                 @restricted-select="handleRestrictedConditionSelect"
+                @open-inactive-custom="openRemovedCustomConditionsSheet"
                 @confirm="confirmConditionOnboarding"
                 @done="finishConditionBrowser"
               />
@@ -395,9 +397,11 @@
                 :saving="isSavingTrackedConditions"
                 :error="trackedConditionsError"
                 :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
+                :inactive-custom-condition-count="inactiveCustomConditions.length"
                 @toggle="toggleDraftCondition"
                 @add-custom="addCustomDraftCondition"
                 @restricted-select="handleRestrictedConditionSelect"
+                @open-inactive-custom="openRemovedCustomConditionsSheet"
                 @confirm="confirmConditionOnboarding"
                 @done="finishConditionBrowser"
               />
@@ -600,9 +604,11 @@
                   :saving="isSavingTrackedConditions"
                   :error="trackedConditionsError"
                   :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
+                  :inactive-custom-condition-count="inactiveCustomConditions.length"
                   @toggle="toggleDraftCondition"
                   @add-custom="addCustomDraftCondition"
                   @restricted-select="handleRestrictedConditionSelect"
+                  @open-inactive-custom="openRemovedCustomConditionsSheet"
                   @confirm="confirmConditionOnboarding"
                   @done="finishConditionBrowser"
                 />
@@ -1492,6 +1498,64 @@
     </AppOverlayShell>
   </Transition>
 
+  <RemovedCustomConditionsSheet
+    v-if="isRemovedCustomConditionsOpen"
+    :items="inactiveCustomConditions"
+    :deleting-key="deletingInactiveCustomKey"
+    @dismiss="closeRemovedCustomConditionsSheet"
+    @delete="requestDeleteInactiveCustom"
+  />
+
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <AppOverlayShell
+      v-if="pendingDeleteInactiveCustom"
+      backdrop-class="bg-black/55"
+      @dismiss="cancelDeleteInactiveCustom"
+    >
+      <div class="app-overlay-panel app-overlay-panel--compact rounded-[1.75rem] bg-elevated p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="delete-inactive-custom-title">
+        <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
+          Delete custom condition logs
+        </p>
+        <h3 id="delete-inactive-custom-title" class="mt-2 text-xl font-bold text-highlighted">
+          Delete logs for {{ pendingDeleteInactiveCustom.label }}?
+        </h3>
+        <p class="mt-3 text-sm leading-6 text-toned">
+          <template v-if="pendingDeleteInactiveCustom.entryCount > 0">
+            {{ pendingDeleteInactiveCustom.entryCount === 1 ? '1 log' : `${pendingDeleteInactiveCustom.entryCount} logs` }}
+            will move to <span class="font-semibold text-highlighted">Deleted</span> in your account settings. You can restore them later from <span class="font-semibold text-highlighted">Recovery</span>.
+          </template>
+          <template v-else>
+            This removes the saved custom label for <span class="font-semibold text-highlighted">{{ pendingDeleteInactiveCustom.label }}</span>. There are no logs to delete.
+          </template>
+        </p>
+
+        <div class="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            class="rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted transition hover:bg-accented"
+            @click="cancelDeleteInactiveCustom"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700"
+            @click="confirmDeleteInactiveCustom"
+          >
+            {{ pendingDeleteInactiveCustom.entryCount > 0 ? 'Move to Deleted' : 'Remove label' }}
+          </button>
+        </div>
+      </div>
+    </AppOverlayShell>
+  </Transition>
+
   <Transition
     enter-active-class="transition duration-200 ease-out"
     enter-from-class="opacity-0"
@@ -2065,6 +2129,7 @@ import { getWeeklyLogCaution, type WeeklyLogCaution } from '../utils/loggingCade
 import { buildLoggingActivityMetrics } from '../utils/loggingActivityReport'
 import { buildSymptomDashboardMetrics } from '../utils/symptomDashboard'
 import { buildConditionPickerOptions, buildCustomConditionLabelsFromEntries, buildHomeVisitTips, collectCustomConditionBrowserKeys, conditionCatalog, getCatalogConditionByKey, isCustomTrackedConditionKey, isMentalHealthConditionKey, listMentalHealthConditionKeys, mergeCustomConditionLabelMaps, MENTAL_HEALTH_ONE_CONDITION_MESSAGE, normalizeConditionLabel, pickRandomHomeVisitTip, resolveCatalogConditionByStoredKey, resolveTrackedConditionByStoredKey, resolveTrackedConditionKey, VA_CRISIS_LINE_SHORT, type HomeVisitTip } from '../utils/conditionCatalog'
+import { buildInactiveCustomConditions, type InactiveCustomCondition } from '../utils/inactiveCustomConditions'
 import { LOG_REMINDER_TEST_INTERVAL_MS, LOG_REMINDER_TEST_MODE } from '../utils/logReminders'
 import { conditionImageAssets } from '../utils/conditionImages'
 import { getSeverityEmoji } from '../utils/severityGuidance'
@@ -2472,6 +2537,9 @@ const pendingDelete = ref<null | {
   mode: 'archive'
   title: string
 }>(null)
+const pendingDeleteInactiveCustom = ref<InactiveCustomCondition | null>(null)
+const isRemovedCustomConditionsOpen = ref(false)
+const deletingInactiveCustomKey = ref<string | null>(null)
 const viewedHistoryEntryId = ref<string | null>(null)
 const isShareLinkOpen = ref(false)
 const shareLinkEntry = ref<any | null>(null)
@@ -2525,6 +2593,8 @@ const shouldHideHistoryChrome = computed(() => (
   || isLoggingCadencePromptOpen.value
   || pendingDeleteDraft.value
   || Boolean(pendingDelete.value)
+  || Boolean(pendingDeleteInactiveCustom.value)
+  || isRemovedCustomConditionsOpen.value
   || Boolean(viewedHistoryEntryId.value)
   || (isShareLinkOpen.value && Boolean(shareLinkEntry.value))
   || isConditionSlotOpen.value
@@ -2598,6 +2668,14 @@ const customConditionLabels = computed(() => mergeCustomConditionLabelMaps(
   buildCustomConditionLabelsFromEntries(savedEntries.value)
 ))
 
+const inactiveCustomConditions = computed(() => buildInactiveCustomConditions({
+  trackedKeys: draftSelectedKeys.value.length
+    ? draftSelectedKeys.value
+    : trackedConditionKeys.value,
+  entries: savedEntries.value,
+  customLabels: customConditionLabels.value
+}))
+
 function rememberCustomConditionLabel(key: string, label: string) {
   const trimmedKey = key.trim()
   const trimmedLabel = label.trim()
@@ -2611,6 +2689,18 @@ function rememberCustomConditionLabel(key: string, label: string) {
     [trimmedKey]: trimmedLabel
   }
   writeStoredCustomConditionLabels(persistedCustomConditionLabels.value)
+}
+
+function forgetCustomConditionLabel(key: string) {
+  const trimmedKey = key.trim()
+  if (!trimmedKey || !persistedCustomConditionLabels.value[trimmedKey]) {
+    return
+  }
+
+  const nextLabels = { ...persistedCustomConditionLabels.value }
+  delete nextLabels[trimmedKey]
+  persistedCustomConditionLabels.value = nextLabels
+  writeStoredCustomConditionLabels(nextLabels)
 }
 
 function reloadPersistedCustomConditionLabels() {
@@ -5338,6 +5428,62 @@ async function confirmDeleteEntry() {
   await archiveEntry(id)
 }
 
+function openRemovedCustomConditionsSheet() {
+  isRemovedCustomConditionsOpen.value = true
+}
+
+function closeRemovedCustomConditionsSheet() {
+  isRemovedCustomConditionsOpen.value = false
+}
+
+function requestDeleteInactiveCustom(item: InactiveCustomCondition) {
+  closeAppOverlaysExcept('delete-inactive-custom')
+  pendingDeleteInactiveCustom.value = item
+}
+
+function cancelDeleteInactiveCustom() {
+  pendingDeleteInactiveCustom.value = null
+}
+
+async function confirmDeleteInactiveCustom() {
+  const item = pendingDeleteInactiveCustom.value
+  if (!item || !user.value) {
+    return
+  }
+
+  deletingInactiveCustomKey.value = item.key
+  pendingDeleteInactiveCustom.value = null
+
+  try {
+    const { deleteEntriesForConditionKey } = useSymptomEntries()
+    const deletedCount = await deleteEntriesForConditionKey(item.key)
+    forgetCustomConditionLabel(item.key)
+    conditionBrowserListOrder.value = conditionBrowserListOrder.value.filter((key) => key !== item.key)
+    draftSelectedKeys.value = draftSelectedKeys.value.filter((key) => key !== item.key)
+    await loadEntries()
+
+    const logLabel = deletedCount === 1 ? '1 log' : `${deletedCount} logs`
+    showSubmissionToast({
+      message: deletedCount
+        ? `Moved ${logLabel} for ${item.label} to Deleted.`
+        : `Removed ${item.label} from your saved custom labels.`,
+      action: deletedCount
+        ? {
+          href: '/profile#settings-recovery',
+          label: 'Open Recovery'
+        }
+        : undefined
+    })
+  } catch (error) {
+    showSubmissionToast({
+      message: getErrorMessage(error),
+      tone: 'error'
+    })
+  } finally {
+    deletingInactiveCustomKey.value = null
+  }
+}
+
 function formatHistoryEntryDetailLabel(key: string) {
   return key
     .replace(/_/g, ' ')
@@ -5455,6 +5601,8 @@ type AppOverlayKey =
   | 'auth'
   | 'delete-draft'
   | 'delete-entry'
+  | 'delete-inactive-custom'
+  | 'removed-custom-conditions'
   | 'entry-details'
   | 'share-link'
   | 'upgrade'
@@ -5475,6 +5623,14 @@ function closeAppOverlaysExcept(keep?: AppOverlayKey) {
 
   if (keep !== 'delete-entry') {
     pendingDelete.value = null
+  }
+
+  if (keep !== 'delete-inactive-custom') {
+    pendingDeleteInactiveCustom.value = null
+  }
+
+  if (keep !== 'removed-custom-conditions' && keep !== 'delete-inactive-custom') {
+    isRemovedCustomConditionsOpen.value = false
   }
 
   if (keep !== 'entry-details' && keep !== 'delete-entry') {
