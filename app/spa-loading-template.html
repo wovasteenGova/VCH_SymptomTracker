@@ -1,0 +1,90 @@
+<div
+  class="vch-spa-loading-template"
+  role="status"
+  aria-live="polite"
+  aria-label="Loading"
+>
+  <div class="vch-spa-loading-template__stack">
+    <div class="vch-spa-loading-template__brand">
+      <img
+        class="vch-spa-loading-template__logo"
+        src="/brand/vch-symptom-tracker-logo.png"
+        alt="Veterans Central Hub"
+        width="44"
+        height="44"
+        decoding="sync"
+        fetchpriority="high"
+      >
+      <span class="vch-spa-loading-template__wordmark">VCH</span>
+    </div>
+    <img
+      class="vch-spa-loading-template__tank"
+      src="/vch-tank-loader.svg"
+      alt=""
+      aria-hidden="true"
+      decoding="sync"
+      fetchpriority="high"
+    >
+  </div>
+</div>
+<style>
+  html,
+  body {
+    background: #131110;
+  }
+
+  .vch-spa-loading-template {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    height: 100dvh;
+    width: 100vw;
+    align-items: center;
+    justify-content: center;
+    background: #131110;
+    padding: 1rem;
+  }
+
+  .vch-spa-loading-template__stack {
+    display: flex;
+    width: min(28rem, 92vw);
+    max-width: 32rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .vch-spa-loading-template__brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .vch-spa-loading-template__logo {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+  }
+
+  .vch-spa-loading-template__wordmark {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    color: #f2ead8;
+  }
+
+  .vch-spa-loading-template__tank {
+    display: block;
+    width: 100%;
+    user-select: none;
+  }
+</style>

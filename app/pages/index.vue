@@ -2160,6 +2160,7 @@ import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
 import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
+import { shouldShowHomeVueSplash } from '../utils/trackerSplash'
 
 const {
   user,
@@ -2403,7 +2404,12 @@ const {
 const { isDesktopLayout, isMobileLayout, isMobileCarouselLayout, prefersDesktopCarouselChrome, isEmbeddedPreview } = useTrackerLayout()
 const { openSettingsPanel } = useTrackerSettingsPanelOpen()
 const homeBootstrapComplete = ref(isEmbeddedPreview.value)
-const showHomeBootstrapLoader = computed(() => !isEmbeddedPreview.value && !homeBootstrapComplete.value)
+// spaLoadingTemplate already played the tank on first paint. Do not remount it
+// here (including theme/cookie hydrate), or the SVG animation restarts.
+const showHomeBootstrapLoader = computed(() => shouldShowHomeVueSplash({
+  isEmbeddedPreview: isEmbeddedPreview.value,
+  htmlSplashAlreadyPlayed: true
+}))
 
 watch(isDesktopLayout, (desktop) => {
   if (desktop) {

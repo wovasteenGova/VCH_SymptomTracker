@@ -37,6 +37,13 @@ const supabaseAnonKey = env('SUPABASE_ANON_KEY')
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  // First-paint tank for ssr:false routes. Resolved from srcDir (app/).
+  // Vue home must not remount VchOpeningWorkspaceLoader on that same load.
+  spaLoadingTemplate: 'spa-loading-template.html',
+  experimental: {
+    // Keep the tank outside #__nuxt so Vue mount does not destroy/restart it.
+    spaLoadingTemplateLocation: 'body'
+  },
   devtools: { enabled: false },
   devServer: {
     port: 3001
@@ -120,6 +127,7 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'preload', as: 'image', href: '/brand/vch-symptom-tracker-logo.png', type: 'image/png', fetchpriority: 'high' },
+        { rel: 'preload', as: 'image', href: '/vch-tank-loader.svg', type: 'image/svg+xml', fetchpriority: 'high' },
         { rel: 'icon', type: 'image/png', href: '/brand/vch-symptom-tracker-logo.png' },
         { rel: 'shortcut icon', type: 'image/png', href: '/brand/vch-symptom-tracker-logo.png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
@@ -134,7 +142,7 @@ export default defineNuxtConfig({
     client: {
       register: false
     },
-    includeAssets: ['brand/vch-symptom-tracker-logo.png', 'vch-logo.png', 'vch-logo-loader.svg', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png', 'notification-badge.png'],
+    includeAssets: ['brand/vch-symptom-tracker-logo.png', 'vch-logo.png', 'vch-logo-loader.svg', 'vch-tank-loader.svg', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png', 'notification-badge.png'],
     workbox: {
       importScripts: ['/log-reminder-handlers.js'],
       skipWaiting: false,
