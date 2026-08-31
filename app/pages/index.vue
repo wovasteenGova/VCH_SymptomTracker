@@ -8,7 +8,8 @@
     id="tracker-app-shell"
     class="tracker-app-shell app-shell relative overflow-hidden bg-default text-default transition-colors"
     :class="{
-      'app-shell-embed': isEmbeddedPreview
+      'app-shell-embed': isEmbeddedPreview,
+      'tracker-app-shell--ready': homeWorkspaceReady || isEmbeddedPreview
     }"
   >
     <section
@@ -951,7 +952,10 @@
               <div>
                 <h2 class="text-2xl font-bold text-highlighted">History</h2>
               </div>
-              <div class="relative flex shrink-0 items-center gap-2">
+              <div
+                id="monthly-backup-reminder-anchor"
+                class="relative flex shrink-0 items-center gap-2"
+              >
                 <MonthlyBackupReminderTip
                   :open="isMonthlyBackupReminderVisible"
                   @dismiss="dismissMonthlyBackupReminder"
@@ -977,7 +981,8 @@
                   />
                   {{ isPro ? 'Pro' : 'Free' }}
                   <span
-                    class="absolute -right-0.5 -top-0.5 grid size-[0.825rem] place-items-center rounded-full bg-highlighted ring-[1.5px] ring-elevated"
+                    v-if="isPro"
+                    class="absolute -right-0.5 -top-0.5 z-10 grid size-[0.825rem] place-items-center rounded-full bg-highlighted ring-[1.5px] ring-elevated"
                     aria-hidden="true"
                   >
                     <UIcon name="i-lucide-check" class="size-[0.55rem] text-emerald-400" />
@@ -2161,6 +2166,7 @@ import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
 import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
 import { shouldShowHomeVueSplash } from '../utils/trackerSplash'
+import { useHomeWorkspaceReady } from '../composables/useHomeWorkspaceReady'
 
 const {
   user,
@@ -2403,7 +2409,12 @@ const {
 } = useLogReminders()
 const { isDesktopLayout, isMobileLayout, isMobileCarouselLayout, prefersDesktopCarouselChrome, isEmbeddedPreview } = useTrackerLayout()
 const { openSettingsPanel } = useTrackerSettingsPanelOpen()
-const homeBootstrapComplete = ref(isEmbeddedPreview.value)
+const { homeWorkspaceReady, markHomeWorkspaceReady } = useHomeWorkspaceReady()
+
+if (isEmbeddedPreview.value) {
+  markHomeWorkspaceReady()
+}
+
 // spaLoadingTemplate already played the tank on first paint. Do not remount it
 // here (including theme/cookie hydrate), or the SVG animation restarts.
 const showHomeBootstrapLoader = computed(() => shouldShowHomeVueSplash({
@@ -4036,7 +4047,7 @@ watch(isConditionPickerOpen, (open) => {
 })
 
 onMounted(async () => {
-  const shouldAwaitBootstrap = !homeBootstrapComplete.value
+  const shouldAwaitBootstrap = !homeWorkspaceReady.value
 
   if (import.meta.client) {
     const { hash, search } = window.location
@@ -4047,7 +4058,7 @@ onMounted(async () => {
       || search.includes('token_hash=')
 
     if (hasAuthPayload) {
-      homeBootstrapComplete.value = true
+      markHomeWorkspaceReady()
 
       if (linkType === 'recovery') {
         window.location.replace(`/auth/reset-password${search}${hash}`)
@@ -4116,7 +4127,7 @@ onMounted(async () => {
     demoReady.value = true
   }
 
-  homeBootstrapComplete.value = true
+  markHomeWorkspaceReady()
 })
 
 onBeforeUnmount(() => {
@@ -4143,7 +4154,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
   entriesLoadOwnerId = null
 
   // Auth token refresh / hydration after the first bootstrap — refresh quietly.
-  if (!prevId && nextId && homeBootstrapComplete.value) {
+  if (!prevId && nextId && homeWorkspaceReady.value) {
     loadProfileDisplayName()
     loadEntitlements()
     await loadAppWelcomeState()
@@ -4158,7 +4169,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
   }
 
   // Skip until the first bootstrap finishes; onMounted owns that path.
-  if (!homeBootstrapComplete.value) {
+  if (!homeWorkspaceReady.value) {
     return
   }
 
@@ -4698,7 +4709,7 @@ async function retryHomeLoad() {
   } catch (error) {
     entriesError.value = getErrorMessage(error)
   } finally {
-    homeBootstrapComplete.value = true
+    markHomeWorkspaceReady()
   }
 }
 

@@ -9,8 +9,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { isIosWebKitBrowser, resolveMobileViewport } from './utils/mobileViewport'
+import { dismissTrackerSpaSplash } from './utils/trackerSplash'
+import { useHomeWorkspaceReady } from './composables/useHomeWorkspaceReady'
 
 const { themeId } = useClaimColorTheme()
 
@@ -23,6 +25,17 @@ useHead(() => ({
 
 const { showSubmissionToast } = useSubmissionToast()
 const supabase = useSupabaseClient()
+const { homeWorkspaceReady } = useHomeWorkspaceReady()
+
+function dismissBootSplash() {
+  dismissTrackerSpaSplash()
+}
+
+watch(homeWorkspaceReady, (ready) => {
+  if (ready) {
+    dismissBootSplash()
+  }
+}, { immediate: true })
 
 const CHECKOUT_SUCCESS_TOAST_KEY = 'symptom-tracker-checkout-success-toast'
 let visualBaselineHeight = 0
@@ -102,3 +115,14 @@ onUnmounted(() => {
   window.visualViewport?.removeEventListener('scroll', updateAppHeight)
 })
 </script>
+
+<style>
+.tracker-app-shell:not(.tracker-app-shell--ready):not(.app-shell-embed) {
+  opacity: 0;
+}
+
+.tracker-app-shell--ready {
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+</style>
