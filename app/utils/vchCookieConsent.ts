@@ -1,12 +1,10 @@
 /** Shared with VCH hub — localStorage on each origin + cookie on the current VCH TLD. */
 
-import { isVchProductionHost, resolveVchCookieDomain } from './vchHost'
+import { resolveVchCookieDomain } from './vchHost'
 
 export const VCH_COOKIE_CONSENT_STORAGE_KEY = 'cookieConsent'
 export const VCH_COOKIE_CONSENT_COOKIE_NAME = 'vch_cookie_consent'
 const VCH_COOKIE_CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
-
-export { isVchProductionHost }
 
 function currentHostname() {
   if (!import.meta.client) {
