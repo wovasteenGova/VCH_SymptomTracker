@@ -1,4 +1,9 @@
-import { applyVchCookieDomain, resolveCurrentHostname } from '../../app/utils/vchHost'
+import {
+  applyVchCookieDomain,
+  resolveCurrentHostname,
+  resolveVchClaimBuilderUrl,
+  rewriteVchUrlToCurrentTld
+} from '../../app/utils/vchHost'
 
 type SupabasePublicConfig = {
   cookieOptions?: {
@@ -12,7 +17,6 @@ export default defineNuxtPlugin({
   name: 'vch-cookie-domain',
   enforce: 'pre',
   setup() {
-    const config = useRuntimeConfig()
     const hostname = import.meta.client
       ? window.location.hostname
       : (() => {
@@ -23,16 +27,34 @@ export default defineNuxtPlugin({
           }
         })()
 
-    const supabase = (config.public as { supabase?: SupabasePublicConfig }).supabase
-
-    if (!supabase) {
+    // Only mutate public runtime config in the browser. Shared server config
+    // would leak the last request's TLD across concurrent .com and .us hits.
+    if (!import.meta.client) {
       return
     }
 
-    if (!supabase.cookieOptions) {
-      supabase.cookieOptions = {}
+    const config = useRuntimeConfig()
+    const supabase = (config.public as { supabase?: SupabasePublicConfig }).supabase
+
+    if (supabase) {
+      if (!supabase.cookieOptions) {
+        supabase.cookieOptions = {}
+      }
+
+      applyVchCookieDomain(supabase.cookieOptions, hostname)
     }
 
-    applyVchCookieDomain(supabase.cookieOptions, hostname)
+    const publicConfig = config.public as {
+      siteUrl?: string
+      claimBuilderUrl?: string
+    }
+
+    if (publicConfig.siteUrl) {
+      publicConfig.siteUrl = rewriteVchUrlToCurrentTld(publicConfig.siteUrl, hostname)
+    }
+
+    if (publicConfig.claimBuilderUrl) {
+      publicConfig.claimBuilderUrl = resolveVchClaimBuilderUrl(publicConfig.claimBuilderUrl, hostname)
+    }
   }
 })
