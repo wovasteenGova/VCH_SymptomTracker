@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { VCH_PRIVACY_URL, VCH_TERMS_URL } from '../../utils/subscription'
+import { useVchPublicUrls } from '../../composables/useVchPublicUrls'
 import { td } from '../../utils/trackerDesktopTheme'
+
+const { privacyUrl, termsUrl } = useVchPublicUrls()
 </script>
 
 <template>
@@ -10,14 +12,14 @@ import { td } from '../../utils/trackerDesktopTheme'
   >
     VCH Symptom Tracker helps you log symptoms and export reports. It is not medical or legal advice and does not guarantee any VA or benefits outcome.
     <a
-      :href="VCH_TERMS_URL"
+      :href="termsUrl"
       target="_blank"
       rel="noopener noreferrer"
       :class="td.link"
     >Terms</a>
     and
     <a
-      :href="VCH_PRIVACY_URL"
+      :href="privacyUrl"
       target="_blank"
       rel="noopener noreferrer"
       :class="td.link"

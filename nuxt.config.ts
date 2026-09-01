@@ -53,7 +53,7 @@ export default defineNuxtConfig({
       collections: ['lucide']
     }
   },
-  modules: ['@nuxt/ui', '@vite-pwa/nuxt', '@nuxtjs/supabase'],
+  modules: ['./nuxt-modules/vch-host', '@nuxt/ui', '@vite-pwa/nuxt', '@nuxtjs/supabase'],
   css: ['~/assets/css/main.css'],
   colorMode: {
     preference: 'dark',
@@ -72,9 +72,9 @@ export default defineNuxtConfig({
         }
       }
     },
+    // Domain is applied at runtime from the current host (.com / .us / host-only).
     cookieOptions: isProduction
       ? {
-          domain: '.veteranscentralhub.us',
           secure: true,
           sameSite: 'lax'
         }

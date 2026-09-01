@@ -14,6 +14,13 @@ describe('tracker toolbar actions', () => {
       .toBe('https://claimbuilder.veteranscentralhub.us')
   })
 
+  it('keeps ClaimBuilder on the current TLD', () => {
+    expect(buildClaimBuilderUrl({
+      claimBuilderUrl: 'https://claimbuilder.veteranscentralhub.us/',
+      hostname: 'tracker.veteranscentralhub.com'
+    })).toBe('https://claimbuilder.veteranscentralhub.com')
+  })
+
   it('renders Open ClaimBuilder left of Lay Reporting in the tracker header', () => {
     const index = readFileSync('app/pages/index.vue', 'utf8')
     const toolbar = index.slice(

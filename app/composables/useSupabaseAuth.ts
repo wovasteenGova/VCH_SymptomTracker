@@ -114,7 +114,7 @@ export function useSupabaseAuth() {
         || failure.code === 'invalid_credentials'
         || /invalid login credentials/i.test(message)
       ) {
-        return 'Wrong password for this email. Use Forgot password, Continue with Google, or the password from veteranscentralhub.us.'
+        return 'Wrong password for this email. Use Forgot password, Continue with Google, or the password from Veterans Central Hub.'
       }
 
       if (
@@ -182,7 +182,7 @@ export function useSupabaseAuth() {
       }
 
       if (/invalid login credentials/i.test(error.message)) {
-        return 'Wrong password for this email. Use Forgot password, Continue with Google, or the password from veteranscentralhub.us.'
+        return 'Wrong password for this email. Use Forgot password, Continue with Google, or the password from Veterans Central Hub.'
       }
 
       return error.message
@@ -298,9 +298,7 @@ export function useSupabaseAuth() {
       }
     }
 
-    const emailRedirectTo = import.meta.client
-      ? authRedirects.confirmUrl()
-      : undefined
+    const emailRedirectTo = authRedirects.confirmUrl()
 
     let data
     let error: unknown
@@ -391,9 +389,7 @@ export function useSupabaseAuth() {
 
     enforceAuthEmailCooldown(normalizedEmail)
 
-    const emailRedirectTo = import.meta.client
-      ? authRedirects.confirmUrl()
-      : undefined
+    const emailRedirectTo = authRedirects.confirmUrl()
 
     let error: unknown
 
@@ -423,9 +419,8 @@ export function useSupabaseAuth() {
     authError.value = ''
 
     // Must match the current browser origin so the PKCE verifier stays in storage.
-    const redirectTo = import.meta.client
-      ? authRedirects.callbackUrl()
-      : undefined
+    // Never omit redirectTo — Supabase Site URL is still the .us hub.
+    const redirectTo = authRedirects.callbackUrl()
 
     let error: unknown
 
@@ -461,9 +456,7 @@ export function useSupabaseAuth() {
 
     enforceAuthEmailCooldown(normalizedEmail)
 
-    const redirectTo = import.meta.client
-      ? authRedirects.resetPasswordUrl()
-      : undefined
+    const redirectTo = authRedirects.resetPasswordUrl()
 
     let error: unknown
 

@@ -1,4 +1,6 @@
-export const TRACKER_PUBLIC_ORIGIN = 'https://tracker.veteranscentralhub.us'
+import { rewriteVchUrlToCurrentTld, resolveCurrentHostname, VCH_TRACKER_ORIGIN_US } from './vchHost'
+
+export const TRACKER_PUBLIC_ORIGIN = VCH_TRACKER_ORIGIN_US
 
 function isLocalOrigin(value: string) {
   try {
@@ -11,18 +13,31 @@ function isLocalOrigin(value: string) {
   }
 }
 
-export function resolveTrackerPublicOrigin(configuredSiteUrl?: string | null) {
+export function resolveTrackerPublicOrigin(
+  configuredSiteUrl?: string | null,
+  hostname?: string | null
+) {
+  const currentHost = hostname || resolveCurrentHostname()
+
+  if (import.meta.client && !hostname) {
+    const origin = window.location.origin.replace(/\/$/, '')
+
+    if (!isLocalOrigin(origin)) {
+      return origin
+    }
+  }
+
   const trimmed = configuredSiteUrl?.trim()
 
   if (trimmed && !isLocalOrigin(trimmed)) {
-    return trimmed.replace(/\/$/, '')
+    return rewriteVchUrlToCurrentTld(trimmed.replace(/\/$/, ''), currentHost)
   }
 
-  return TRACKER_PUBLIC_ORIGIN
+  return rewriteVchUrlToCurrentTld(TRACKER_PUBLIC_ORIGIN, currentHost)
 }
 
-export function resolveTrackerAppUrl(configuredSiteUrl?: string | null) {
-  return `${resolveTrackerPublicOrigin(configuredSiteUrl)}/`
+export function resolveTrackerAppUrl(configuredSiteUrl?: string | null, hostname?: string | null) {
+  return `${resolveTrackerPublicOrigin(configuredSiteUrl, hostname)}/`
 }
 
 export const reportBranding = {

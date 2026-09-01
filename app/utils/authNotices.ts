@@ -1,6 +1,6 @@
 import type { SubmissionToastPayload } from '../composables/useSubmissionToast'
-import { VCH_CONTACT_URL } from './subscription'
 import { isAuthEmailCooldownMessage } from './authEmailCooldown'
+import { resolveVchHubPath } from './vchHost'
 
 export const AUTH_NOTICE_DURATION_MS = 5200
 
@@ -85,7 +85,7 @@ export function authRateLimitErrorToast(): SubmissionToastPayload {
     tone: 'error',
     durationMs: AUTH_NOTICE_DURATION_MS,
     action: {
-      href: VCH_CONTACT_URL,
+      href: resolveVchHubPath('/contact'),
       label: 'Contact us'
     }
   }

@@ -35,7 +35,7 @@
                 {{ WHY_WE_CHARGE_COPY }}
               </p>
               <a
-                :href="VCH_CLAIM_MAKER_URL"
+                :href="claimMakerUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="mt-4 inline-flex items-center gap-1 rounded-full bg-sky-500/15 px-3 py-2 text-xs font-semibold text-sky-100 ring-1 ring-sky-500/30 underline-offset-2 hover:underline"
@@ -206,7 +206,7 @@
                   Email for free access
                 </a>
                 <a
-                  :href="VCH_CONTACT_URL"
+                  :href="contactUrl"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white ring-1 ring-slate-700"
@@ -299,11 +299,12 @@ import {
   PRO_REFUND_POLICY,
   PRO_REFUND_POLICY_SHORT,
   PRO_TIER_FEATURES,
-  VCH_CLAIM_MAKER_URL,
-  VCH_CONTACT_URL,
   WHY_WE_CHARGE_COPY,
   buildSupportEmailHref
 } from '../utils/subscription'
+import { useVchPublicUrls } from '../composables/useVchPublicUrls'
+
+const { claimMakerUrl, contactUrl } = useVchPublicUrls()
 
 const route = useRoute()
 const router = useRouter()

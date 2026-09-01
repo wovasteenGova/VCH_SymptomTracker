@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { acceptVchCookieConsent, hasVchCookieConsent } from '../utils/vchCookieConsent'
-import { VCH_HUB_URL } from '../utils/subscription'
+import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
-const cookiesPolicyUrl = `${VCH_HUB_URL}/cookies`
+const { cookiesUrl } = useVchPublicUrls()
 const visible = ref(false)
 
 onMounted(() => {
@@ -39,7 +39,7 @@ function acceptCookies() {
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <a
-            :href="cookiesPolicyUrl"
+            :href="cookiesUrl"
             target="_blank"
             rel="noopener noreferrer"
             class="rounded-full bg-muted px-4 py-2 text-sm font-semibold text-toned transition hover:bg-accented"

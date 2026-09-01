@@ -1,4 +1,6 @@
+import { getRequestHost } from 'h3'
 import { requireAuthUser } from '../../utils/authUser'
+import { resolveVchClaimBuilderUrl } from '../../../app/utils/vchHost'
 
 type ClaimBuilderEntitlementResponse = {
   entitled: boolean
@@ -17,7 +19,10 @@ const FALLBACK: ClaimBuilderEntitlementResponse = {
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
-  const claimBuilderUrl = String(config.public.claimBuilderUrl || '').trim().replace(/\/$/, '')
+  const claimBuilderUrl = resolveVchClaimBuilderUrl(
+    config.public.claimBuilderUrl,
+    getRequestHost(event, { xForwardedHost: true })
+  )
 
   if (!claimBuilderUrl) {
     return FALLBACK

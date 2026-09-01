@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import {
   FREE_CONDITION_LIMIT,
-  PRO_ANNUAL_PRICE_LABEL,
-  VCH_PRIVACY_URL
+  PRO_ANNUAL_PRICE_LABEL
 } from '../utils/subscription'
+import { useVchPublicUrls } from '../composables/useVchPublicUrls'
+
+const { privacyUrl } = useVchPublicUrls()
 
 defineProps<{
   open: boolean
@@ -147,7 +149,7 @@ function handleOpenContact() {
               <p>{{ item.answer }}</p>
               <template v-if="item.id === 'privacy-data'">
                 <a
-                  :href="VCH_PRIVACY_URL"
+                  :href="privacyUrl"
                   target="_blank"
                   rel="noopener"
                   class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary underline decoration-primary/30 underline-offset-2 hover:opacity-80"

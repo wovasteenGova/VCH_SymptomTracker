@@ -7473,7 +7473,10 @@ function openClaimBuilder() {
   if (!import.meta.client) return
   const config = useRuntimeConfig()
   window.open(
-    buildClaimBuilderUrl({ claimBuilderUrl: config.public.claimBuilderUrl }),
+    buildClaimBuilderUrl({
+      claimBuilderUrl: config.public.claimBuilderUrl,
+      hostname: window.location.hostname
+    }),
     '_blank',
     'noopener,noreferrer'
   )

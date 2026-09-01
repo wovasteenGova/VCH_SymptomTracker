@@ -45,7 +45,7 @@
                 Open Symptom Tracker
               </UButton>
               <UButton
-                :href="VCH_HUB_URL"
+                :href="hubUrl"
                 external
                 target="_blank"
                 color="neutral"
@@ -133,7 +133,7 @@
               Use now
             </UButton>
             <UButton
-              :href="`${VCH_HUB_URL}/symptom-tracker`"
+              :href="symptomTrackerMarketingUrl"
               external
               target="_blank"
               color="neutral"
@@ -153,11 +153,12 @@
 import { computed, onMounted } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { reportBranding, resolveTrackerAppUrl } from '../utils/reportBranding'
-import { VCH_HUB_URL } from '../utils/subscription'
+import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
 const config = useRuntimeConfig()
+const { hubUrl, symptomTrackerMarketingUrl, hostname } = useVchPublicUrls()
 
-const trackerAppUrl = computed(() => resolveTrackerAppUrl(config.public.siteUrl))
+const trackerAppUrl = computed(() => resolveTrackerAppUrl(config.public.siteUrl, hostname.value))
 
 const isDesktopLayout = useMediaQuery('(min-width: 768px)')
 

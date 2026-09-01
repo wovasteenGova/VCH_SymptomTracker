@@ -61,7 +61,7 @@
             <p>
               By using VCH Symptom Tracker, you agree to the
               <a
-                :href="VCH_PRIVACY_URL"
+                :href="privacyUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="font-bold text-white underline underline-offset-2 hover:text-slate-200"
@@ -87,5 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { VCH_PRIVACY_URL } from '../utils/subscription'
+import { useVchPublicUrls } from '../composables/useVchPublicUrls'
+
+const { privacyUrl } = useVchPublicUrls()
 </script>

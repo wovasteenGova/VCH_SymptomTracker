@@ -1,16 +1,19 @@
-/** Shared with VCH hub — localStorage on each origin + cookie on *.veteranscentralhub.us. */
+/** Shared with VCH hub — localStorage on each origin + cookie on the current VCH TLD. */
+
+import { isVchProductionHost, resolveVchCookieDomain } from './vchHost'
 
 export const VCH_COOKIE_CONSENT_STORAGE_KEY = 'cookieConsent'
 export const VCH_COOKIE_CONSENT_COOKIE_NAME = 'vch_cookie_consent'
 const VCH_COOKIE_CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
-export function isVchProductionHost() {
+export { isVchProductionHost }
+
+function currentHostname() {
   if (!import.meta.client) {
-    return false
+    return ''
   }
 
-  const host = window.location.hostname
-  return host === 'veteranscentralhub.us' || host.endsWith('.veteranscentralhub.us')
+  return window.location.hostname
 }
 
 function readConsentCookie(): boolean {
@@ -42,7 +45,9 @@ export function acceptVchCookieConsent() {
 
   localStorage.setItem(VCH_COOKIE_CONSENT_STORAGE_KEY, 'true')
 
+  const hostname = currentHostname()
+  const cookieDomain = resolveVchCookieDomain(hostname)
   const secure = window.location.protocol === 'https:' ? '; Secure' : ''
-  const domain = isVchProductionHost() ? '; domain=.veteranscentralhub.us' : ''
+  const domain = cookieDomain ? `; domain=${cookieDomain}` : ''
   document.cookie = `${VCH_COOKIE_CONSENT_COOKIE_NAME}=true; path=/; max-age=${VCH_COOKIE_CONSENT_MAX_AGE_SECONDS}; SameSite=Lax${secure}${domain}`
 }

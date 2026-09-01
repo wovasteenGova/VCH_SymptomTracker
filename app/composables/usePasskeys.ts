@@ -43,7 +43,7 @@ function getPasskeyErrorMessage(error: unknown, fallback: string) {
     }
 
     if (failure.name === 'SecurityError' || /relying party|rp id/i.test(message)) {
-      return 'Passkeys only work on the production site (veteranscentralhub.us), not on this address.'
+      return 'Passkeys only work on the Veterans Central Hub production site, not on this address.'
     }
 
     if (code === 'passkey_disabled' || /passkey.*disabled/i.test(message)) {
