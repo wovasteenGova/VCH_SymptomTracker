@@ -15,7 +15,7 @@ services:
       - key: NITRO_PRESET
         value: node-server
       - key: APP_URL
-        value: https://tracker.veteranscentralhub.us
+        value: https://tracker.veteranscentralhub.com
       - key: NODE_ENV
         value: production
       # Required at build + runtime — set values in Render dashboard (see .env.example)
@@ -52,6 +52,6 @@ services:
       - key: NODE_VERSION
         value: "22"
       - key: APP_URL
-        value: https://tracker.veteranscentralhub.us
+        value: https://tracker.veteranscentralhub.com
       - key: REMINDER_CRON_SECRET
         sync: false

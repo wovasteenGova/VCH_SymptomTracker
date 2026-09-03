@@ -3,7 +3,7 @@ export default async () => {
     process.env.APP_URL
       || process.env.URL
       || process.env.DEPLOY_PRIME_URL
-      || 'https://tracker.veteranscentralhub.us'
+      || 'https://tracker.veteranscentralhub.com'
   ).replace(/\/$/, '')
 
   const secret = String(process.env.REMINDER_CRON_SECRET || '').trim()

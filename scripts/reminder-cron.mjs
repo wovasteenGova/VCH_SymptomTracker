@@ -5,7 +5,7 @@
 const siteUrl = String(
   process.env.APP_URL
   || process.env.RENDER_EXTERNAL_URL
-  || 'https://tracker.veteranscentralhub.us'
+  || 'https://tracker.veteranscentralhub.com'
 ).replace(/\/$/, '')
 
 const secret = String(process.env.REMINDER_CRON_SECRET || '').trim()

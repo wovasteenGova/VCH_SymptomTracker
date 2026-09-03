@@ -10,8 +10,9 @@ describe('tracker toolbar actions', () => {
   })
 
   it('builds a normalized ClaimBuilder URL', () => {
-    expect(buildClaimBuilderUrl({ claimBuilderUrl: 'https://claimbuilder.veteranscentralhub.us/' }))
-      .toBe('https://claimbuilder.veteranscentralhub.us')
+    expect(buildClaimBuilderUrl({ claimBuilderUrl: 'https://claimbuilder.veteranscentralhub.com/' }))
+      .toBe('https://claimbuilder.veteranscentralhub.com')
+    expect(buildClaimBuilderUrl()).toBe('https://claimbuilder.veteranscentralhub.com')
   })
 
   it('keeps ClaimBuilder on the current TLD', () => {

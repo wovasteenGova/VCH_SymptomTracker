@@ -70,15 +70,26 @@ describe('applyVchCookieDomain', () => {
 
 describe('VCH public URL TLD rewrite', () => {
   it('keeps hub, tracker, and ClaimBuilder on the current TLD', () => {
-    expect(resolveVchHubUrl('tracker.veteranscentralhub.com')).toBe('https://veteranscentralhub.com')
-    expect(resolveVchHubUrl('tracker.veteranscentralhub.us')).toBe('https://veteranscentralhub.us')
+    expect(resolveVchHubUrl('tracker.veteranscentralhub.com')).toBe('https://www.veteranscentralhub.com')
+    expect(resolveVchHubUrl('tracker.veteranscentralhub.us')).toBe('https://www.veteranscentralhub.us')
     expect(resolveVchTrackerUrl('tracker.veteranscentralhub.com')).toBe('https://tracker.veteranscentralhub.com')
     expect(resolveVchClaimBuilderUrl('https://claimbuilder.veteranscentralhub.us/', 'tracker.veteranscentralhub.com'))
       .toBe('https://claimbuilder.veteranscentralhub.com')
     expect(resolveVchHubPath('/privacy', 'tracker.veteranscentralhub.com'))
-      .toBe('https://veteranscentralhub.com/privacy')
+      .toBe('https://www.veteranscentralhub.com/privacy')
     expect(resolveVchHubPath('contact', 'claimbuilder.veteranscentralhub.us'))
-      .toBe('https://veteranscentralhub.us/contact')
+      .toBe('https://www.veteranscentralhub.us/contact')
+  })
+
+  it('defaults to .com when no current host is available', () => {
+    expect(resolveVchHubUrl()).toBe('https://www.veteranscentralhub.com')
+    expect(resolveVchHubUrl('')).toBe('https://www.veteranscentralhub.com')
+    expect(resolveVchHubUrl('localhost')).toBe('https://www.veteranscentralhub.com')
+    expect(resolveVchTrackerUrl()).toBe('https://tracker.veteranscentralhub.com')
+    expect(resolveVchTrackerUrl('localhost')).toBe('https://tracker.veteranscentralhub.com')
+    expect(resolveVchClaimBuilderUrl()).toBe('https://claimbuilder.veteranscentralhub.com')
+    expect(resolveVchClaimBuilderUrl(null, '127.0.0.1')).toBe('https://claimbuilder.veteranscentralhub.com')
+    expect(resolveVchHubPath('/privacy')).toBe('https://www.veteranscentralhub.com/privacy')
   })
 
   it('rewrites configured .us URLs when the page is on .com', () => {
@@ -120,10 +131,11 @@ describe('auth and checkout origins stay on the opened host', () => {
   })
 
   it('never omits an OAuth callback URL', () => {
-    expect(resolveOAuthCallbackUrl('https://tracker.veteranscentralhub.us', ''))
-      .toBe('https://tracker.veteranscentralhub.us/auth/callback')
+    expect(resolveOAuthCallbackUrl('https://tracker.veteranscentralhub.com', ''))
+      .toBe('https://tracker.veteranscentralhub.com/auth/callback')
     expect(resolveOAuthCallbackUrl('', 'https://tracker.veteranscentralhub.com'))
       .toBe('https://tracker.veteranscentralhub.com/auth/callback')
+    expect(resolveOAuthCallbackUrl('', '')).toBe('https://tracker.veteranscentralhub.com/auth/callback')
   })
 
   it('rewrites tracker public origin to the current TLD', () => {
@@ -149,6 +161,31 @@ describe('baked production cookie domain', () => {
     const config = readFileSync('nuxt.config.ts', 'utf8')
     expect(config).not.toMatch(/domain:\s*['"]\.veteranscentralhub\.us['"]/)
     expect(config).toContain('./nuxt-modules/vch-host')
+  })
+
+  it('uses .com production fallbacks instead of .us', () => {
+    const config = readFileSync('nuxt.config.ts', 'utf8')
+    const render = readFileSync('render.yaml', 'utf8')
+    const cron = readFileSync('scripts/reminder-cron.mjs', 'utf8')
+    const netlifyCron = readFileSync('netlify/functions/reminder-cron.mjs', 'utf8')
+    const cronEnv = readFileSync('.local/render-cron.env.example', 'utf8')
+    const subscription = readFileSync('app/utils/subscription.ts', 'utf8')
+
+    expect(config).toContain('https://tracker.veteranscentralhub.com')
+    expect(config).toContain('https://claimbuilder.veteranscentralhub.com')
+    expect(config).not.toContain('https://tracker.veteranscentralhub.us')
+    expect(config).not.toContain('https://claimbuilder.veteranscentralhub.us')
+    expect(render).toContain('https://tracker.veteranscentralhub.com')
+    expect(render).not.toContain('veteranscentralhub.us')
+    expect(cron).toContain('https://tracker.veteranscentralhub.com')
+    expect(cron).not.toContain('veteranscentralhub.us')
+    expect(netlifyCron).toContain('https://tracker.veteranscentralhub.com')
+    expect(netlifyCron).not.toContain('veteranscentralhub.us')
+    expect(cronEnv).toContain('APP_URL=https://tracker.veteranscentralhub.com')
+    expect(cronEnv).not.toContain('veteranscentralhub.us')
+    expect(subscription).toContain("VCH_HUB_URL = 'https://www.veteranscentralhub.com'")
+    expect(subscription).toContain("VCH_CLAIMBUILDER_URL = 'https://claimbuilder.veteranscentralhub.com'")
+    expect(subscription).not.toContain('veteranscentralhub.us')
   })
 
   it('always passes OAuth redirectTo from the current origin helper', () => {

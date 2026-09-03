@@ -4,7 +4,7 @@ export const VCH_APEX_US = 'veteranscentralhub.us'
 export const VCH_APEX_COM = 'veteranscentralhub.com'
 
 export const VCH_HUB_ORIGIN_US = `https://${VCH_APEX_US}`
-export const VCH_HUB_ORIGIN_COM = `https://${VCH_APEX_COM}`
+export const VCH_HUB_ORIGIN_COM = `https://www.${VCH_APEX_COM}`
 export const VCH_TRACKER_ORIGIN_US = `https://tracker.${VCH_APEX_US}`
 export const VCH_TRACKER_ORIGIN_COM = `https://tracker.${VCH_APEX_COM}`
 export const VCH_CLAIMBUILDER_ORIGIN_US = `https://claimbuilder.${VCH_APEX_US}`
@@ -84,15 +84,15 @@ export function resolveCurrentHostname(hostname?: string | null) {
 }
 
 export function resolveVchHubUrl(hostname?: string | null) {
-  return rewriteVchUrlToCurrentTld(VCH_HUB_ORIGIN_US, resolveCurrentHostname(hostname) || hostname)
+  return rewriteVchUrlToCurrentTld(VCH_HUB_ORIGIN_COM, resolveCurrentHostname(hostname) || hostname)
 }
 
 export function resolveVchTrackerUrl(hostname?: string | null) {
-  return rewriteVchUrlToCurrentTld(VCH_TRACKER_ORIGIN_US, resolveCurrentHostname(hostname) || hostname)
+  return rewriteVchUrlToCurrentTld(VCH_TRACKER_ORIGIN_COM, resolveCurrentHostname(hostname) || hostname)
 }
 
 export function resolveVchClaimBuilderUrl(configuredUrl?: string | null, hostname?: string | null) {
-  const fallback = String(configuredUrl || '').trim() || VCH_CLAIMBUILDER_ORIGIN_US
+  const fallback = String(configuredUrl || '').trim() || VCH_CLAIMBUILDER_ORIGIN_COM
   return rewriteVchUrlToCurrentTld(fallback.replace(/\/$/, ''), resolveCurrentHostname(hostname) || hostname)
 }
 

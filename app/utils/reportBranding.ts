@@ -1,6 +1,6 @@
-import { rewriteVchUrlToCurrentTld, resolveCurrentHostname, VCH_TRACKER_ORIGIN_US } from './vchHost'
+import { rewriteVchUrlToCurrentTld, resolveCurrentHostname, VCH_TRACKER_ORIGIN_COM } from './vchHost'
 
-export const TRACKER_PUBLIC_ORIGIN = VCH_TRACKER_ORIGIN_US
+export const TRACKER_PUBLIC_ORIGIN = VCH_TRACKER_ORIGIN_COM
 
 function isLocalOrigin(value: string) {
   try {
