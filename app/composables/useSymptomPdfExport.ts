@@ -57,6 +57,8 @@ type PdfExportOptions = VeteranSignatureInfo & {
   weeklyLogDay?: number
   reportVariant?: 'veteran' | 'family'
   entryRevisionsByEntryId?: Record<string, EntryRevisionRecord[]>
+  reportingPeriodLabel?: string | null
+  reportingPeriodSlug?: string | null
 }
 
 function resolveTypedSignatureName(signatureInfo: VeteranSignatureInfo) {
@@ -335,7 +337,9 @@ export function useSymptomPdfExport() {
       loggingCadence = 'weekly',
       weeklyLogDay = 0,
       reportVariant,
-      entryRevisionsByEntryId
+      entryRevisionsByEntryId,
+      reportingPeriodLabel = null,
+      reportingPeriodSlug = null
     } = options
     const showAdvancedCharts = includeCharts ?? includeAdvancedCharts
     const signatureInfo = { veteranName, veteranEmail }
@@ -417,6 +421,12 @@ export function useSymptomPdfExport() {
       headerX,
       72
     )
+
+    if (reportingPeriodLabel) {
+      doc.setFontSize(8)
+      doc.setTextColor(186, 230, 253)
+      doc.text(`Reporting period: ${reportingPeriodLabel}`, headerX, 86)
+    }
 
     doc.setFontSize(9)
     doc.setTextColor(203, 213, 225)
@@ -683,15 +693,21 @@ export function useSymptomPdfExport() {
     doc.save(buildSymptomReportPdfFilename({
       conditionLabel,
       reportVariant,
-      reportMode: entryLogIncludesCharts ? 'full' : 'entries-only'
+      reportMode: entryLogIncludesCharts ? 'full' : 'entries-only',
+      reportingPeriodSlug
     }, exportedAt))
   }
 
   async function downloadCpExamPdf(
     entries: SymptomEntryRecord[],
-    options: Pick<PdfExportOptions, 'veteranName' | 'conditionLabel'> = {}
+    options: Pick<PdfExportOptions, 'veteranName' | 'conditionLabel' | 'reportingPeriodLabel' | 'reportingPeriodSlug'> = {}
   ) {
-    const { veteranName = null, conditionLabel = null } = options
+    const {
+      veteranName = null,
+      conditionLabel = null,
+      reportingPeriodLabel = null,
+      reportingPeriodSlug = null
+    } = options
 
     if (!entries.length) {
       throw new Error('Add at least one symptom entry before exporting.')
@@ -712,10 +728,11 @@ export function useSymptomPdfExport() {
       summaries,
       veteranName,
       reportTitle: buildCpExamReportTitle(conditionLabel),
-      conditionLabel
+      conditionLabel,
+      reportingPeriodLabel
     })
 
-    doc.save(buildPersonalReviewPdfFilename(conditionLabel, new Date()))
+    doc.save(buildPersonalReviewPdfFilename(conditionLabel, new Date(), reportingPeriodSlug))
   }
 
   return {

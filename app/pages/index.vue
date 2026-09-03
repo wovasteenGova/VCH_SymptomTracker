@@ -1894,6 +1894,125 @@
             {{ pdfExportDescription }}
           </p>
 
+          <div class="mt-5 space-y-3">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-xs font-bold uppercase tracking-[0.14em] text-muted">
+                Reporting period
+              </p>
+              <p
+                v-if="exportPeriodPreviewLabel"
+                class="text-right text-[11px] font-semibold text-primary"
+              >
+                {{ exportPeriodPreviewLabel }}
+              </p>
+            </div>
+
+            <div class="rounded-full bg-muted p-1">
+              <div class="grid grid-cols-3 gap-1">
+                <button
+                  type="button"
+                  class="rounded-full px-2 py-2.5 text-[11px] font-semibold transition"
+                  :class="pdfExportPeriodPreset === 'full'
+                    ? 'bg-elevated text-highlighted shadow-sm'
+                    : 'text-muted'"
+                  @click="pdfExportPeriodPreset = 'full'"
+                >
+                  Full history
+                </button>
+                <button
+                  type="button"
+                  class="rounded-full px-2 py-2.5 text-[11px] font-semibold transition"
+                  :class="pdfExportPeriodPreset === 'since-last-va'
+                    ? 'bg-elevated text-highlighted shadow-sm'
+                    : 'text-muted'"
+                  @click="pdfExportPeriodPreset = 'since-last-va'"
+                >
+                  New evidence
+                </button>
+                <button
+                  type="button"
+                  class="rounded-full px-2 py-2.5 text-[11px] font-semibold transition"
+                  :class="pdfExportPeriodPreset === 'custom'
+                    ? 'bg-elevated text-highlighted shadow-sm'
+                    : 'text-muted'"
+                  @click="pdfExportPeriodPreset = 'custom'"
+                >
+                  Custom dates
+                </button>
+              </div>
+            </div>
+
+            <p class="text-xs leading-5 text-muted">
+              {{ exportPeriodHelpText }}
+            </p>
+
+            <div
+              v-if="pdfExportPeriodPreset === 'since-last-va' && !vaExportCutoffDate"
+              class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 dark:border-amber-900/60 dark:bg-amber-950/30"
+            >
+              <p class="text-xs font-semibold text-amber-950 dark:text-amber-100">
+                When did you last submit symptom logs to the VA?
+              </p>
+              <p class="mt-1 text-xs leading-5 text-amber-900/90 dark:text-amber-100/90">
+                Pick the last day included in that submission. Your next export will start the day after.
+              </p>
+              <input
+                v-model="pdfExportVaCutoffDate"
+                type="date"
+                :max="exportTodayDateString"
+                class="mt-3 w-full rounded-xl border border-default bg-default px-3 py-2.5 text-xs text-highlighted"
+              >
+            </div>
+
+            <div
+              v-else-if="pdfExportPeriodPreset === 'since-last-va' && vaExportCutoffDate"
+              class="rounded-2xl border border-default bg-muted/40 px-4 py-3 text-xs leading-5 text-toned"
+            >
+              Last VA submission remembered through
+              <span class="font-semibold text-highlighted">{{ formatStoredVaCutoffLabel }}</span>.
+              This export includes logs after that date only.
+            </div>
+
+            <div
+              v-if="pdfExportPeriodPreset === 'custom'"
+              class="grid grid-cols-2 gap-3"
+            >
+              <label class="block">
+                <span class="mb-1.5 block text-xs font-semibold text-muted">From</span>
+                <input
+                  v-model="pdfExportCustomStartDate"
+                  type="date"
+                  :max="pdfExportCustomEndDate || exportTodayDateString"
+                  class="w-full rounded-xl border border-default bg-default px-3 py-2.5 text-xs text-highlighted"
+                >
+              </label>
+              <label class="block">
+                <span class="mb-1.5 block text-xs font-semibold text-muted">Through</span>
+                <input
+                  v-model="pdfExportCustomEndDate"
+                  type="date"
+                  :min="pdfExportCustomStartDate || undefined"
+                  :max="exportTodayDateString"
+                  class="w-full rounded-xl border border-default bg-default px-3 py-2.5 text-xs text-highlighted"
+                >
+              </label>
+            </div>
+
+            <p
+              v-if="exportPeriodEntryPreview"
+              class="rounded-2xl border border-default bg-muted/30 px-4 py-3 text-xs leading-5 text-toned"
+            >
+              {{ exportPeriodEntryPreview }}
+            </p>
+
+            <p
+              v-if="exportPeriodValidationMessage"
+              class="text-xs font-medium text-amber-700 dark:text-amber-200"
+            >
+              {{ exportPeriodValidationMessage }}
+            </p>
+          </div>
+
           <div v-if="pdfExportType === 'full'" class="mt-4 space-y-4">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.14em] text-muted">
@@ -1978,7 +2097,7 @@
               <span class="min-w-0 flex-1">
                 <span class="block truncate font-semibold text-highlighted">{{ condition.label }}</span>
                 <span class="mt-0.5 block text-xs text-muted">
-                  {{ condition.entryCount }} {{ condition.entryCount === 1 ? 'entry' : 'entries' }}
+                  {{ exportConditionEntryLabel(condition.key, condition.entryCount) }}
                 </span>
               </span>
             </label>
@@ -1990,6 +2109,23 @@
           >
             Select at least one condition to include in the PDF.
           </p>
+
+          <label
+            v-if="pdfExportType === 'full'"
+            class="mt-4 flex items-start gap-3 rounded-2xl border border-default bg-muted/30 px-4 py-4"
+          >
+            <input
+              v-model="pdfExportMarkVaSubmission"
+              type="checkbox"
+              class="mt-0.5 size-4 rounded border-default text-highlighted focus:ring-primary"
+            >
+            <span class="text-xs leading-5 text-toned">
+              <span class="font-semibold text-highlighted">Remember this as submitted to the VA</span>
+              <span class="mt-1 block">
+                Next time you choose New evidence, the export will start after this reporting period so you do not resubmit older logs.
+              </span>
+            </span>
+          </label>
 
           <label
             v-if="pdfExportType === 'full'"
@@ -2090,6 +2226,18 @@ import {
 import { copyToClipboard } from '../utils/copyToClipboard'
 import { AUTH_NOTICES, authNoticeToast, authSuccessToast, handleAuthApiFailure, resolveAuthApiErrorMessage, validateSignupForm, AUTH_VALIDATION, authErrorToast, isEmailConfirmationNotice } from '../utils/authNotices'
 import { PDF_EXPORT_ACKNOWLEDGMENT_LABEL } from '../utils/pdfExportCertification'
+import {
+  buildReportingPeriodSlug,
+  computeRangeEndFromEntries,
+  filterEntriesByDateRange,
+  formatReportingPeriodLabel,
+  getTodayCalendarDateString,
+  isExportDateRangeValid,
+  loadVaExportCutoff,
+  resolveExportDateRange,
+  saveVaExportCutoff,
+  type ExportPeriodPreset
+} from '../utils/exportDateRange'
 import {
   calendarDateToDateString,
   clampTime24ToMax,
@@ -2379,6 +2527,13 @@ const pdfExportSeparateFamily = ref(false)
 const isPdfExportOverlayOpen = ref(false)
 const selectedExportConditionKeys = ref<string[]>([])
 const pdfExportAcknowledged = ref(false)
+const pdfExportPeriodPreset = ref<ExportPeriodPreset>('full')
+const pdfExportCustomStartDate = ref('')
+const pdfExportCustomEndDate = ref('')
+const pdfExportVaCutoffDate = ref('')
+const pdfExportMarkVaSubmission = ref(true)
+const vaExportCutoffDate = ref<string | null>(null)
+const exportTodayDateString = getTodayCalendarDateString()
 const transitionDirection = ref<HomeTransitionDirection>('next')
 const { installPlatform, canPromptInstall, promptInstall } = usePwaInstall()
 const historyExpanded = ref(false)
@@ -3498,6 +3653,142 @@ function isFamilySourceEntry(entry: { source?: string | null }) {
   return entry.source === 'family'
 }
 
+const activeVaSubmissionCutoff = computed(() => (
+  vaExportCutoffDate.value || pdfExportVaCutoffDate.value || null
+))
+
+const activeExportDateRange = computed(() => resolveExportDateRange({
+  preset: pdfExportPeriodPreset.value,
+  customStartDate: pdfExportCustomStartDate.value || null,
+  customEndDate: pdfExportCustomEndDate.value || null,
+  lastVaSubmissionEndDate: activeVaSubmissionCutoff.value
+}))
+
+const activeReportingPeriodLabel = computed(() => formatReportingPeriodLabel(
+  activeExportDateRange.value.startDate,
+  activeExportDateRange.value.endDate
+))
+
+const activeReportingPeriodSlug = computed(() => buildReportingPeriodSlug(
+  activeExportDateRange.value.startDate,
+  activeExportDateRange.value.endDate
+))
+
+const exportPeriodIsValid = computed(() => isExportDateRangeValid(
+  pdfExportPeriodPreset.value,
+  {
+    customStartDate: pdfExportCustomStartDate.value || null,
+    customEndDate: pdfExportCustomEndDate.value || null,
+    lastVaSubmissionEndDate: activeVaSubmissionCutoff.value
+  }
+))
+
+const exportPeriodValidationMessage = computed(() => {
+  if (exportPeriodIsValid.value) {
+    return ''
+  }
+
+  if (pdfExportPeriodPreset.value === 'since-last-va') {
+    return 'Choose the last day you submitted logs to the VA.'
+  }
+
+  if (pdfExportPeriodPreset.value === 'custom') {
+    if (!pdfExportCustomStartDate.value) {
+      return 'Choose a start date for this export.'
+    }
+
+    return 'The start date must be on or before the end date.'
+  }
+
+  return ''
+})
+
+const exportPeriodHelpText = computed(() => {
+  if (pdfExportPeriodPreset.value === 'full') {
+    return 'Includes every saved log for the selected conditions. Use this for an initial claim or a full backup.'
+  }
+
+  if (pdfExportPeriodPreset.value === 'since-last-va') {
+    return 'Only logs after your last VA submission. Use this for an increase or supplemental so you do not resubmit older evidence.'
+  }
+
+  return 'Choose exact dates when you need a specific window of symptom history.'
+})
+
+const exportPeriodPreviewLabel = computed(() => {
+  if (pdfExportPeriodPreset.value === 'full') {
+    return 'All saved logs'
+  }
+
+  return activeReportingPeriodLabel.value || 'Set dates'
+})
+
+const formatStoredVaCutoffLabel = computed(() => {
+  if (!vaExportCutoffDate.value) {
+    return ''
+  }
+
+  return formatReportingPeriodLabel(
+    vaExportCutoffDate.value,
+    vaExportCutoffDate.value
+  ) || vaExportCutoffDate.value
+})
+
+const exportSelectedPeriodEntryCount = computed(() => (
+  resolveExportEntries(selectedExportConditionKeys.value).length
+))
+
+const exportTotalSelectedEntryCount = computed(() => {
+  const keySet = new Set(selectedExportConditionKeys.value)
+
+  return savedEntries.value.filter((entry) => {
+    const resolvedCondition = resolveCatalogConditionByStoredKey(entry.condition_key || entry.condition_label)
+    const entryKey = resolvedCondition?.key || entry.condition_key || conditionKey(entry.condition_label)
+    return keySet.has(entryKey)
+  }).length
+})
+
+const exportPeriodEntryPreview = computed(() => {
+  if (!selectedExportConditionKeys.value.length) {
+    return ''
+  }
+
+  if (pdfExportPeriodPreset.value === 'full') {
+    return `${exportTotalSelectedEntryCount.value} ${exportTotalSelectedEntryCount.value === 1 ? 'entry' : 'entries'} will be included.`
+  }
+
+  if (!exportPeriodIsValid.value) {
+    return ''
+  }
+
+  const periodCount = exportSelectedPeriodEntryCount.value
+  const totalCount = exportTotalSelectedEntryCount.value
+
+  if (!periodCount) {
+    return `No entries fall in this reporting period (${totalCount} total saved for the selected conditions).`
+  }
+
+  if (periodCount === totalCount) {
+    return `${periodCount} ${periodCount === 1 ? 'entry' : 'entries'} will be included.`
+  }
+
+  return `${periodCount} ${periodCount === 1 ? 'entry' : 'entries'} in this period (${totalCount} total saved).`
+})
+
+function exportConditionEntryLabel(conditionKey: string, totalCount: number) {
+  if (pdfExportPeriodPreset.value === 'full' || !exportPeriodIsValid.value) {
+    return `${totalCount} ${totalCount === 1 ? 'entry' : 'entries'}`
+  }
+
+  const periodCount = resolveExportEntries([conditionKey]).length
+
+  if (periodCount === totalCount) {
+    return `${periodCount} ${periodCount === 1 ? 'entry' : 'entries'}`
+  }
+
+  return `${periodCount} of ${totalCount} entries in this period`
+}
+
 function resolveExportEntries(
   conditionKeys: string[],
   options: { source?: 'veteran' | 'family' | 'all' } = {}
@@ -3505,7 +3796,7 @@ function resolveExportEntries(
   const { source = 'all' } = options
   const keySet = new Set(conditionKeys)
 
-  return savedEntries.value.filter((entry) => {
+  const matchedEntries = savedEntries.value.filter((entry) => {
     const resolvedCondition = resolveCatalogConditionByStoredKey(entry.condition_key || entry.condition_label)
     const entryKey = resolvedCondition?.key || entry.condition_key || conditionKey(entry.condition_label)
 
@@ -3523,6 +3814,8 @@ function resolveExportEntries(
 
     return true
   })
+
+  return filterEntriesByDateRange(matchedEntries, activeExportDateRange.value)
 }
 
 const exportSelectedFamilyEntryCount = computed(() => (
@@ -3539,6 +3832,10 @@ const exportableFamilyEntryCount = computed(() => (
 
 const canConfirmPdfExport = computed(() => {
   if (isExportingPdf.value || pdfExportDownloadStarted.value || !user.value || !exportableConditions.value.length || !selectedExportConditionKeys.value.length) {
+    return false
+  }
+
+  if (!exportPeriodIsValid.value || exportSelectedPeriodEntryCount.value <= 0) {
     return false
   }
 
@@ -3574,6 +3871,11 @@ const exportButtonLabel = computed(() => {
 function openPdfExportOverlay() {
   exportError.value = ''
   pdfExportDownloadStarted.value = false
+  pdfExportPeriodPreset.value = vaExportCutoffDate.value ? 'since-last-va' : 'full'
+  pdfExportCustomStartDate.value = ''
+  pdfExportCustomEndDate.value = ''
+  pdfExportVaCutoffDate.value = ''
+  pdfExportMarkVaSubmission.value = true
   isPdfExportOverlayOpen.value = true
 }
 
@@ -3587,13 +3889,32 @@ function closePdfExportOverlay() {
 }
 
 watch(
-  [pdfExportType, pdfExportContentMode, pdfExportSeparateFamily, selectedExportConditionKeys, pdfExportAcknowledged],
+  [
+    pdfExportType,
+    pdfExportContentMode,
+    pdfExportSeparateFamily,
+    selectedExportConditionKeys,
+    pdfExportAcknowledged,
+    pdfExportPeriodPreset,
+    pdfExportCustomStartDate,
+    pdfExportCustomEndDate,
+    pdfExportVaCutoffDate,
+    pdfExportMarkVaSubmission
+  ],
   () => {
     if (pdfExportDownloadStarted.value) {
       pdfExportDownloadStarted.value = false
       exportNotice.value = ''
     }
   }
+)
+
+watch(
+  () => user.value?.id,
+  (userId) => {
+    vaExportCutoffDate.value = loadVaExportCutoff(userId)
+  },
+  { immediate: true }
 )
 
 function isExportConditionSelected(conditionKey: string) {
@@ -4519,7 +4840,9 @@ async function exportCpExamPdf(conditionKeys: string[]) {
 
     await downloadCpExamPdf(entries, {
       veteranName: veteranName || null,
-      conditionLabel
+      conditionLabel,
+      reportingPeriodLabel: activeReportingPeriodLabel.value,
+      reportingPeriodSlug: activeReportingPeriodSlug.value
     })
 
     exportNotice.value = 'Your personal review PDF should be in your downloads folder.'
@@ -4574,7 +4897,9 @@ async function exportEntriesPdf(conditionKeys: string[]) {
       weeklyLogDay: weeklyLogDay.value,
       includeLoggingCharts: includeCharts,
       includeAdvancedCharts: includeCharts && isPro.value,
-      entryRevisionsByEntryId
+      entryRevisionsByEntryId,
+      reportingPeriodLabel: activeReportingPeriodLabel.value,
+      reportingPeriodSlug: activeReportingPeriodSlug.value
     }
 
     if (veteranEntries.length) {
@@ -4601,6 +4926,16 @@ async function exportEntriesPdf(conditionKeys: string[]) {
       exportNotice.value = 'PDF downloaded with summary stats and your entry log. Check your downloads folder.'
     } else {
       exportNotice.value = 'Your PDF should be in your downloads folder.'
+    }
+
+    if (pdfExportMarkVaSubmission.value && user.value?.id) {
+      const exportedEntries = [...veteranEntries, ...familyEntries]
+      const cutoffDate = computeRangeEndFromEntries(
+        exportedEntries,
+        activeExportDateRange.value.endDate
+      )
+      saveVaExportCutoff(user.value.id, cutoffDate)
+      vaExportCutoffDate.value = cutoffDate
     }
 
     pdfExportDownloadStarted.value = true

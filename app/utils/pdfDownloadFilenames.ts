@@ -2,6 +2,7 @@ export type SymptomReportFilenameOptions = {
   conditionLabel?: string | null
   reportVariant?: 'veteran' | 'family'
   reportMode?: 'full' | 'entries-only'
+  reportingPeriodSlug?: string | null
 }
 
 function formatExportDate(date = new Date()) {
@@ -45,27 +46,30 @@ export function buildSymptomReportPdfFilename(
   exportedAt = new Date()
 ) {
   const scope = slugifyConditionScope(options.conditionLabel)
+  const periodPart = options.reportingPeriodSlug ? `${options.reportingPeriodSlug}_` : ''
   const datePart = formatExportTimestamp(exportedAt)
 
   if (options.reportVariant === 'family') {
-    return `VCH_family_report_${scope}_${datePart}.pdf`
+    return `VCH_family_report_${scope}_${periodPart}${datePart}.pdf`
   }
 
   const reportKind = options.reportMode === 'entries-only' ? 'entries_report' : 'full_report'
 
   if (options.reportVariant === 'veteran') {
-    return `VCH_veteran_${reportKind}_${scope}_${datePart}.pdf`
+    return `VCH_veteran_${reportKind}_${scope}_${periodPart}${datePart}.pdf`
   }
 
-  return `VCH_${reportKind}_${scope}_${datePart}.pdf`
+  return `VCH_${reportKind}_${scope}_${periodPart}${datePart}.pdf`
 }
 
 export function buildPersonalReviewPdfFilename(
   conditionLabel: string | null | undefined,
-  exportedAt = new Date()
+  exportedAt = new Date(),
+  reportingPeriodSlug: string | null = null
 ) {
   const scope = slugifyConditionScope(conditionLabel)
+  const periodPart = reportingPeriodSlug ? `${reportingPeriodSlug}_` : ''
   const datePart = formatExportTimestamp(exportedAt)
 
-  return `VCH_personal_review_${scope}_${datePart}.pdf`
+  return `VCH_personal_review_${scope}_${periodPart}${datePart}.pdf`
 }

@@ -260,8 +260,9 @@ export function drawCpExamReportPdf(options: {
   veteranName?: string | null
   reportTitle: string
   conditionLabel?: string | null
+  reportingPeriodLabel?: string | null
 }) {
-  const { doc, summaries, veteranName, reportTitle } = options
+  const { doc, summaries, veteranName, reportTitle, reportingPeriodLabel = null } = options
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
   const margin = 36
@@ -286,6 +287,11 @@ export function drawCpExamReportPdf(options: {
 
   if (veteranName) {
     doc.text(`Prepared for ${veteranName}`, pageWidth - margin, y, { align: 'right' })
+  }
+
+  if (reportingPeriodLabel) {
+    y += 14
+    doc.text(`Reporting period: ${reportingPeriodLabel}`, margin, y)
   }
 
   y += 18
