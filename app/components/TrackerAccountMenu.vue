@@ -20,6 +20,7 @@ import {
   ACCOUNT_SETTINGS_ACTION,
   TRACKER_TOOLTIP
 } from '../utils/trackerToolbarUi'
+import { resolveAuthUserAvatarUrl } from '../utils/userAvatar'
 
 const props = withDefaults(defineProps<{
   embedded?: boolean
@@ -95,6 +96,8 @@ const accountLabel = computed(() => {
 const accountDisplayName = computed(() => {
   return accountName.value.trim() || accountLabel.value
 })
+
+const userAvatarUrl = computed(() => resolveAuthUserAvatarUrl(user.value))
 
 function closeSettings() {
   closeSettingsSupportOverlays()
@@ -278,7 +281,6 @@ async function onSignedIn() {
         size="xs"
         color="neutral"
         variant="ghost"
-        icon="i-lucide-user-round"
         trailing-icon="i-lucide-chevron-down"
         :label="showName ? accountFirstName : undefined"
         :aria-label="`Open account for ${accountLabel}`"
@@ -286,7 +288,15 @@ async function onSignedIn() {
         class="max-w-[9rem] shrink-0 truncate"
         data-settings-panel-trigger
         @click="openProfileSettings"
-      />
+      >
+        <template #leading>
+          <UAvatar
+            :src="userAvatarUrl"
+            :alt="accountLabel"
+            size="2xs"
+          />
+        </template>
+      </UButton>
     </UTooltip>
 
     <UPopover
@@ -306,14 +316,21 @@ async function onSignedIn() {
           size="xs"
           color="neutral"
           variant="ghost"
-          icon="i-lucide-user-round"
           trailing-icon="i-lucide-chevron-down"
           :label="showName ? accountFirstName : undefined"
           :aria-label="`Open account for ${accountLabel}`"
           :aria-expanded="settingsOpen || settingsExpanded"
           class="max-w-[9rem] shrink-0 truncate"
           data-settings-panel-trigger
-        />
+        >
+          <template #leading>
+            <UAvatar
+              :src="userAvatarUrl"
+              :alt="accountLabel"
+              size="2xs"
+            />
+          </template>
+        </UButton>
       </UTooltip>
 
       <template #content>
