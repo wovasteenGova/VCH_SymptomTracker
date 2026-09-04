@@ -3,6 +3,7 @@ import {
   applyVchCookieDomain,
   isVchProductionHost,
   resolveVchClaimBuilderUrl,
+  resolveVchContactUrl,
   resolveVchCookieDomain,
   resolveVchHubPath,
   resolveVchHubUrl,
@@ -79,6 +80,10 @@ describe('VCH public URL TLD rewrite', () => {
       .toBe('https://www.veteranscentralhub.com/privacy')
     expect(resolveVchHubPath('contact', 'claimbuilder.veteranscentralhub.us'))
       .toBe('https://www.veteranscentralhub.us/contact')
+    expect(resolveVchContactUrl('tracker.veteranscentralhub.com'))
+      .toBe('https://www.veteranscentralhub.com/contact?source=tracker')
+    expect(resolveVchContactUrl('tracker.veteranscentralhub.us'))
+      .toBe('https://www.veteranscentralhub.us/contact?source=tracker')
   })
 
   it('defaults to .com when no current host is available', () => {
@@ -90,6 +95,8 @@ describe('VCH public URL TLD rewrite', () => {
     expect(resolveVchClaimBuilderUrl()).toBe('https://claimbuilder.veteranscentralhub.com')
     expect(resolveVchClaimBuilderUrl(null, '127.0.0.1')).toBe('https://claimbuilder.veteranscentralhub.com')
     expect(resolveVchHubPath('/privacy')).toBe('https://www.veteranscentralhub.com/privacy')
+    expect(resolveVchContactUrl()).toBe('https://www.veteranscentralhub.com/contact?source=tracker')
+    expect(resolveVchContactUrl('localhost')).toBe('https://www.veteranscentralhub.com/contact?source=tracker')
   })
 
   it('rewrites configured .us URLs when the page is on .com', () => {
@@ -184,6 +191,7 @@ describe('baked production cookie domain', () => {
     expect(cronEnv).toContain('APP_URL=https://tracker.veteranscentralhub.com')
     expect(cronEnv).not.toContain('veteranscentralhub.us')
     expect(subscription).toContain("VCH_HUB_URL = 'https://www.veteranscentralhub.com'")
+    expect(subscription).toContain('contact?source=tracker')
     expect(subscription).toContain("VCH_CLAIMBUILDER_URL = 'https://claimbuilder.veteranscentralhub.com'")
     expect(subscription).not.toContain('veteranscentralhub.us')
   })
@@ -193,5 +201,27 @@ describe('baked production cookie domain', () => {
     expect(auth).toContain('const redirectTo = authRedirects.callbackUrl()')
     expect(auth).toMatch(/signInWithOAuth\(\{[\s\S]*redirectTo/)
     expect(auth).not.toMatch(/redirectTo = import\.meta\.client\s*\n\s*\? authRedirects\.callbackUrl\(\)\s*\n\s*: undefined/)
+  })
+})
+
+describe('Tracker contact deep-link', () => {
+  it('sends Account Settings and FAQ contact to Hub with source=tracker', () => {
+    const profile = readFileSync('app/pages/profile.vue', 'utf8')
+    const faq = readFileSync('app/components/FaqOverlay.vue', 'utf8')
+    const menu = readFileSync('app/components/TrackerAccountMenu.vue', 'utf8')
+    const authNotices = readFileSync('app/utils/authNotices.ts', 'utf8')
+    const subscription = readFileSync('app/utils/subscription.ts', 'utf8')
+
+    expect(profile).toContain(':href="contactUrl"')
+    expect(profile).toContain('target="_blank"')
+    expect(profile).not.toContain('ContactSupportOverlay')
+    expect(faq).toContain(':href="contactUrl"')
+    expect(faq).toContain('target="_blank"')
+    expect(faq).toContain('hello@veteranscentralhub.com')
+    expect(faq).not.toContain('open-contact')
+    expect(menu).not.toContain('ContactSupportOverlay')
+    expect(authNotices).toContain('resolveVchContactUrl()')
+    expect(subscription).toContain('hello@veteranscentralhub.com')
+    expect(subscription).not.toContain('support@veteranscentralhub.com')
   })
 })

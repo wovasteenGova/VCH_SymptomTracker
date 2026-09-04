@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import {
   resolveCurrentHostname,
   resolveVchClaimBuilderUrl,
+  resolveVchContactUrl,
   resolveVchHubPath,
   resolveVchHubUrl
 } from '../utils/vchHost'
@@ -24,7 +25,7 @@ export function useVchPublicUrls() {
   const hubUrl = computed(() => resolveVchHubUrl(hostname.value))
   const privacyUrl = computed(() => resolveVchHubPath('/privacy', hostname.value))
   const termsUrl = computed(() => resolveVchHubPath('/terms', hostname.value))
-  const contactUrl = computed(() => resolveVchHubPath('/contact', hostname.value))
+  const contactUrl = computed(() => resolveVchContactUrl(hostname.value))
   const cookiesUrl = computed(() => resolveVchHubPath('/cookies', hostname.value))
   const claimMakerUrl = computed(() => resolveVchHubPath('/claims-maker', hostname.value))
   const symptomTrackerMarketingUrl = computed(() => resolveVchHubPath('/symptom-tracker', hostname.value))

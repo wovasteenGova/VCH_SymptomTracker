@@ -80,11 +80,13 @@
               {{ billingPortalNotice }}
             </p>
             <a
-              :href="supportEmailHref"
+              :href="contactUrl"
+              target="_blank"
+              rel="noopener noreferrer"
               class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-300 underline-offset-2 hover:underline"
             >
               Contact us
-              <UIcon name="i-lucide-mail" class="size-4" />
+              <UIcon name="i-lucide-arrow-up-right" class="size-4" />
             </a>
           </div>
         </section>
@@ -138,7 +140,7 @@
                   {{ PRO_REFUND_POLICY }}
                 </p>
                 <p class="mt-2 text-xs leading-5 text-amber-100/90">
-                  Remember months of symptoms before your next exam — not during it.
+                  Remember months of symptoms before your next exam, not during it.
                 </p>
               </div>
             </div>
@@ -195,7 +197,7 @@
             <div>
               <h2 class="text-lg font-bold text-white">Can't pay right now?</h2>
               <p class="mt-2 text-sm leading-6 text-emerald-50/90">
-                We built this for veterans first. If cost is a barrier, reach out and we'll unlock Pro for you — no shame, no proof required.
+                We built this for veterans first. If cost is a barrier, reach out and we'll unlock Pro for you. No shame, no proof required.
               </p>
               <div class="mt-4 flex flex-wrap gap-3">
                 <a
@@ -225,10 +227,13 @@
         >
           <p>{{ pageError }}</p>
           <a
-            :href="supportEmailHref"
+            :href="contactUrl"
+            target="_blank"
+            rel="noopener noreferrer"
             class="mt-2 inline-flex items-center gap-1.5 font-semibold text-red-50 underline-offset-2 hover:underline"
           >
             Contact us if you think something is wrong
+            <UIcon name="i-lucide-arrow-up-right" class="size-4" />
           </a>
         </div>
       </div>
@@ -267,7 +272,7 @@
           :disabled="isCheckoutLoading"
           @click="handleUpgrade"
         >
-          {{ isCheckoutLoading ? 'Loading checkout...' : `Upgrade to Pro — ${PRO_ANNUAL_PRICE_LABEL}` }}
+          {{ isCheckoutLoading ? 'Loading checkout...' : `Upgrade to Pro: ${PRO_ANNUAL_PRICE_LABEL}` }}
         </button>
 
         <NuxtLink
@@ -279,7 +284,7 @@
         </NuxtLink>
 
         <p v-if="!isPro" class="mt-3 text-center text-[0.68rem] leading-5 text-slate-500">
-          {{ PRO_REFUND_POLICY_SHORT }} — cancel renewal anytime from billing settings.
+          {{ PRO_REFUND_POLICY_SHORT }}. Cancel renewal anytime from billing settings.
         </p>
       </StickyActionBar>
     </section>
@@ -322,7 +327,7 @@ const {
   startCheckout
 } = useEntitlements()
 
-const supportEmailHref = buildSupportEmailHref('Symptom Tracker — billing question')
+const supportEmailHref = buildSupportEmailHref('Symptom Tracker: billing question')
 
 const billingPortalNotice = computed(() => {
   if (isComped.value) {
@@ -330,7 +335,7 @@ const billingPortalNotice = computed(() => {
   }
 
   if (isClaimBuilderPro.value) {
-    return 'Pro is included with VCH Claim Maker, so billing is managed through Claim Maker — not here.'
+    return 'Pro is included with VCH Claim Maker, so billing is managed through Claim Maker, not here.'
   }
 
   return 'There is no active paid subscription linked to this account to manage here.'
@@ -367,7 +372,7 @@ const pageTitle = computed(() => isPro.value ? 'Your Pro plan' : 'Choose your pl
 const paymentSteps = [
   {
     title: 'Choose Pro',
-    body: 'Tap upgrade — secure Stripe checkout opens in the app (card, Cash App, Google Pay when available).'
+    body: 'Tap upgrade. Secure Stripe checkout opens in the app (card, Cash App, Google Pay when available).'
   },
   {
     title: 'Pay monthly',
@@ -379,7 +384,7 @@ const paymentSteps = [
   },
   {
     title: 'Help finish Claim Maker',
-    body: 'Your payment supports a self-funded build of the upcoming VCH Claim Maker — not live yet — so veterans can organize claims with more clarity when it ships.'
+    body: 'Your payment supports a self-funded build of the upcoming VCH Claim Maker (not live yet) so veterans can organize claims with more clarity when it ships.'
   }
 ]
 

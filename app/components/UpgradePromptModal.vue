@@ -43,7 +43,7 @@
         </ul>
 
         <p class="mt-4 rounded-2xl border border-sky-900/60 bg-sky-950/30 px-4 py-3 text-xs leading-5 text-sky-100">
-          {{ PRO_ANNUAL_PRICE_LABEL }} helps fund the upcoming VCH Claim Maker build. It is not live yet — Pro subscriptions help cover development until it ships.
+          {{ PRO_ANNUAL_PRICE_LABEL }} helps fund the upcoming VCH Claim Maker build. It is not live yet. Pro subscriptions help cover development until it ships.
         </p>
 
         <p class="mt-3 text-xs leading-5 text-slate-400">
@@ -66,7 +66,7 @@
             :disabled="isCheckoutLoading"
             @click="emit('upgrade')"
           >
-            {{ isCheckoutLoading ? 'Continue to checkout...' : `Upgrade — ${PRO_ANNUAL_PRICE_LABEL}` }}
+            {{ isCheckoutLoading ? 'Continue to checkout...' : `Upgrade: ${PRO_ANNUAL_PRICE_LABEL}` }}
           </button>
           <NuxtLink
             to="/upgrade"
@@ -76,7 +76,9 @@
             See full plan details
           </NuxtLink>
           <a
-            :href="supportEmailHref"
+            :href="contactUrl"
+            target="_blank"
+            rel="noopener noreferrer"
             class="block text-center text-xs font-semibold text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
           >
             Can't pay? Contact us for free access
@@ -88,7 +90,8 @@
 </template>
 
 <script setup lang="ts">
-import { PRO_ANNUAL_PRICE_LABEL, PRO_REFUND_POLICY_SHORT, PRO_TIER_FEATURES, buildSupportEmailHref } from '../utils/subscription'
+import { PRO_ANNUAL_PRICE_LABEL, PRO_REFUND_POLICY_SHORT, PRO_TIER_FEATURES } from '../utils/subscription'
+import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
 defineProps<{
   open: boolean
@@ -102,5 +105,5 @@ const emit = defineEmits<{
   upgrade: []
 }>()
 
-const supportEmailHref = buildSupportEmailHref()
+const { contactUrl } = useVchPublicUrls()
 </script>

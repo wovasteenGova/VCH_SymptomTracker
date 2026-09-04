@@ -104,9 +104,7 @@ export default defineNuxtConfig({
         || env('NUXT_PUBLIC_SITE_URL')
         || (isProduction ? 'https://tracker.veteranscentralhub.com' : ''),
       claimBuilderUrl: envFirst('NUXT_PUBLIC_CLAIMBUILDER_URL', 'CLAIMBUILDER_URL')
-        || (isProduction ? 'https://claimbuilder.veteranscentralhub.com' : 'http://localhost:3000'),
-      // Web3Forms contact form — create a form at https://web3forms.com (can share VCH inbox key).
-      web3formsAccessKey: env('NUXT_PUBLIC_WEB3FORMS_ACCESS_KEY')
+        || (isProduction ? 'https://claimbuilder.veteranscentralhub.com' : 'http://localhost:3000')
     }
   },
   app: {

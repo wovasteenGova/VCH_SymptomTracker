@@ -17,7 +17,7 @@ withDefaults(defineProps<{
   backdropClass?: string
   zIndex?: number
   dismissible?: boolean
-  /** Contact/FAQ overlays opened from settings — keep settings panel open underneath. */
+  /** FAQ overlay opened from settings. Keep the settings panel open underneath. */
   settingsSupportOverlay?: boolean
 }>(), {
   backdropClass: 'bg-slate-950/70',

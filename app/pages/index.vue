@@ -1250,7 +1250,7 @@
             <div class="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pb-1 text-xs font-semibold text-muted">
               <NuxtLink to="/install" data-history-interactive class="hover:text-highlighted">Install</NuxtLink>
               <a
-                href="mailto:support@veteranscentralhub.com?subject=Accessibility%20help%20with%20VCH"
+                href="mailto:hello@veteranscentralhub.com?subject=Accessibility%20help%20with%20VCH"
                 data-history-interactive
                 class="hover:text-highlighted"
               >

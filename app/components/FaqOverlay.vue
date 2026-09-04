@@ -6,15 +6,14 @@ import {
 } from '../utils/subscription'
 import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
-const { privacyUrl } = useVchPublicUrls()
+const { privacyUrl, contactUrl } = useVchPublicUrls()
 
 defineProps<{
   open: boolean
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   close: []
-  'open-contact': []
 }>()
 
 type FaqItem = {
@@ -30,7 +29,7 @@ const faqItems: FaqItem[] = [
   {
     id: 'what-is-tracker',
     question: 'What is Symptom Tracker?',
-    answer: 'Symptom Tracker helps veterans log symptoms over time — severity, impact, and notes — so patterns are easier to review for yourself or a claim. Log from the home screen, browse your history, and export PDF reports when you need them.'
+    answer: 'Symptom Tracker helps veterans log symptoms over time: severity, impact, and notes, so patterns are easier to review for yourself or a claim. Log from the home screen, browse your history, and export PDF reports when you need them.'
   },
   {
     id: 'how-logging-works',
@@ -45,12 +44,12 @@ const faqItems: FaqItem[] = [
   {
     id: 'reminders',
     question: 'How do log reminders work?',
-    answer: 'Turn on reminders in Account Settings. You will get a morning nudge at your chosen time and an 8 PM follow-up if you have not logged yet. Install the app to your home screen for background alerts. Reminders use push notifications — allow them when prompted.'
+    answer: 'Turn on reminders in Account Settings. You will get a morning nudge at your chosen time and an 8 PM follow-up if you have not logged yet. Install the app to your home screen for background alerts. Reminders use push notifications; allow them when prompted.'
   },
   {
     id: 'family-reporting',
     question: 'What are family, friends, and other reporting links?',
-    answer: 'Pro users can create private links for someone they trust. The supporter opens the link, enters their own contact info, and submits a signed observation about how your condition affects you. You manage links from Account Settings — create, copy, disable, or delete them anytime.'
+    answer: 'Pro users can create private links for someone they trust. The supporter opens the link, enters their own contact info, and submits a signed observation about how your condition affects you. You manage links from Account Settings: create, copy, disable, or delete them anytime.'
   },
   {
     id: 'passkeys',
@@ -60,12 +59,12 @@ const faqItems: FaqItem[] = [
   {
     id: 'privacy-data',
     question: 'Who can see my data? Can I export or delete logs?',
-    answer: 'Your symptom entries are private to your account. Export PDFs from the tracker when you need a report. Deleted entries go to the recovery bin first; you can restore or permanently remove them. Delete all logs from Account Settings if you want a fresh start — your profile and plan stay saved. See our privacy policy for more.'
+    answer: 'Your symptom entries are private to your account. Export PDFs from the tracker when you need a report. Deleted entries go to the recovery bin first; you can restore or permanently remove them. Delete all logs from Account Settings if you want a fresh start. Your profile and plan stay saved. See our privacy policy for more.'
   },
   {
     id: 'contact',
     question: 'Still need help?',
-    answer: 'Use Contact us in Account Settings to send a message. We reply by email, usually within a few business days.'
+    answer: 'Open the Veterans Central Hub contact page to send a message. We reply by email at hello@veteranscentralhub.com, usually within a few business days.'
   }
 ]
 
@@ -73,11 +72,6 @@ const openItemId = ref<string | null>(null)
 
 function toggleItem(id: string) {
   openItemId.value = openItemId.value === id ? null : id
-}
-
-function handleOpenContact() {
-  emit('close')
-  emit('open-contact')
 }
 </script>
 
@@ -158,14 +152,16 @@ function handleOpenContact() {
                   <UIcon name="i-lucide-external-link" class="size-3.5" />
                 </a>
               </template>
-              <button
+              <a
                 v-if="item.id === 'contact'"
-                type="button"
+                :href="contactUrl"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
-                @click="handleOpenContact"
               >
                 Contact us
-              </button>
+                <UIcon name="i-lucide-external-link" class="size-3.5" />
+              </a>
             </div>
           </div>
         </div>

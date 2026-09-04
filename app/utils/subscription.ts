@@ -13,20 +13,20 @@ export const PRO_ANNUAL_PRICE_LABEL = PRO_MONTHLY_PRICE_LABEL
 export const PRO_ANNUAL_PRICE_DETAIL = PRO_MONTHLY_PRICE_DETAIL
 export const PRO_REFUND_POLICY_SHORT = '14-day refund'
 export const PRO_REFUND_POLICY =
-  '14-day refund — email support@veteranscentralhub.com within 14 days of purchase if Pro is not right for you.'
+  '14-day refund. Email hello@veteranscentralhub.com within 14 days of purchase if Pro is not right for you.'
 export const PRO_CHECKOUT_SUBMIT_MESSAGE =
-  '$6.99/month · 14-day refund — contact support within 14 days of purchase for a refund.'
+  '$6.99/month · 14-day refund. Contact support within 14 days of purchase for a refund.'
 
 /** Fallback origins when no current host is available. UI should use useVchPublicUrls(). */
 export const VCH_HUB_URL = 'https://www.veteranscentralhub.com'
 export const VCH_PRIVACY_URL = `${VCH_HUB_URL}/privacy`
 export const VCH_TERMS_URL = `${VCH_HUB_URL}/terms`
-export const VCH_CONTACT_URL = `${VCH_HUB_URL}/contact`
+export const VCH_CONTACT_URL = `${VCH_HUB_URL}/contact?source=tracker`
 export const VCH_CLAIM_MAKER_URL = `${VCH_HUB_URL}/claims-maker`
 export const VCH_CLAIMBUILDER_URL = 'https://claimbuilder.veteranscentralhub.com'
 
 export const WHY_WE_CHARGE_COPY =
-  "Pro subscriptions help fund our upcoming VCH Claim Maker — a separate tool for organizing service history, symptoms, and claim evidence into a stronger first draft. It is not live yet. This is a self-funded build, so symptom tracker Pro helps cover servers and development until Claim Maker ships. Don't wait on us to file — file on VA.gov when you're ready."
+  "Pro subscriptions help fund our upcoming VCH Claim Maker, a separate tool for organizing service history, symptoms, and claim evidence into a stronger first draft. It is not live yet. This is a self-funded build, so symptom tracker Pro helps cover servers and development until Claim Maker ships. Don't wait on us to file; file on VA.gov when you're ready."
 
 export const FREE_TIER_FEATURES = [
   'Pick 1 condition to track',
@@ -81,6 +81,8 @@ export const NO_BILLING_PORTAL_MESSAGE =
 export const BILLING_PORTAL_UNAVAILABLE_MESSAGE =
   'We could not open the billing portal right now. If you think something is wrong, contact us.'
 
-export function buildSupportEmailHref(subject = 'Symptom Tracker — free Pro access request') {
-  return `mailto:support@veteranscentralhub.com?subject=${encodeURIComponent(subject)}`
+export const VCH_SUPPORT_EMAIL = 'hello@veteranscentralhub.com'
+
+export function buildSupportEmailHref(subject = 'Symptom Tracker: free Pro access request') {
+  return `mailto:${VCH_SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}`
 }

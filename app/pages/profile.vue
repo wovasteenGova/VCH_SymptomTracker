@@ -256,7 +256,7 @@
                 :name="isPro ? 'i-lucide-receipt' : 'i-lucide-crown'"
                 class="size-3.5"
               />
-              {{ isPro ? 'Payment center' : `Upgrade — ${PRO_ANNUAL_PRICE_LABEL}` }}
+              {{ isPro ? 'Payment center' : `Upgrade: ${PRO_ANNUAL_PRICE_LABEL}` }}
             </NuxtLink>
           </div>
 
@@ -535,14 +535,15 @@
             :class="SETTINGS_ACCOUNT_HELP_CLASS"
           >
             <span>Issues?</span>
-            <button
-              type="button"
+            <a
+              :href="contactUrl"
+              target="_blank"
+              rel="noopener noreferrer"
               class="font-semibold text-primary underline decoration-primary/40 underline-offset-2 transition hover:text-primary/80"
               @pointerdown.stop
-              @click="supportOverlays.openContact()"
             >
               Contact us
-            </button>
+            </a>
             <span aria-hidden="true" class="text-muted">·</span>
             <button
               type="button"
@@ -773,7 +774,7 @@
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Lay reporting</p>
             <h2 class="mt-1 text-xl font-bold text-highlighted">Observer access links</h2>
             <p class="mt-2 text-sm leading-6 text-muted">
-              Create a private link for someone you trust — family, friends, caregivers, or anyone else. They enter their own contact info on each report. You can also create a link from a saved entry in your history.
+              Create a private link for someone you trust: family, friends, caregivers, or anyone else. They enter their own contact info on each report. You can also create a link from a saved entry in your history.
             </p>
           </div>
 
@@ -1406,19 +1407,10 @@
       </div>
     </Transition>
 
-    <ContactSupportOverlay
-      v-if="!overlay"
-      :open="settingsContactOpen"
-      :default-name="profileForm.full_name"
-      :default-email="user?.email || ''"
-      @close="supportOverlays.closeContact()"
-    />
-
     <FaqOverlay
       v-if="!overlay"
       :open="settingsFaqOpen"
       @close="supportOverlays.closeFaq()"
-      @open-contact="supportOverlays.openContactFromFaq()"
     />
   </component>
 </template>
@@ -1470,6 +1462,7 @@ import {
   type VeteranServiceProfile
 } from '#shared/veteranServiceProfile'
 import { AUTH_NOTICES, authNoticeToast, authSuccessToast, handleAuthApiFailure, resolveAuthApiErrorMessage, validateSignupForm, AUTH_VALIDATION, authErrorToast, isEmailConfirmationNotice } from '../utils/authNotices'
+import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -1713,6 +1706,7 @@ const layoutOptions: Array<{ value: TrackerLayoutMode, label: string, copy: stri
 
 const weeklyLogDayOptions = WEEKLY_LOG_DAY_OPTIONS
 
+const { contactUrl } = useVchPublicUrls()
 const supportEmailHref = buildSupportEmailHref()
 
 const freeConditionKeyLabels = computed(() => {
@@ -1806,14 +1800,14 @@ const autoSaveLabel = computed(() => {
 const nameSaveHint = computed(() => {
   if (autoSaveState.value === 'saving') return 'Saving…'
   if (autoSaveState.value === 'saved') return 'Saved'
-  if (autoSaveState.value === 'error') return 'Could not save — try again'
+  if (autoSaveState.value === 'error') return 'Could not save. Try again.'
   return ''
 })
 
 const serviceSaveHint = computed(() => {
   if (autoSaveState.value === 'saving') return 'Saving…'
   if (autoSaveState.value === 'saved') return 'Saved'
-  if (autoSaveState.value === 'error') return 'Could not save — try again'
+  if (autoSaveState.value === 'error') return 'Could not save. Try again.'
   return ''
 })
 
@@ -1840,10 +1834,7 @@ const pendingPurgeEntry = ref<null | { id: string, title: string }>(null)
 const pendingDeleteSupporter = ref<null | { id: string, display_name: string }>(null)
 const activeLogCount = useState('profile-page-log-count', () => 0)
 const supportOverlays = useSettingsSupportOverlays()
-const {
-  contactOpen: settingsContactOpen,
-  faqOpen: settingsFaqOpen
-} = supportOverlays
+const { faqOpen: settingsFaqOpen } = supportOverlays
 const isDeleteAllLogsModalOpen = ref(false)
 const deleteAllLogsPassword = ref('')
 const deleteAllLogsConfirmPhrase = ref('')

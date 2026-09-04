@@ -101,6 +101,16 @@ export function resolveVchHubPath(path: string, hostname?: string | null) {
   return `${resolveVchHubUrl(hostname)}${normalizedPath}`
 }
 
+/** Query tag so Hub Web3Forms / hello@ mail shows the visitor came from Tracker. */
+export const VCH_CONTACT_SOURCE_TRACKER = 'tracker'
+
+export function resolveVchContactUrl(
+  hostname?: string | null,
+  source: string = VCH_CONTACT_SOURCE_TRACKER
+) {
+  return `${resolveVchHubPath('/contact', hostname)}?source=${encodeURIComponent(source)}`
+}
+
 export function applyVchCookieDomain<T extends { domain?: string }>(
   cookieOptions: T | null | undefined,
   hostname: string | null | undefined

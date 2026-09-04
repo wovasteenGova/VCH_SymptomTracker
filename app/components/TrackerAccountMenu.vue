@@ -48,11 +48,8 @@ const {
 } = useTrackerSettingsPanelOpen()
 const supportOverlays = useSettingsSupportOverlays()
 const {
-  contactOpen: settingsContactOpen,
   faqOpen: settingsFaqOpen,
   isOpen: settingsSupportOverlayOpen,
-  openContactFromFaq: openSettingsContactFromFaq,
-  closeContact: closeSettingsContact,
   closeFaq: closeSettingsFaq,
   closeAll: closeSettingsSupportOverlays
 } = supportOverlays
@@ -542,16 +539,8 @@ async function onSignedIn() {
     <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" />
   </div>
 
-  <ContactSupportOverlay
-    :open="settingsContactOpen"
-    :default-name="accountDisplayName"
-    :default-email="user?.email || ''"
-    @close="closeSettingsContact()"
-  />
-
   <FaqOverlay
     :open="settingsFaqOpen"
     @close="closeSettingsFaq()"
-    @open-contact="openSettingsContactFromFaq()"
   />
 </template>
