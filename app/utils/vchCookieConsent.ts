@@ -1,4 +1,4 @@
-/** Shared with VCH hub — localStorage on each origin + cookie on the current VCH TLD. */
+/** Shared with VCH hub — localStorage on each origin + cookie on .veteranscentralhub.com. */
 
 import { resolveVchCookieDomain } from './vchHost'
 

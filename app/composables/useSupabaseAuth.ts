@@ -419,7 +419,7 @@ export function useSupabaseAuth() {
     authError.value = ''
 
     // Must match the current browser origin so the PKCE verifier stays in storage.
-    // Never omit redirectTo — Supabase Site URL is still the .us hub.
+    // Never omit redirectTo — Supabase Site URL may still be the Hub origin.
     const redirectTo = authRedirects.callbackUrl()
 
     let error: unknown

@@ -12,7 +12,7 @@
   # Required at build AND runtime on Netlify (Site configuration → Environment variables):
   # SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY,
   # STRIPE_SECRET_KEY, STRIPE_PUBLIC_KEY, STRIPE_PRO_PRICE_ID, STRIPE_WEBHOOK_SECRET,
-  # APP_URL=https://tracker.veteranscentralhub.us,
+  # APP_URL=https://tracker.veteranscentralhub.com,
   # VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, REMINDER_CRON_SECRET
 
 [[headers]]
