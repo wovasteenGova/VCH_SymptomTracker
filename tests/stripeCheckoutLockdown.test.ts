@@ -47,7 +47,6 @@ describe('Stripe source lockdown', () => {
 
     const client = readFileSync('server/utils/stripeClient.ts', 'utf8')
     expect(client).toContain('apiVersion: Stripe.API_VERSION')
-    }
   })
 
   it('documents the production webhook URL and Render secrets', () => {

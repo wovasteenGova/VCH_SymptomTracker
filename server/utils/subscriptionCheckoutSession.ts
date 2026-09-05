@@ -93,7 +93,7 @@ export function buildSubscriptionCheckoutParams(options: {
     }
   }
 
-  // Never set payment_method_types — Dashboard + dynamic payment methods.
+  // Dynamic payment methods: omit Stripe payment method type lists.
   if (options.existingCustomerId) {
     shared.customer = options.existingCustomerId
   } else if (options.user.email) {
