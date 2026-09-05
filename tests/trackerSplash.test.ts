@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { TRACKER_LOADER_SENTENCES } from '../app/utils/trackerLoaderCopy.ts'
 import {
   TRACKER_BRAND_LOGO_SRC,
   TRACKER_TANK_LOADER_SRC,
@@ -13,6 +14,8 @@ const themePlugin = readFileSync('app/plugins/claim-color-theme.client.ts', 'utf
 const cookieBanner = readFileSync('app/components/VchCookieConsentBanner.vue', 'utf8')
 const authPage = readFileSync('app/pages/auth/index.vue', 'utf8')
 const loaderPreview = readFileSync('app/pages/dev/loader.vue', 'utf8')
+const vueLoader = readFileSync('app/components/VchOpeningWorkspaceLoader.vue', 'utf8')
+const tankSvg = readFileSync('public/vch-tank-loader.svg', 'utf8')
 
 describe('VCH tank spa loading template', () => {
   it('includes the tank SVG and VCH brand logo on first paint', () => {
@@ -20,6 +23,11 @@ describe('VCH tank spa loading template', () => {
     expect(spaTemplate).toContain(TRACKER_BRAND_LOGO_SRC)
     expect(spaTemplate).toContain('VCH')
     expect(spaTemplate).not.toContain('Setting up workspace')
+    expect(spaTemplate).toContain('vch-spa-loader-label')
+    expect(spaTemplate).toContain('Math.random()')
+    for (const sentence of TRACKER_LOADER_SENTENCES) {
+      expect(spaTemplate).toContain(sentence)
+    }
   })
 
   it('is wired from nuxt.config with tank preload', () => {
@@ -76,5 +84,20 @@ describe('home bootstrap does not replay the tank', () => {
   it('keeps the Vue tank loader for in-app waits', () => {
     expect(authPage).toContain('VchOpeningWorkspaceLoader')
     expect(loaderPreview).toContain('VchOpeningWorkspaceLoader')
+  })
+})
+
+describe('loader splash caption', () => {
+  it('picks a shared sentence once per Vue loader mount', () => {
+    expect(vueLoader).toContain('pickTrackerLoaderSentence')
+    expect(vueLoader).toContain('fallbackLabel')
+    expect(vueLoader).toContain('{{ statusLabel }}')
+    expect(vueLoader).not.toContain('v-if="label"')
+  })
+
+  it('does not bake a fixed caption into the tank SVG', () => {
+    expect(tankSvg).not.toContain('GETTING THINGS READY')
+    expect(tankSvg).not.toContain('Getting things ready')
+    expect(tankSvg).toContain('class="tank-move"')
   })
 })
