@@ -25,8 +25,29 @@
       decoding="sync"
       fetchpriority="high"
     >
+    <p
+      class="vch-spa-loading-template__label"
+      id="vch-spa-loader-label"
+    ></p>
   </div>
 </div>
+<script>
+  (function () {
+    // Keep in sync with TRACKER_LOADER_SENTENCES in app/utils/trackerLoaderCopy.ts
+    var sentences = [
+      'Loading your symptom tracker…',
+      'Pulling your logs together…',
+      'Almost ready. Preparing Tracker…',
+      'Getting your claim day tracking ready…'
+    ]
+    var index = Math.floor(Math.random() * sentences.length)
+    var sentence = sentences[index] || sentences[0]
+    var label = document.getElementById('vch-spa-loader-label')
+    var root = document.querySelector('.vch-spa-loading-template')
+    if (label) label.textContent = sentence
+    if (root) root.setAttribute('aria-label', sentence)
+  })()
+</script>
 <style>
   html,
   body {
@@ -86,5 +107,16 @@
     display: block;
     width: 100%;
     user-select: none;
+  }
+
+  .vch-spa-loading-template__label {
+    margin: 0;
+    min-height: 1.25em;
+    text-align: center;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    color: #b0b5a4;
   }
 </style>

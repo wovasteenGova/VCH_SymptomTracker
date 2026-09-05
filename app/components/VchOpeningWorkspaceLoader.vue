@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { reportBranding } from '../utils/reportBranding'
+import { pickTrackerLoaderSentence } from '../utils/trackerLoaderCopy'
 
 const props = withDefaults(defineProps<{
   label?: string
@@ -17,7 +18,9 @@ const props = withDefaults(defineProps<{
   showBrand: true
 })
 
-const statusLabel = computed(() => props.label.trim() || 'Loading')
+// Pick once per mount so the caption stays stable for this load instance.
+const fallbackLabel = pickTrackerLoaderSentence()
+const statusLabel = computed(() => props.label.trim() || fallbackLabel)
 const stackClass = computed(() =>
   props.fullScreen
     ? 'w-[min(28rem,92vw)] max-w-[32rem]'
@@ -67,10 +70,9 @@ const tankClass = computed(() =>
           decoding="async"
         >
         <p
-          v-if="label"
           class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted"
         >
-          {{ label }}
+          {{ statusLabel }}
         </p>
       </div>
     </div>
@@ -109,10 +111,9 @@ const tankClass = computed(() =>
         decoding="async"
       >
       <p
-        v-if="label"
         class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted"
       >
-        {{ label }}
+        {{ statusLabel }}
       </p>
     </div>
   </div>
