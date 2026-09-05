@@ -7,7 +7,8 @@ export const TRACKER_LOADER_SENTENCES = [
   'Loading your symptom tracker…',
   'Pulling your logs together…',
   'Almost ready. Preparing Tracker…',
-  'Getting your claim day tracking ready…'
+  'Getting your claim day tracking ready…',
+  "We don't sell your data."
 ] as const
 
 export type TrackerLoaderSentence = (typeof TRACKER_LOADER_SENTENCES)[number]

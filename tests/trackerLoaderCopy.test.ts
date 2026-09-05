@@ -15,6 +15,8 @@ describe('tracker loader copy', () => {
     expect(TRACKER_LOADER_SENTENCES).toContain('Pulling your logs together…')
     expect(TRACKER_LOADER_SENTENCES).toContain('Almost ready. Preparing Tracker…')
     expect(TRACKER_LOADER_SENTENCES).toContain('Getting your claim day tracking ready…')
+    expect(TRACKER_LOADER_SENTENCES).toContain("We don't sell your data.")
+    expect(TRACKER_LOADER_SENTENCES.join(' ')).not.toMatch(/never share/i)
 
     for (const sentence of TRACKER_LOADER_SENTENCES) {
       expect(sentence).not.toContain('—')
@@ -34,7 +36,7 @@ describe('tracker loader copy', () => {
   it('keeps the first-paint splash sentence list in sync', () => {
     const match = spaTemplate.match(/var sentences = \[([\s\S]*?)\]/)
     expect(match).toBeTruthy()
-    const embedded = [...(match?.[1].matchAll(/'([^']*)'/g) ?? [])].map((item) => item[1])
+    const embedded = [...(match?.[1].matchAll(/"([^"]*)"/g) ?? [])].map((item) => item[1])
     expect(embedded).toEqual([...TRACKER_LOADER_SENTENCES])
   })
 })
