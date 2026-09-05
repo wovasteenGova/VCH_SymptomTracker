@@ -8,6 +8,7 @@ import {
 type SupabasePublicConfig = {
   cookieOptions?: {
     domain?: string
+    path?: string
     secure?: boolean
     sameSite?: 'lax' | 'strict' | 'none'
   }
@@ -27,8 +28,8 @@ export default defineNuxtPlugin({
           }
         })()
 
-    // Only mutate public runtime config in the browser. Shared server config
-    // would leak the last request's TLD across concurrent .com and .us hits.
+    // Client-only: localhost must not keep the baked .com Domain. Production
+    // already has Domain=.veteranscentralhub.com from nuxt.config.
     if (!import.meta.client) {
       return
     }

@@ -10,7 +10,8 @@ import {
   resolveVchPublicTld,
   resolveVchTrackerUrl,
   rewriteSetCookieDomain,
-  rewriteVchUrlToCurrentTld
+  rewriteVchUrlToCurrentTld,
+  VCH_AUTH_COOKIE_DOMAIN
 } from '../app/utils/vchHost'
 import { resolveAuthSiteOrigin, resolveOAuthCallbackUrl } from '../app/utils/authRedirects'
 import { resolveRequestBaseUrl } from '../server/utils/stripeClient'
@@ -19,10 +20,13 @@ import { buildClaimBuilderUrl } from '../app/utils/claimBuilderLinks'
 import { readFileSync } from 'node:fs'
 
 describe('resolveVchCookieDomain', () => {
-  it('uses the .com parent domain on veteranscentralhub.com hosts', () => {
-    expect(resolveVchCookieDomain('tracker.veteranscentralhub.com')).toBe('.veteranscentralhub.com')
-    expect(resolveVchCookieDomain('veteranscentralhub.com')).toBe('.veteranscentralhub.com')
-    expect(resolveVchCookieDomain('TRACKER.VeteransCentralHub.COM')).toBe('.veteranscentralhub.com')
+  it('uses the shared .com parent for Hub, ClaimBuilder, and Tracker', () => {
+    expect(VCH_AUTH_COOKIE_DOMAIN).toBe('.veteranscentralhub.com')
+    expect(resolveVchCookieDomain('tracker.veteranscentralhub.com')).toBe(VCH_AUTH_COOKIE_DOMAIN)
+    expect(resolveVchCookieDomain('claimbuilder.veteranscentralhub.com')).toBe(VCH_AUTH_COOKIE_DOMAIN)
+    expect(resolveVchCookieDomain('www.veteranscentralhub.com')).toBe(VCH_AUTH_COOKIE_DOMAIN)
+    expect(resolveVchCookieDomain('veteranscentralhub.com')).toBe(VCH_AUTH_COOKIE_DOMAIN)
+    expect(resolveVchCookieDomain('TRACKER.VeteransCentralHub.COM')).toBe(VCH_AUTH_COOKIE_DOMAIN)
   })
 
   it('uses the .us parent domain on veteranscentralhub.us hosts', () => {
@@ -164,8 +168,10 @@ describe('auth and checkout origins stay on the opened host', () => {
 })
 
 describe('baked production cookie domain', () => {
-  it('does not hardcode Domain=.veteranscentralhub.us in nuxt.config', () => {
+  it('bakes Domain=.veteranscentralhub.com so @nuxtjs/supabase shares the session', () => {
     const config = readFileSync('nuxt.config.ts', 'utf8')
+    expect(config).toContain("import { VCH_AUTH_COOKIE_DOMAIN } from './app/utils/vchHost'")
+    expect(config).toContain('domain: VCH_AUTH_COOKIE_DOMAIN')
     expect(config).not.toMatch(/domain:\s*['"]\.veteranscentralhub\.us['"]/)
     expect(config).toContain('./nuxt-modules/vch-host')
   })

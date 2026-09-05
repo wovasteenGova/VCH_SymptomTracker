@@ -1,7 +1,8 @@
-/** Shared VCH production apex hosts. One Render deploy serves both TLDs. */
+/** Shared VCH production apex. Auth cookies use the .com parent so Hub, ClaimBuilder, and Tracker share one session. */
 
 export const VCH_APEX_US = 'veteranscentralhub.us'
 export const VCH_APEX_COM = 'veteranscentralhub.com'
+export const VCH_AUTH_COOKIE_DOMAIN = `.${VCH_APEX_COM}`
 
 export const VCH_HUB_ORIGIN_US = `https://${VCH_APEX_US}`
 export const VCH_HUB_ORIGIN_COM = `https://www.${VCH_APEX_COM}`
@@ -40,17 +41,22 @@ export function resolveVchPublicTld(hostname: string | null | undefined): VchPub
 }
 
 /**
- * Parent-domain cookie for hub + tracker on the same TLD.
- * A .com page cannot set Domain=.veteranscentralhub.us — derive from the current host.
+ * Parent-domain cookie so Hub, ClaimBuilder, and Tracker share one Supabase session.
+ * Production VCH is .com — Domain=.veteranscentralhub.com.
+ * Leftover .us hosts still get their own parent so the browser will accept the cookie.
  */
 export function resolveVchCookieDomain(hostname: string | null | undefined): string | undefined {
   const tld = resolveVchPublicTld(hostname)
 
-  if (!tld) {
-    return undefined
+  if (tld === 'com') {
+    return VCH_AUTH_COOKIE_DOMAIN
   }
 
-  return `.${APEX_BY_TLD[tld]}`
+  if (tld === 'us') {
+    return `.${VCH_APEX_US}`
+  }
+
+  return undefined
 }
 
 export function isVchProductionHost(hostname: string | null | undefined) {

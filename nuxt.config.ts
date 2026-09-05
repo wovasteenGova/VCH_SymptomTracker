@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { config as loadDotenv } from 'dotenv'
+import { VCH_AUTH_COOKIE_DOMAIN } from './app/utils/vchHost'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -72,9 +73,13 @@ export default defineNuxtConfig({
         }
       }
     },
-    // Domain is applied at runtime from the current host (.com / .us / host-only).
+    // Shared with ClaimBuilder + Hub on *.veteranscentralhub.com. Bake Domain
+    // here so @nuxtjs/supabase createBrowserClient/createServerClient see it
+    // at init — runtime mutation alone is too late if that plugin runs first.
     cookieOptions: isProduction
       ? {
+          domain: VCH_AUTH_COOKIE_DOMAIN,
+          path: '/',
           secure: true,
           sameSite: 'lax'
         }
