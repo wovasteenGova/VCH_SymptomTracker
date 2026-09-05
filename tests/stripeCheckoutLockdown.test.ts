@@ -56,11 +56,14 @@ describe('Stripe source lockdown', () => {
 
     expect(docs).toContain('https://tracker.veteranscentralhub.us/api/stripe/webhook')
     expect(docs).toContain('STRIPE_WEBHOOK_SECRET')
-    expect(docs).toContain('acct_1TpCwZQVbQe31Q8Y')
+    expect(docs).toContain('Tracker sandbox')
     expect(docs).toContain('$6.99/month')
     expect(envExample).toContain('docs/stripe-tracker.md')
     expect(render).toContain('STRIPE_WEBHOOK_SECRET')
     expect(render).toContain('STRIPE_PRO_PRICE_ID')
+    const netlify = readFileSync('netlify.toml', 'utf8')
+    expect(netlify).toContain('STRIPE_PUBLIC_KEY')
+    expect(netlify).toContain('SECRETS_SCAN_OMIT_PATHS')
   })
 })
 

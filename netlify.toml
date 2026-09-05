@@ -6,7 +6,9 @@
   NITRO_PRESET = "netlify"
   NODE_VERSION = "22"
   NODE_OPTIONS = "--max-old-space-size=4096"
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_KEY"
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_KEY,STRIPE_PUBLIC_KEY,STRIPE_PUBLISHABLE_KEY,STRIPE_PRO_PRICE_ID"
+  # Public catalog IDs and the Stripe runbook are not secrets; keep scanning sk_/whsec_.
+  SECRETS_SCAN_OMIT_PATHS = "docs/stripe-tracker.md,.env.example,tests/stripeCheckoutLockdown.test.ts"
   # Required at build AND runtime on Netlify (Site configuration → Environment variables):
   # SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY,
   # STRIPE_SECRET_KEY, STRIPE_PUBLIC_KEY, STRIPE_PRO_PRICE_ID, STRIPE_WEBHOOK_SECRET,
