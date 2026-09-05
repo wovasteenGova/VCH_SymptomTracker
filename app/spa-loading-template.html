@@ -28,7 +28,7 @@
     <p
       class="vch-spa-loading-template__label"
       id="vch-spa-loader-label"
-    ></p>
+    ><span id="vch-spa-loader-caption"></span></p>
   </div>
 </div>
 <script>
@@ -43,9 +43,11 @@
     ]
     var index = Math.floor(Math.random() * sentences.length)
     var sentence = sentences[index] || sentences[0]
-    var label = document.getElementById('vch-spa-loader-label')
+    // Caption only — never copy sibling markup (dots / SVG / class= /
+    // aria-hidden) into the visible status text.
+    var caption = document.getElementById('vch-spa-loader-caption')
     var root = document.querySelector('.vch-spa-loading-template')
-    if (label) label.textContent = sentence
+    if (caption) caption.textContent = sentence
     if (root) root.setAttribute('aria-label', sentence)
   })()
 </script>

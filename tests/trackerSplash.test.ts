@@ -24,6 +24,7 @@ describe('VCH tank spa loading template', () => {
     expect(spaTemplate).toContain('VCH')
     expect(spaTemplate).not.toContain('Setting up workspace')
     expect(spaTemplate).toContain('vch-spa-loader-label')
+    expect(spaTemplate).toContain('vch-spa-loader-caption')
     expect(spaTemplate).toContain('Math.random()')
     for (const sentence of TRACKER_LOADER_SENTENCES) {
       expect(spaTemplate).toContain(sentence)
@@ -92,7 +93,17 @@ describe('loader splash caption', () => {
     expect(vueLoader).toContain('pickTrackerLoaderSentence')
     expect(vueLoader).toContain('fallbackLabel')
     expect(vueLoader).toContain('{{ statusLabel }}')
+    expect(vueLoader).toContain('vch-opening-workspace-loader__caption')
+    expect(vueLoader).toMatch(/<span class="vch-opening-workspace-loader__caption">\{\{ statusLabel \}\}<\/span>/)
     expect(vueLoader).not.toContain('v-if="label"')
+    expect(vueLoader).not.toMatch(/\{\{ statusLabel \}\}\s*<span/)
+  })
+
+  it('does not interpolate loader status next to dots or attribute markup', () => {
+    expect(vueLoader).not.toMatch(/\{\{ statusLabel \}\}[\s\S]{0,80}class=/)
+    expect(vueLoader).not.toMatch(/\{\{[^}]+\}\}[\s\S]{0,80}aria-hidden/)
+    expect(spaTemplate).not.toMatch(/\.innerHTML\s*=/)
+    expect(spaTemplate).toContain('caption.textContent = sentence')
   })
 
   it('does not bake a fixed caption into the tank SVG', () => {

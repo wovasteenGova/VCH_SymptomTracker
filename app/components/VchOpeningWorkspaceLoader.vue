@@ -72,7 +72,7 @@ const tankClass = computed(() =>
         <p
           class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted"
         >
-          {{ statusLabel }}
+          <span class="vch-opening-workspace-loader__caption">{{ statusLabel }}</span>
         </p>
       </div>
     </div>
@@ -113,7 +113,7 @@ const tankClass = computed(() =>
       <p
         class="vch-opening-workspace-loader__label text-center text-sm font-semibold tracking-wide text-muted"
       >
-        {{ statusLabel }}
+        <span class="vch-opening-workspace-loader__caption">{{ statusLabel }}</span>
       </p>
     </div>
   </div>

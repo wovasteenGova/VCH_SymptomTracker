@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs'
+import { runInNewContext } from 'node:vm'
 import { describe, expect, it } from 'vitest'
 import {
   TRACKER_LOADER_SENTENCES,
+  applyTrackerLoaderCaption,
   pickTrackerLoaderSentence
 } from '../app/utils/trackerLoaderCopy.ts'
 
@@ -38,5 +40,57 @@ describe('tracker loader copy', () => {
     expect(match).toBeTruthy()
     const embedded = [...(match?.[1].matchAll(/"([^"]*)"/g) ?? [])].map((item) => item[1])
     expect(embedded).toEqual([...TRACKER_LOADER_SENTENCES])
+  })
+
+  it('writes the caption through textContent on a dedicated node', () => {
+    const caption = { textContent: '' }
+    const siblingMarkup = '<span class="dots" aria-hidden="true">...</span>'
+    applyTrackerLoaderCaption(caption, TRACKER_LOADER_SENTENCES[0])
+    expect(caption.textContent).toBe(TRACKER_LOADER_SENTENCES[0])
+    expect(caption.textContent).not.toMatch(/class=|aria-hidden|<span/)
+    expect(siblingMarkup).toContain('aria-hidden')
+  })
+
+  it('does not leak sibling splash markup into the visible caption', () => {
+    expect(spaTemplate).toMatch(/<span id="vch-spa-loader-caption"><\/span>/)
+    expect(spaTemplate).toContain("caption.textContent = sentence")
+    expect(spaTemplate).not.toMatch(/\.innerHTML\s*=/)
+    expect(spaTemplate).not.toMatch(/label\.textContent/)
+
+    const script = spaTemplate.match(/<script>([\s\S]*?)<\/script>/)?.[1]
+    expect(script).toBeTruthy()
+
+    const caption = { textContent: '' }
+    const label = {
+      innerHTML: '<span id="vch-spa-loader-caption"></span><span class="dots" aria-hidden="true">...</span>',
+      textContent: ''
+    }
+    const rootAttrs: Record<string, string> = {}
+    runInNewContext(script!, {
+      Math: { floor: () => 0, random: () => 0 },
+      document: {
+        getElementById: (id: string) => {
+          if (id === 'vch-spa-loader-caption') {
+            return caption
+          }
+          if (id === 'vch-spa-loader-label') {
+            return label
+          }
+          return null
+        },
+        querySelector: () => ({
+          setAttribute: (name: string, value: string) => {
+            rootAttrs[name] = value
+          }
+        })
+      }
+    })
+
+    expect(caption.textContent).toBe(TRACKER_LOADER_SENTENCES[0])
+    expect(caption.textContent).not.toMatch(/class=|aria-hidden|<span|dots/)
+    expect(label.innerHTML).toContain('class="dots"')
+    expect(label.innerHTML).toContain('aria-hidden')
+    expect(label.textContent).toBe('')
+    expect(rootAttrs['aria-label']).toBe(TRACKER_LOADER_SENTENCES[0])
   })
 })
