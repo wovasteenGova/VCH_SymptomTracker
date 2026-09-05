@@ -1,4 +1,6 @@
 export const PRO_PRODUCT_KEY = 'symptom_tracker_pro'
+export const TRACKER_PAYMENT_SOURCE = 'tracker'
+export const TRACKER_PAYMENT_TYPE_SUBSCRIPTION = 'subscription'
 export const FREE_CONDITION_LIMIT = 1
 /** @deprecated Use FREE_CONDITION_LIMIT */
 export const FREE_ENTRY_LIMIT = FREE_CONDITION_LIMIT

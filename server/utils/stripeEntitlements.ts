@@ -2,6 +2,7 @@ import type Stripe from 'stripe'
 import { PRO_PRODUCT_KEY } from '../../app/utils/subscription'
 import { getSupabaseAdmin } from './supabaseAdmin'
 import { getStripeClient } from './stripeClient'
+import { getSubscriptionCurrentPeriodEnd, stripeObjectId } from './stripeWebhook'
 
 type EntitlementUpsert = {
   user_id: string
@@ -79,15 +80,16 @@ export async function syncSubscriptionEntitlement(
 
   const status = mapSubscriptionStatus(subscription.status)
   const priceId = subscription.items.data[0]?.price?.id || null
-  const periodEnd = subscription.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
+  const periodEndUnix = getSubscriptionCurrentPeriodEnd(subscription)
+  const periodEnd = periodEndUnix
+    ? new Date(periodEndUnix * 1000).toISOString()
     : null
 
   await upsertEntitlement({
     user_id: userId,
     product_key: subscription.metadata?.product_key || fallback.productKey || existingEntitlement?.product_key || PRO_PRODUCT_KEY,
     status,
-    stripe_customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id || null,
+    stripe_customer_id: stripeObjectId(subscription.customer),
     stripe_subscription_id: subscription.id,
     stripe_price_id: priceId,
     current_period_end: periodEnd,
@@ -106,9 +108,12 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
 
   if (session.mode === 'subscription' && session.subscription) {
     const stripe = getStripeClient()
-    const subscriptionId = typeof session.subscription === 'string'
-      ? session.subscription
-      : session.subscription.id
+    const subscriptionId = stripeObjectId(session.subscription)
+
+    if (!subscriptionId) {
+      throw new Error('Checkout session is missing subscription id.')
+    }
+
     const subscription = await stripe.subscriptions.retrieve(subscriptionId)
     return syncSubscriptionEntitlement(subscription, {
       userId,
@@ -120,7 +125,7 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
     user_id: userId,
     product_key: session.metadata?.product_key || PRO_PRODUCT_KEY,
     status: 'active',
-    stripe_customer_id: typeof session.customer === 'string' ? session.customer : session.customer?.id || null,
+    stripe_customer_id: stripeObjectId(session.customer),
     unlocked_at: new Date().toISOString()
   })
 

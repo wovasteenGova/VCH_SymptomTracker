@@ -5,6 +5,10 @@ import {
   handleCheckoutCompleted,
   syncSubscriptionEntitlement
 } from '../../utils/stripeEntitlements'
+import {
+  isTrackerStripeWebhookEvent,
+  syncInvoiceSubscription
+} from '../../utils/stripeWebhook'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -39,31 +43,29 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    if (!isTrackerStripeWebhookEvent(stripeEvent.type)) {
+      return { received: true }
+    }
+
     switch (stripeEvent.type) {
     case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded':
       await handleCheckoutCompleted(stripeEvent.data.object as Stripe.Checkout.Session)
       break
     case 'customer.subscription.updated':
     case 'customer.subscription.created':
+    case 'customer.subscription.deleted':
       await syncSubscriptionEntitlement(stripeEvent.data.object as Stripe.Subscription)
       break
-    case 'customer.subscription.deleted': {
-      const subscription = stripeEvent.data.object as Stripe.Subscription
-      await syncSubscriptionEntitlement(subscription)
+    case 'invoice.paid':
+    case 'invoice.payment_succeeded':
+    case 'invoice.payment_failed':
+      await syncInvoiceSubscription(
+        stripeEvent.data.object as Stripe.Invoice,
+        (subscriptionId) => stripe.subscriptions.retrieve(subscriptionId),
+        syncSubscriptionEntitlement
+      )
       break
-    }
-    case 'invoice.payment_failed': {
-      const invoice = stripeEvent.data.object as Stripe.Invoice
-      const subscriptionId = typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : invoice.subscription?.id
-
-      if (subscriptionId) {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-        await syncSubscriptionEntitlement(subscription)
-      }
-      break
-    }
     default:
       break
     }

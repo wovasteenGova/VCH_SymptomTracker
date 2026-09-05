@@ -35,6 +35,7 @@ export default defineEventHandler(() => {
     productKey: 'symptom_tracker_pro',
     proActivationReady: Boolean(config.stripeSecretKey && (config.supabaseServiceRoleKey || config.supabaseServiceKey)),
     webhookPath: '/api/stripe/webhook',
+    webhookUrl: 'https://tracker.veteranscentralhub.us/api/stripe/webhook',
     environment: process.env.NODE_ENV || 'development'
   }
 })

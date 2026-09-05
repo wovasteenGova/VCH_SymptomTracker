@@ -2,6 +2,7 @@ import { readBody } from 'h3'
 import { requireAuthUser } from '../../utils/authUser'
 import { getStripeClient } from '../../utils/stripeClient'
 import { handleCheckoutCompleted } from '../../utils/stripeEntitlements'
+import { stripeObjectId } from '../../utils/stripeWebhook'
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAuthUser(event)
@@ -51,9 +52,7 @@ export default defineEventHandler(async (event) => {
       paymentStatus: session.payment_status,
       status: session.status,
       mode: session.mode,
-      subscriptionId: typeof session.subscription === 'string'
-        ? session.subscription
-        : session.subscription?.id || null
+      subscriptionId: stripeObjectId(session.subscription)
     }
   } catch (error) {
     console.error('[stripe confirm] activation failed', {
@@ -63,9 +62,7 @@ export default defineEventHandler(async (event) => {
       paymentStatus: session.payment_status,
       status: session.status,
       mode: session.mode,
-      subscriptionId: typeof session.subscription === 'string'
-        ? session.subscription
-        : session.subscription?.id || null,
+      subscriptionId: stripeObjectId(session.subscription),
       message: error instanceof Error ? error.message : String(error)
     })
     if (error && typeof error === 'object' && 'statusCode' in error) {

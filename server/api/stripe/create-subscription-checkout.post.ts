@@ -1,6 +1,8 @@
 import Stripe from 'stripe'
 import { readBody } from 'h3'
+import { PRO_PRODUCT_KEY } from '../../../app/utils/subscription'
 import { requireAuthUser } from '../../utils/authUser'
+import { getSupabaseAdmin } from '../../utils/supabaseAdmin'
 import { getRequestBaseUrl, getStripeClient } from '../../utils/stripeClient'
 import {
   buildSubscriptionCheckoutParams,
@@ -68,11 +70,22 @@ export default defineEventHandler(async (event) => {
 
   try {
     const lineItems = await resolveSubscriptionLineItems(stripe, configuredPriceId)
+    let existingCustomerId: string | null = null
 
-    if (!lineItems.length) {
-      throw createError({
-        statusCode: 500,
-        message: 'Could not resolve subscription line items.'
+    try {
+      const supabase = getSupabaseAdmin()
+      const { data: entitlement } = await supabase
+        .from('user_entitlements')
+        .select('stripe_customer_id')
+        .eq('user_id', user.id)
+        .eq('product_key', PRO_PRODUCT_KEY)
+        .maybeSingle()
+
+      existingCustomerId = entitlement?.stripe_customer_id || null
+    } catch (error) {
+      logCheckoutError('existing customer lookup skipped', {
+        requestId,
+        message: error instanceof Error ? error.message : String(error)
       })
     }
 
@@ -80,7 +93,8 @@ export default defineEventHandler(async (event) => {
       user,
       baseUrl,
       lineItems,
-      embedded
+      embedded,
+      existingCustomerId
     })
     const session = await stripe.checkout.sessions.create(checkoutParams)
 
