@@ -13,7 +13,7 @@ watch([user, isAuthLoading], async ([nextUser, loading]) => {
 </script>
 
 <template>
-  <main class="flex h-dvh min-h-0 flex-col overflow-hidden bg-default text-default">
+  <main class="tracker-chrome-frame flex min-h-0 flex-col overflow-hidden bg-default text-default">
     <VchOpeningWorkspaceLoader
       v-if="isAuthLoading"
       full-screen

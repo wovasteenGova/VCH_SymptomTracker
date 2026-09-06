@@ -59,6 +59,7 @@
 
 :root {
   --app-height: 100dvh;
+  --site-notice-height: 0px;
   --app-offset-top: 0px;
   --history-sheet-collapsed-height: calc(4.95rem + env(safe-area-inset-bottom, 0px));
   --history-sheet-expanded-height: 80dvh;
@@ -69,6 +70,7 @@
 /*
  * Z-index ladder (Symptom Tracker app shell)
  * - App content: default (0)
+ * - Shared site notice (.vch-site-notice-banner): 85
  * - History collapsed (.home-history-panel): 90
  * - History expanded (.home-history-panel.is-history-expanded): 100
  * - Modals / prompts (.app-overlay-shell via AppOverlayShell): 110+
@@ -105,10 +107,16 @@ html.dark body {
   background: var(--ui-bg);
 }
 
-.app-shell {
-  height: var(--app-height);
-  max-height: var(--app-height);
-  min-height: var(--app-height);
+.app-shell,
+.tracker-chrome-frame {
+  height: calc(var(--app-height) - var(--site-notice-height, 0px));
+  max-height: calc(var(--app-height) - var(--site-notice-height, 0px));
+  min-height: calc(var(--app-height) - var(--site-notice-height, 0px));
+}
+
+.vch-site-notice-banner {
+  background: #7c2d12;
+  color: #fff7ed;
 }
 
 .tracker-desktop-workspace {

@@ -3,7 +3,7 @@
     :is="overlay ? 'div' : 'main'"
     :class="overlay
       ? 'flex min-h-0 flex-1 flex-col overflow-hidden bg-default text-default'
-      : 'flex h-dvh min-h-0 flex-col overflow-hidden bg-default text-default'"
+      : 'tracker-chrome-frame flex min-h-0 flex-col overflow-hidden bg-default text-default'"
   >
     <section
       :class="overlay
