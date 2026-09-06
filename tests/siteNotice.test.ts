@@ -146,8 +146,7 @@ describe('site notice copy', () => {
       'shared/siteNotice.ts',
       'app/composables/useSiteNotice.ts',
       'app/components/VchSiteNoticeBanner.vue',
-      'server/api/site-notices.get.ts',
-      'tests/siteNotice.test.ts'
+      'server/api/site-notices.get.ts'
     ]
 
     for (const file of files) {
