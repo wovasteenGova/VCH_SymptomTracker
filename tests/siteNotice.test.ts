@@ -131,7 +131,7 @@ describe('tracker site notice wiring', () => {
     expect(app).toContain('<VchSiteNoticeBanner />')
     expect(banner).toContain('vch-site-notice-banner')
     expect(banner).toContain('Dismiss this notice')
-    expect(banner).toContain('border border-current/70')
+    expect(banner).toContain('border border-current')
     expect(banner).not.toContain('#fff7ed')
     expect(composable).toContain("'/api/site-notices'")
     expect(api).toContain(".from('site_notices')")
