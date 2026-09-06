@@ -1,4 +1,4 @@
-/** Canonical VCH account name — same resolution in ClaimBuilder and Symptom Tracker. */
+/** Canonical VCH account name: same resolution in ClaimBuilder and Symptom Tracker. */
 export function resolveVchAccountFullName(options: {
   trackerFullName?: string | null
   authFullName?: string | null

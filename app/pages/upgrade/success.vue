@@ -110,7 +110,7 @@ const headline = computed(() => {
   }
 
   if (showThankYou.value) {
-    return 'Thank you — payment received'
+    return 'Thank you: payment received'
   }
 
   if (!checkoutSessionId.value) {
@@ -126,7 +126,7 @@ const bodyCopy = computed(() => {
   }
 
   if (showThankYou.value) {
-    return `We received your ${PRO_ANNUAL_PRICE_LABEL} payment. Pro unlocks in a few seconds.`
+    return `We received your ${PRO_ANNUAL_PRICE_LABEL} payment. Pro activates in a few seconds.`
   }
 
   if (!checkoutSessionId.value) {
@@ -150,7 +150,7 @@ const statusMessage = computed(() => {
   }
 
   if (showThankYou.value && !isPro.value) {
-    return 'Unlocking Pro on your account...'
+    return 'Activating Pro on your account...'
   }
 
   return ''

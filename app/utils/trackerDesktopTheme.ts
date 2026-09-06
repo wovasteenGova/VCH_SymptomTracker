@@ -1,4 +1,4 @@
-/** Semantic class tokens for tracker panels — follow active color theme. */
+/** Semantic class tokens for tracker panels: follow active color theme. */
 
 export function trackerDesktopPanelClass() {
   return [

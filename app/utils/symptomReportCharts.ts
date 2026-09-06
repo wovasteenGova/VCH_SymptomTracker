@@ -99,7 +99,7 @@ export function buildReportMetrics(entries: ChartEntry[]) {
 
   const firstEntry = sorted[0]
   const lastEntry = sorted[sorted.length - 1]
-  let trackingSpanLabel = '—'
+  let trackingSpanLabel = 'N/A'
   let trackingDays = 0
 
   if (firstEntry && lastEntry) {
@@ -544,7 +544,7 @@ export function drawAggregateLoggingSection(
 ) {
   const showCondition = options.showConditionChart === true
 
-  drawSectionTitle(doc, `Logging activity — ${metrics.rangeLabel}`, x, y)
+  drawSectionTitle(doc, `Logging activity: ${metrics.rangeLabel}`, x, y)
   y += 14
 
   if (summaryText) {
@@ -564,7 +564,7 @@ export function drawAggregateLoggingSection(
     }))
     const conditionChartHeight = Math.max(96, conditionItems.length * 28 + 28)
     y = ensureChartPageSpace(doc, y, conditionChartHeight + 64, pageHeight, margin)
-    drawSectionTitle(doc, `Total logs per condition — ${metrics.rangeLabel}`, x, y)
+    drawSectionTitle(doc, `Total logs per condition: ${metrics.rangeLabel}`, x, y)
     y += 10
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
@@ -706,7 +706,7 @@ export function drawConditionWeeklyFrequencyGrid(
           doc.setFont('helvetica', 'normal')
           doc.setFontSize(7)
           setText(doc, [203, 213, 225])
-          doc.text('—', cx, dy + 15, { align: 'center' })
+          doc.text('N/A', cx, dy + 15, { align: 'center' })
           continue
         }
 
@@ -878,7 +878,7 @@ export function drawLoggingActivitySection(
   const heatmapOnly = showHeatmap && !showWeek && !showCondition
 
   if (!heatmapOnly && !skipHeader) {
-    drawSectionTitle(doc, `Logging activity — ${metrics.monthLabel}`, x, y)
+    drawSectionTitle(doc, `Logging activity: ${metrics.monthLabel}`, x, y)
     y += 14
 
     if (summaryText) {
@@ -926,7 +926,7 @@ export function drawLoggingActivitySection(
   if (showCondition) {
     const conditionChartHeight = Math.max(96, conditionItems.length * 28 + 28)
     y = ensureChartPageSpace(doc, y, conditionChartHeight + 52, pageHeight, margin)
-    drawSectionTitle(doc, `Logs per condition — ${metrics.monthLabel}`, x, y)
+    drawSectionTitle(doc, `Logs per condition: ${metrics.monthLabel}`, x, y)
     y += 10
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
@@ -949,16 +949,16 @@ export function drawLoggingActivitySection(
     const heatmapHeight = computeHeatmapChartHeight(metrics.dailyCounts, metrics.mondayOffset)
     y = ensureChartPageSpace(doc, y, heatmapHeight + 52, pageHeight, margin)
     const heatmapTitle = heatmapOnly
-      ? `Daily logging consistency — ${metrics.monthLabel}`
+      ? `Daily logging consistency: ${metrics.monthLabel}`
       : (sections.consistencyRangeLabel
-        ? `Daily logging consistency — ${sections.consistencyRangeLabel}`
-        : `Daily logging consistency — ${metrics.monthLabel}`)
+        ? `Daily logging consistency: ${sections.consistencyRangeLabel}`
+        : `Daily logging consistency: ${metrics.monthLabel}`)
     drawSectionTitle(doc, heatmapTitle, x, y)
     y += 10
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     setText(doc, slate500)
-    doc.text('Days with at least one saved log — consistency over time', x, y)
+    doc.text('Days with at least one saved log: consistency over time', x, y)
     y += 14
     y = drawHeatmapCalendar(
       doc,

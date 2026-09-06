@@ -4,7 +4,7 @@ import { reportBranding } from '../utils/reportBranding'
 const props = withDefaults(defineProps<{
   compact?: boolean
   vertical?: boolean
-  /** Hide VCH wordmark — logo mark only (ultra-narrow header). */
+  /** Hide VCH wordmark: logo mark only (ultra-narrow header). */
   logoOnly?: boolean
 }>(), {
   compact: false,

@@ -4463,7 +4463,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
   entriesLoadPromise = null
   entriesLoadOwnerId = null
 
-  // Auth token refresh / hydration after the first bootstrap — refresh quietly.
+  // Auth token refresh / hydration after the first bootstrap: refresh quietly.
   if (!prevId && nextId && homeBootstrapComplete.value) {
     loadProfileDisplayName()
     loadEntitlements()
@@ -4483,7 +4483,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     return
   }
 
-  // Signed out — clear data without replaying the opening loader.
+  // Signed out: clear data without replaying the opening loader.
   if (!nextId && prevId) {
     profileDisplayName.value = ''
     savedEntries.value = []
@@ -4496,7 +4496,7 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     return
   }
 
-  // Different signed-in account — refresh quietly (no fullscreen bootstrap loader).
+  // Different signed-in account: refresh quietly (no fullscreen bootstrap loader).
   if (nextId && prevId) {
     try {
       isAuthPanelOpen.value = false
@@ -6846,7 +6846,7 @@ function lerpMorphValue(from: number, to: number, progress: number) {
 
 function easeHomeMorph(progress: number) {
   const p = Math.min(1, Math.max(0, progress))
-  // Quadratic ease-out — lands cleanly without the end crawl of cubic ease-out
+  // Quadratic ease-out: lands cleanly without the end crawl of cubic ease-out
   return 1 - ((1 - p) ** 2)
 }
 
@@ -6854,7 +6854,7 @@ function easeHomeMorphRadius(progress: number) {
   return Math.min(1, easeHomeMorph(progress) / 0.4)
 }
 
-/** Corner-anchored box morph — not uniform rect lerp (which drags top edges downward). */
+/** Corner-anchored box morph: not uniform rect lerp (which drags top edges downward). */
 function interpolateMorphRect(
   from: DOMRect,
   to: DOMRect,
@@ -6874,7 +6874,7 @@ function interpolateMorphRect(
     }
   }
 
-  // Collapse: bottom-right corner leads — shrink up-left into list thumbnail
+  // Collapse: bottom-right corner leads: shrink up-left into list thumbnail
   const width = lerpMorphValue(from.width, to.width, moveProgress)
   const height = lerpMorphValue(from.height, to.height, moveProgress)
   const right = lerpMorphValue(from.right, to.right, moveProgress)

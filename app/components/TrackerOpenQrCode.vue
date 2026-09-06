@@ -27,7 +27,7 @@
         Open on your phone
       </p>
       <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
-        Scan to jump straight into the tracker — best for logging on the go.
+        Scan to jump straight into the tracker: best for logging on the go.
       </p>
       <p class="mt-2 truncate text-xs text-slate-500 dark:text-slate-500">
         {{ targetUrl }}

@@ -8,7 +8,7 @@ export type SupporterImpactPreset = {
 export const supporterSeverityGuidanceByLevel: SeverityGuidance[] = [
   {
     title: 'No impact noticed',
-    text: 'They seemed unaffected — I did not see symptoms limit them.'
+    text: 'They seemed unaffected: I did not see symptoms limit them.'
   },
   {
     title: 'Minimal impact',
@@ -32,7 +32,7 @@ export const supporterSeverityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Moderate to significant impact',
-    text: 'It looked like symptoms shaped much of the day — skipping tasks, leaving early, or needing extra rest.'
+    text: 'It looked like symptoms shaped much of the day: skipping tasks, leaving early, or needing extra rest.'
   },
   {
     title: 'Significant impact',
@@ -40,7 +40,7 @@ export const supporterSeverityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Severe impact',
-    text: 'Daily tasks looked very hard — frequent breaks, help, or major adjustments were needed.'
+    text: 'Daily tasks looked very hard: frequent breaks, help, or major adjustments were needed.'
   },
   {
     title: 'Very severe impact',
@@ -48,7 +48,7 @@ export const supporterSeverityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Debilitating impact',
-    text: 'Symptoms seemed to largely shut down their day — little to no normal function that I saw.'
+    text: 'Symptoms seemed to largely shut down their day: little to no normal function that I saw.'
   }
 ]
 

@@ -30,7 +30,7 @@
                 Stop trying to remember six months of symptoms during a 30-minute exam.
               </h1>
               <p class="max-w-xl text-base leading-relaxed text-slate-600 dark:text-slate-300 lg:text-lg">
-                A mobile-first symptom history report for veterans — log as you go, organize functional impact over time,
+                A mobile-first symptom history report for veterans: log as you go, organize functional impact over time,
                 and export signed PDFs or personal review summaries before medical visits and claims work.
               </p>
             </div>
@@ -81,7 +81,7 @@
             </ClientOnly>
           </div>
           <p class="mt-4 text-center text-xs text-slate-500 dark:text-slate-400 lg:text-right">
-            Live preview — click the phone to try it yourself, or
+            Live preview: click the phone to try it yourself, or
             <NuxtLink to="/" class="font-semibold text-sky-600 underline underline-offset-2 dark:text-sky-400">
               open full screen
             </NuxtLink>
@@ -97,7 +97,7 @@
         </h2>
         <p class="mt-4 max-w-4xl text-base leading-relaxed text-slate-600 dark:text-slate-300 lg:text-lg">
           Organize symptom history, functional impairment, and family observations in one place. Review your calendar,
-          export a signed Veteran Symptom History Report, or download a personal review summary before exams —
+          export a signed Veteran Symptom History Report, or download a personal review summary before exams,
           so you are not reconstructing months of memory in one sitting.
         </p>
 
@@ -121,7 +121,7 @@
 
         <div class="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-8 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
           <p class="max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
-            VCH Symptom Tracker is for personal recordkeeping — not medical advice, legal advice, or an
+            VCH Symptom Tracker is for personal recordkeeping: not medical advice, legal advice, or an
             emergency line. In crisis, call 988 and press 1.
           </p>
           <div class="flex flex-col gap-3 sm:flex-row sm:shrink-0">
@@ -192,12 +192,12 @@ const highlights = [
   },
   {
     title: 'Family observations',
-    copy: 'Share a private link so a spouse or supporter can add what they noticed — on Pro.',
+    copy: 'Share a private link so a spouse or supporter can add what they noticed (Pro).',
     icon: 'i-lucide-users'
   },
   {
     title: 'Evidence organizer PDFs',
-    copy: 'Export a signed symptom history report or a personal review summary pulled from your own logs — for exams, your VSO, and your records.',
+    copy: 'Export a signed symptom history report or a personal review summary pulled from your own logs for exams, your VSO, and your records.',
     icon: 'i-lucide-file-text'
   }
 ]
@@ -210,7 +210,7 @@ useHead({
   meta: [
     {
       name: 'description',
-      content: 'VCH Symptom Tracker — log symptoms over time and export Veteran Symptom History Reports and personal review summaries for medical visits and your records.'
+      content: 'VCH Symptom Tracker: log symptoms over time and export Veteran Symptom History Reports and personal review summaries for medical visits and your records.'
     }
   ]
 })

@@ -236,7 +236,7 @@ const footerClass = computed(() => (
         <AuthModeTabs v-model="authMode" tone="theme" />
 
         <p class="mt-4 text-xs leading-6 text-muted">
-          Use your Veterans Central Hub account — the same sign-in as Claim Maker.
+          Use your Veterans Central Hub account: the same sign-in as Claim Maker.
         </p>
 
         <div class="mt-5 space-y-4">

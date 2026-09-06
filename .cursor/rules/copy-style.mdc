@@ -1,0 +1,27 @@
+---
+description: User-facing copy — no em dashes, plain tone, avoid AI buzzwords
+alwaysApply: true
+---
+
+# Symptom Tracker copy style
+
+Applies to UI labels, help text, FAQs, PDF export copy, onboarding, and marketing.
+
+## No em dashes
+
+Do not use `—` or `–` as punctuation in user-facing copy.
+
+Prefer periods, commas, colons, or parentheses.
+
+## Avoid AI buzzword tone
+
+Do not use hype words unless technically required: AI-assisted, AI-powered, leverage, seamlessly, unlock, streamline, harness, cutting-edge, game-changer, empower, delve, robust, innovative, utilize.
+
+Prefer plain verbs: organize, use, help, may, sometimes, can, often.
+
+When describing uncertain outcomes, prefer **may** or **sometimes** over definitive claims.
+
+## OK to keep
+
+- Code comments and internal developer strings
+- Product names (Symptom Tracker Pro)

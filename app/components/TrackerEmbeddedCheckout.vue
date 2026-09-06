@@ -16,7 +16,7 @@
         <header class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <div>
             <p class="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">Secure checkout</p>
-            <h2 class="mt-1 text-lg font-bold text-white">Symptom Tracker Pro — {{ PRO_ANNUAL_PRICE_LABEL }}</h2>
+            <h2 class="mt-1 text-lg font-bold text-white">Symptom Tracker Pro: {{ PRO_ANNUAL_PRICE_LABEL }}</h2>
             <p class="mt-1 text-xs leading-5 text-slate-400">
               {{ PRO_REFUND_POLICY }}
             </p>
@@ -117,7 +117,7 @@ let embeddedCheckout: StripeEmbeddedCheckout | null = null
 
 const loadingMessage = computed(() => (
   isCompletingCheckout.value
-    ? 'Payment received — activating Pro...'
+    ? 'Payment received: activating Pro...'
     : 'Loading secure payment form...'
 ))
 

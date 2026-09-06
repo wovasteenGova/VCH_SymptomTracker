@@ -198,7 +198,7 @@ export function saveVaExportCutoff(userId: string, endDate: string) {
   try {
     localStorage.setItem(`${CUTOFF_STORAGE_PREFIX}${userId}`, endDate)
   } catch {
-    // Ignore storage failures — export still succeeds.
+    // Ignore storage failures: export still succeeds.
   }
 }
 

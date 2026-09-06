@@ -81,7 +81,7 @@ export function getWeeklyLogCaution(
       daysUntilLogDay: daysUntil,
       logDayLabel,
       title: 'Logging before your chosen day',
-      message: `You chose to log weekly on ${logDayLabel}s. That helps you capture the week without revisiting every event daily — especially helpful for mental health conditions. Continue logging early anyway?`
+      message: `You chose to log weekly on ${logDayLabel}s. That helps you capture the week without revisiting every event daily: especially helpful for mental health conditions. Continue logging early anyway?`
     }
   }
 

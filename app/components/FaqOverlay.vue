@@ -39,7 +39,7 @@ const faqItems: FaqItem[] = [
   {
     id: 'free-vs-pro',
     question: 'What is the difference between Free and Pro?',
-    answer: `Free includes ${FREE_CONDITION_LIMIT} condition with unlimited entries, calendar charts, and entry PDFs with weekly symptom counts. Pro (${PRO_ANNUAL_PRICE_LABEL}) unlocks unlimited conditions, family reporting links, severity trends in PDFs, and personal review summaries.`
+    answer: `Free includes ${FREE_CONDITION_LIMIT} condition with unlimited entries, calendar charts, and entry PDFs with weekly symptom counts. Pro (${PRO_ANNUAL_PRICE_LABEL}) adds unlimited conditions, family reporting links, severity trends in PDFs, and personal review summaries.`
   },
   {
     id: 'reminders',

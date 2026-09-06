@@ -93,7 +93,7 @@ const label = computed(() => {
   font-size: 0.875rem;
 }
 
-/* Light theme — matches the app's light surfaces (white cards, slate borders) */
+/* Light theme: matches the app's light surfaces (white cards, slate borders) */
 .google-sign-in-btn--light {
   background-color: #ffffff;
   border-color: rgb(203 213 225); /* slate-300 */
@@ -109,7 +109,7 @@ const label = computed(() => {
   background-color: rgb(241 245 249); /* slate-100 */
 }
 
-/* Dark theme — matches the app's slate-900 cards and slate-800 controls */
+/* Dark theme: matches the app's slate-900 cards and slate-800 controls */
 .google-sign-in-btn--dark {
   background-color: rgb(30 41 59 / 0.8); /* slate-800 */
   border-color: rgb(51 65 85); /* slate-700 */

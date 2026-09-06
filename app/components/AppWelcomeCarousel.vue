@@ -173,7 +173,7 @@ async function finishWelcome() {
             For mental health conditions like PTSD, many veterans prefer logging once at the end of the week instead of revisiting painful events every day.
           </p>
           <p class="mt-3 leading-6 text-slate-600 dark:text-slate-300">
-            You can still log early when you need to — we will just remind you of your plan.
+            You can still log early when you need to: we will just remind you of your plan.
           </p>
 
           <div class="mt-5 grid gap-3">
@@ -187,7 +187,7 @@ async function finishWelcome() {
             >
               <span class="block text-base font-bold text-slate-950 dark:text-white">End of the week</span>
               <span class="mt-1 block text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Recommended for PTSD and mental health — capture the week without daily triggers.
+                Recommended for PTSD and mental health: capture the week without daily triggers.
               </span>
             </button>
 

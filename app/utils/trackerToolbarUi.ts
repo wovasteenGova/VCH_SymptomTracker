@@ -1,4 +1,4 @@
-/** Header toolbar labels and hover help — buttons use Title Case; sentences stay lowercase in copy. */
+/** Header toolbar labels and hover help: buttons use Title Case; sentences stay lowercase in copy. */
 
 export const TRACKER_TOOLTIP = {
   delayDuration: 250,

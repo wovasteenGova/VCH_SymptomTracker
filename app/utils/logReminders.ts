@@ -9,7 +9,7 @@ export const DEFAULT_LOG_REMINDER_HOUR = 10
 export const DEFAULT_LOG_REMINDER_EVENING_HOUR = 20
 export const FALLBACK_REMINDER_TIMEZONE = 'America/Chicago'
 
-/** Temporary test hook — keep false in production. */
+/** Temporary test hook: keep false in production. */
 export const LOG_REMINDER_TEST_MODE = false
 export const LOG_REMINDER_TEST_INTERVAL_MS = 2 * 60 * 1000
 export const LOG_REMINDER_TEST_TITLE = 'VCH is testing app notification'
@@ -317,7 +317,7 @@ export function buildLogReminderPayloads(input: {
     if (isReminderHourMatch(reminderHour, now, timeZone)) {
       payloads.push({
         kind: 'daily-morning',
-        title: 'VCH — Time to log symptoms',
+        title: 'VCH: Time to log symptoms',
         body: 'Add a quick entry while today is still fresh.',
         dedupeKey: `daily-morning:${dateKey}`
       })
@@ -326,7 +326,7 @@ export function buildLogReminderPayloads(input: {
     if (isReminderHourMatch(reminderEveningHour, now, timeZone)) {
       payloads.push({
         kind: 'daily-evening',
-        title: 'VCH — Evening log reminder',
+        title: 'VCH: Evening log reminder',
         body: 'You have not logged today yet. Add a quick entry before the day ends.',
         dedupeKey: `daily-evening:${dateKey}`
       })
@@ -348,7 +348,7 @@ export function buildLogReminderPayloads(input: {
   if (today === dayBefore) {
     payloads.push({
       kind: 'weekly-eve',
-      title: 'VCH — Log day is tomorrow',
+      title: 'VCH: Log day is tomorrow',
       body: `You chose ${logDayLabel}s for weekly logging. Plan a few minutes tomorrow to capture the week.`,
       dedupeKey: `weekly-eve:${dateKey}`
     })
@@ -357,7 +357,7 @@ export function buildLogReminderPayloads(input: {
   if (today === input.weeklyLogDay && !loggedThisWeek) {
     payloads.push({
       kind: 'weekly-day',
-      title: 'VCH — Today is your log day',
+      title: 'VCH: Today is your log day',
       body: `It is ${logDayLabel}. Log once and capture the week together.`,
       dedupeKey: `weekly-day:${dateKey}`
     })
@@ -366,7 +366,7 @@ export function buildLogReminderPayloads(input: {
   if (today === dayAfter && !loggedThisWeek) {
     payloads.push({
       kind: 'weekly-followup',
-      title: 'VCH — Catch up on your weekly log',
+      title: 'VCH: Catch up on your weekly log',
       body: `You planned to log on ${logDayLabel}. Add an entry when you can while the week is still fresh.`,
       dedupeKey: `weekly-followup:${dateKey}`
     })
@@ -420,7 +420,7 @@ export function describeLogReminderSchedule(
 
   const logDayLabel = getWeeklyLogDayLabel(weeklyLogDay)
 
-  return `Reminders around ${logDayLabel} — day before, on ${logDayLabel}, and the day after — each at ${timeLabel} (${zoneLabel}).`
+  return `Reminders around ${logDayLabel}: day before, on ${logDayLabel}, and the day after: each at ${timeLabel} (${zoneLabel}).`
 }
 
 export function defaultLogReminderSettings(): LogReminderSettings {

@@ -42,7 +42,7 @@ export function resolveVchPublicTld(hostname: string | null | undefined): VchPub
 
 /**
  * Parent-domain cookie so Hub, ClaimBuilder, and Tracker share one Supabase session.
- * Production VCH is .com — Domain=.veteranscentralhub.com.
+ * Production VCH is .com. Domain=.veteranscentralhub.com.
  * Leftover .us hosts still get their own parent so the browser will accept the cookie.
  */
 export function resolveVchCookieDomain(hostname: string | null | undefined): string | undefined {

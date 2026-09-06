@@ -35,4 +35,4 @@ export function markMonthlyBackupReminderSeen(userId: string) {
 }
 
 export const MONTHLY_BACKUP_REMINDER_COPY =
-  'End of the month — download a PDF backup and keep it somewhere safe.'
+  'End of the month: download a PDF backup and keep it somewhere safe.'

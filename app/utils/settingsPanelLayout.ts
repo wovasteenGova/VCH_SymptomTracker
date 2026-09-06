@@ -1,5 +1,5 @@
 /**
- * Settings overlay widths — match ClaimBuilder (+2rem for readability).
+ * Settings overlay widths: match ClaimBuilder (+2rem for readability).
  */
 export const SETTINGS_POPOVER_WIDTH_CLASS =
   'w-[min(22rem,calc(100vw-2rem))] max-w-[22rem] min-w-0 shrink-0'

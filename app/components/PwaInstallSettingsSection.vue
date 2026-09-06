@@ -48,7 +48,7 @@ async function installApp() {
       Add to home screen or taskbar
     </h2>
     <p class="mt-2 text-sm leading-6 text-muted">
-      Install VCH Symptom Tracker for faster access and background reminders — even if you removed the shortcut earlier.
+      Install VCH Symptom Tracker for faster access and background reminders: even if you removed the shortcut earlier.
     </p>
 
     <div

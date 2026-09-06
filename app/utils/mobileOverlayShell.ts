@@ -1,5 +1,5 @@
 /**
- * Shared Teleport overlay layout — full viewport on mobile, centered modal on lg+.
+ * Shared Teleport overlay layout: full viewport on mobile, centered modal on lg+.
  */
 
 export type MobileOverlayPanelOptions = {

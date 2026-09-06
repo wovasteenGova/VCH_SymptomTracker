@@ -30,7 +30,7 @@ export const severityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Moderate to significant impact',
-    text: 'Symptoms shaped much of your day — skipping tasks, leaving early, or needing extra rest.'
+    text: 'Symptoms shaped much of your day: skipping tasks, leaving early, or needing extra rest.'
   },
   {
     title: 'Significant impact',
@@ -38,7 +38,7 @@ export const severityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Severe impact',
-    text: 'Daily tasks were very hard today — frequent breaks, help, or major adjustments were needed.'
+    text: 'Daily tasks were very hard today: frequent breaks, help, or major adjustments were needed.'
   },
   {
     title: 'Very severe impact',
@@ -46,7 +46,7 @@ export const severityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Debilitating impact',
-    text: 'Symptoms largely shut down your day — little to no normal function.'
+    text: 'Symptoms largely shut down your day: little to no normal function.'
   }
 ]
 

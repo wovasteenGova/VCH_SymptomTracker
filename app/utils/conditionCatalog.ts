@@ -18,7 +18,7 @@ export type ConditionCatalogEntry = {
 
 export const FILING_WHEN_READY_TIP = {
   title: 'Don\'t wait to file',
-  text: 'Don\'t let logging hold you back from filing. If you\'re near a deadline or effective date, submit with what you have now—symptom logs and evidence can be added later.'
+  text: 'Don\'t let logging hold you back from filing. If you\'re near a deadline or effective date, submit with what you have now. Symptom logs and evidence can be added later.'
 } as const
 
 export const VA_MENTAL_HEALTH_COMBINED_TIP =
@@ -28,7 +28,7 @@ export const VA_MENTAL_HEALTH_SEVERITY_TIP =
   'Severity is about impact, not toughness. Log what happened under episode type or symptoms noticed. Your 0-10 score should reflect how the day actually went: work, sleep, relationships, and safety. You are not picking a diagnosis. You are building an honest timeline.'
 
 export const VA_MENTAL_HEALTH_WORST_DAY_TIP =
-  'Worst days often look like this: could not or would not leave the house, being forced out by friends or family, panic most of the day, no sleep, or thoughts of not wanting to be here. Remember those days too—if it happened, log it. Many veterans minimize symptoms that raters still treat as significant.'
+  'Worst days often look like this: could not or would not leave the house, being forced out by friends or family, panic most of the day, no sleep, or thoughts of not wanting to be here. Remember those days too. If it happened, log it. Many veterans minimize symptoms that raters still treat as significant.'
 
 export const VA_MENTAL_HEALTH_CRISIS_TIP =
   'In crisis right now? Call 988 and press 1, text 838255, or visit veteranscrisisline.net. This tracker is for your records, not an emergency line. Passive or brief suicidal thoughts are still worth logging when you are safe.'
@@ -38,17 +38,17 @@ export const VA_CRISIS_LINE_SHORT =
 
 export const HOME_HONESTY_TIP = {
   title: 'Honestly is a virtue',
-  text: 'Log what actually happened—not what you think you should report. Honest entries help you see your real patterns and give raters a timeline they can trust. This is your record, not a performance.'
+  text: 'Log what actually happened, not what you think you should report. Honest entries help you see your real patterns and give raters a timeline they can trust. This is your record, not a performance.'
 } as const
 
 export const DONT_DOWNPLAY_SYMPTOMS_TIP = {
   title: 'Don\'t downplay it',
-  text: 'There are people depending on you not to downplay your symptoms. Log the hard days and the real impact—your family, your care team, and your future self need an honest record.'
+  text: 'There are people depending on you not to downplay your symptoms. Log the hard days and the real impact. Your family, your care team, and your future self need an honest record.'
 } as const
 
 export const LOG_HISTORY_LENGTH_TIP = {
   title: 'How much to log',
-  text: 'There is no hard rule, but about three months of steady entries—roughly 30 to 40 logs—gives you a useful pattern for exams and reviews. Consistency beats volume.'
+  text: 'There is no hard rule, but about three months of steady entries, roughly 30 to 40 logs, gives you a useful pattern for exams and reviews. Consistency beats volume.'
 } as const
 
 export type HomeVisitTip = {
@@ -94,7 +94,7 @@ const neurologicalTip = (title: string) => {
     return 'Note what happened before and after the episode, any injury, witnesses, and how long recovery took. Those details are easy to lose if you wait.'
   }
 
-  return 'Capture the episode while it is still fresh—duration, triggers, and whether you had to lie down or miss plans.'
+  return 'Capture the episode while it is still fresh: duration, triggers, and whether you had to lie down or miss plans.'
 }
 
 const musculoskeletalFocus = [
@@ -104,7 +104,7 @@ const musculoskeletalFocus = [
 ] as const
 
 const musculoskeletalTip =
-  'Describe what you could not do—not just how much it hurt. The VA weighs functional loss heavily for joint and back claims.'
+  'Describe what you could not do, not just how much it hurt. The VA weighs functional loss heavily for joint and back claims.'
 
 const nerveFocus = [
   'Side affected and type of nerve symptoms',
@@ -131,7 +131,7 @@ const urinaryFocus = [
 ] as const
 
 const urinaryTip =
-  'Frequent urination is a urinary/bladder issue—not the same as bowel or IBS. Log trips, night wake-ups, urgency, and what you had to stop doing.'
+  'Frequent urination is a urinary/bladder issue, not the same as bowel or IBS. Log trips, night wake-ups, urgency, and what you had to stop doing.'
 
 const gerdFocus = [
   'Heartburn, reflux, regurgitation, chest or throat burning, nausea, or trouble swallowing',
@@ -171,12 +171,12 @@ const skinTip =
 
 const chronicPainFocus = [
   'Pain, fatigue, brain fog, and flare severity',
-  'Useful function that day—work, chores, driving, self-care',
+  'Useful function that day: work, chores, driving, self-care',
   'What worsened symptoms such as sleep, stress, or overdoing it'
 ] as const
 
 const chronicPainTip =
-  'On low-function days, write what you had to skip—not only how bad you felt. That shows real-world impact.'
+  'On low-function days, write what you had to skip, not only how bad you felt. That shows real-world impact.'
 
 const hearingFocus = [
   'Which ear or ears and how often symptoms happen',
@@ -196,10 +196,10 @@ const dutyMosNoiseLinks = [
 ] as const
 
 const tinnitusTip =
-  'Intermittent tinnitus still counts—log every episode, even the ones that come and go. The VA rates tinnitus at a maximum of 10% (Diagnostic Code 6260) and has proposed removing the standalone rating, so a steady log matters even more. When arguing noise exposure, it is best to stay within your Duty MOS: the VA\'s Duty MOS Noise Exposure Listing (Fast Letter 10-35) concedes hazardous noise based on your military job.'
+  'Intermittent tinnitus still counts. Log every episode, even the ones that come and go. The VA rates tinnitus at a maximum of 10% (Diagnostic Code 6260) and has proposed removing the standalone rating, so a steady log matters even more. When arguing noise exposure, it is best to stay within your Duty MOS: the VA\'s Duty MOS Noise Exposure Listing (Fast Letter 10-35) concedes hazardous noise based on your military job.'
 
 const hearingLossTip =
-  'The VA rates hearing loss from audiometric testing, but your log still matters. Write down the real-world impact: missed conversations, turning the TV up, or asking people to repeat themselves. Arguing noise exposure within your Duty MOS—using the VA\'s Duty MOS Noise Exposure Listing (Fast Letter 10-35)—supports service connection.'
+  'The VA rates hearing loss from audiometric testing, but your log still matters. Write down the real-world impact: missed conversations, turning the TV up, or asking people to repeat themselves. Arguing noise exposure within your Duty MOS, using the VA\'s Duty MOS Noise Exposure Listing (Fast Letter 10-35), supports service connection.'
 
 export const conditionCatalogDefinitions: ConditionCatalogEntry[] = [
   {
@@ -419,7 +419,7 @@ export const conditionCatalogDefinitions: ConditionCatalogEntry[] = [
     category: 'Respiratory',
     description: 'Sleep problems, fatigue, CPAP use, headaches, and daytime impact.',
     vaFocus: [...respiratoryFocus.slice(0, 2), 'Daytime fatigue, headaches, and CPAP or BiPAP compliance'],
-    tip: 'If CPAP helps—or you skipped it and felt worse—note that. Compliance and daytime function both matter for sleep apnea claims.'
+    tip: 'If CPAP help. r you skipped it and felt wors. ote that. Compliance and daytime function both matter for sleep apnea claims.'
   },
   {
     title: 'Sinusitis',
@@ -764,7 +764,7 @@ const customConditionFocus = [
 ] as const
 
 const customConditionTip =
-  'Log what actually happened—not what you think you should report. Patterns over time matter more than one perfect entry.'
+  'Log what actually happened, not what you think you should report. Patterns over time matter more than one perfect entry.'
 
 export function isCustomTrackedConditionKey(key: string) {
   const trimmedKey = key?.trim()
@@ -797,7 +797,7 @@ export function buildCustomConditionItem(key: string, label?: string): Condition
     key,
     title,
     category: CUSTOM_CONDITION_CATEGORY,
-    description: 'Your custom condition — log symptoms, severity, and how they affect your day.',
+    description: 'Your custom condition: log symptoms, severity, and how they affect your day.',
     vaFocus: customConditionFocus,
     tip: customConditionTip,
     image: conditionImageAssets.customCondition

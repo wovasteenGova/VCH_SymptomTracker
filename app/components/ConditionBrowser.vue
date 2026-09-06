@@ -36,7 +36,7 @@
             v-if="mode === 'onboarding'"
             class="mt-2 text-sm leading-6 text-toned"
           >
-            Pick catalog conditions or search to add your own — anything you want quick access to on your home screen.
+            Pick catalog conditions or search to add your own: anything you want quick access to on your home screen.
           </p>
 
         </div>
@@ -188,7 +188,7 @@
               Add "{{ trimmedSearchQuery }}"
             </span>
             <span class="mt-1 block text-sm leading-5 text-toned">
-              Custom condition — track it on your home screen like any other.
+              Custom condition: track it on your home screen like any other.
             </span>
           </span>
         </button>

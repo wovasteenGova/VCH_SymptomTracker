@@ -25,7 +25,7 @@ export function settingsSectionClass(compact?: boolean) {
   return `scroll-mt-3 ${SETTINGS_SECTION_BLOCK_CLASS} ${py}`
 }
 
-/** Bordered help row under Account — Contact us + FAQ. */
+/** Bordered help row under Account: Contact us + FAQ. */
 export const SETTINGS_ACCOUNT_HELP_CLASS =
   'mt-4 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-xl border border-default bg-default/40 px-4 py-3 text-center text-sm text-muted'
 

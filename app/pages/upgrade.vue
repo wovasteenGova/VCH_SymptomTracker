@@ -59,7 +59,7 @@
             </span>
             <span v-else-if="isComped">Your access was granted at no cost. Thank you for using the tracker.</span>
             <span v-else>
-              Unlimited entries, family reporting, and PDF exports are unlocked
+              Unlimited entries, family reporting, and PDF exports are included with Pro
               <span v-if="renewalLabel"> until {{ renewalLabel }}</span>.
             </span>
           </p>
@@ -197,7 +197,7 @@
             <div>
               <h2 class="text-lg font-bold text-white">Can't pay right now?</h2>
               <p class="mt-2 text-sm leading-6 text-emerald-50/90">
-                We built this for veterans first. If cost is a barrier, reach out and we'll unlock Pro for you. No shame, no proof required.
+                We built this for veterans first. If cost is a barrier, reach out and we can enable Pro for you. No shame, no proof required.
               </p>
               <div class="mt-4 flex flex-wrap gap-3">
                 <a
@@ -379,7 +379,7 @@ const paymentSteps = [
     body: `${PRO_ANNUAL_PRICE_LABEL} (${PRO_ANNUAL_PRICE_DETAIL}). ${PRO_REFUND_POLICY} Renews automatically each month unless you cancel from billing settings.`
   },
   {
-    title: 'Unlock instantly',
+    title: 'Active right away',
     body: 'Pro turns on right after payment: unlimited entries, family reporting links, and signed PDF exports.'
   },
   {

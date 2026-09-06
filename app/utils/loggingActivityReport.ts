@@ -235,7 +235,7 @@ export function buildAggregateLoggingMetrics(entries: LoggingEntry[]): Aggregate
     .sort((left, right) => right[1] - left[1])
     .map(([label, count]) => ({ label, count }))
 
-  let rangeLabel = '—'
+  let rangeLabel = 'N/A'
 
   if (earliest && latest) {
     const sameMonth = earliest.getFullYear() === latest.getFullYear()

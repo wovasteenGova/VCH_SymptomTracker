@@ -43,7 +43,7 @@ const durationField: EntryFieldDef = {
 const functionalImpactField: EntryFieldDef = {
   label: 'Functional impact',
   type: 'text',
-  placeholder: 'Annoying, irritating, disruptive — or had to rest, stop work, cancel plans, or lose sleep?',
+  placeholder: 'Annoying, irritating, disruptive: or had to rest, stop work, cancel plans, or lose sleep?',
   helper: 'Tap one or more chips. VA raters look for work, social, and sleep disruption from this episode.'
 }
 
@@ -220,13 +220,13 @@ export const entryFieldsByCondition: Record<string, EntryFieldDef[]> = {
       label: 'Possible Factors (optional)',
       type: 'text',
       placeholder: 'Meal trigger, dairy, spicy food, antacid/PPI, stress, position, or unknown.',
-      helper: 'Food, medication, or other triggers when you know them — common for GERD and digestive logs.'
+      helper: 'Food, medication, or other triggers when you know them: common for GERD and digestive logs.'
     },
     {
       label: 'Night symptoms',
       type: 'text',
       placeholder: 'Woke with reflux, slept propped up, bathroom trips, or no night issues.',
-      helper: 'Separate from step 3 functional impact — GERD/nocturnal symptoms matter for raters.'
+      helper: 'Separate from step 3 functional impact: GERD/nocturnal symptoms matter for raters.'
     }
   ]),
   'Sleep Issues': buildEntryFields('Sleep Issues', [

@@ -272,7 +272,7 @@
               v-if="!isPro"
               class="mt-2 text-xs leading-5 text-muted"
             >
-              Free plan: 1 condition with unlimited entries, calendar logging charts, and entry PDFs with weekly symptom counts. Upgrade for {{ PRO_ANNUAL_PRICE_LABEL }} to unlock more conditions, family reporting, and severity trends in PDFs.
+              Free plan: 1 condition with unlimited entries, calendar logging charts, and entry PDFs with weekly symptom counts. Upgrade for {{ PRO_ANNUAL_PRICE_LABEL }} to add more conditions, family reporting, and severity trends in PDFs.
             </p>
             <div
               v-if="!isPro"
@@ -330,7 +330,7 @@
               v-if="!isPro"
               class="mt-2 text-xs leading-5 text-muted"
             >
-              Free plan: 1 condition with unlimited entries. Upgrade for {{ PRO_ANNUAL_PRICE_LABEL }} to unlock more.
+              Free plan: 1 condition with unlimited entries. Upgrade for {{ PRO_ANNUAL_PRICE_LABEL }} to add more.
             </p>
             <p
               v-else-if="isClaimBuilderPro"
@@ -794,7 +794,7 @@
                   to="/upgrade"
                   class="mt-3 inline-flex items-center gap-2 rounded-2xl bg-amber-400 px-4 py-3 text-sm font-bold text-slate-950"
                 >
-                  Unlock family reporting
+                  Get family reporting with Pro
                 </NuxtLink>
                 <a
                   :href="supportEmailHref"

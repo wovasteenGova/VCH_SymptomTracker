@@ -1,4 +1,4 @@
-/** FAQ overlay opened from settings — state lives outside the settings panel so UPopover dismiss does not tear it down. */
+/** FAQ overlay opened from settings: state lives outside the settings panel so UPopover dismiss does not tear it down. */
 export function useSettingsSupportOverlays() {
   const faqOpen = useState('symptom-tracker-settings-faq-open', () => false)
   const isOpen = computed(() => faqOpen.value)

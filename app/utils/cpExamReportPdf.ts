@@ -316,7 +316,7 @@ export function drawCpExamReportPdf(options: {
 
   y = drawWrappedText(
     doc,
-    `${CP_PREP_DISCLAIMER_BODY} Topics below are generated from your logged frequency, severity, functional impact, and notes — not medical or legal advice.`,
+    `${CP_PREP_DISCLAIMER_BODY} Topics below are generated from your logged frequency, severity, functional impact, and notes: not medical or legal advice.`,
     margin,
     y,
     contentWidth,

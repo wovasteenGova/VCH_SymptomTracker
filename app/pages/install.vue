@@ -58,7 +58,7 @@ const { canPromptInstall, promptInstall } = usePwaInstall()
             </span>
             <span class="min-w-0">
               <span class="block text-base font-bold text-white">Watch the 30-second guide</span>
-              <span class="mt-0.5 block text-xs leading-5 text-teal-100/80">Opens in YouTube — follow along in Safari</span>
+              <span class="mt-0.5 block text-xs leading-5 text-teal-100/80">Opens in YouTube: follow along in Safari</span>
             </span>
             <UIcon name="i-lucide-external-link" class="ml-auto size-4 shrink-0 text-teal-200/70" />
           </a>
@@ -85,7 +85,7 @@ const { canPromptInstall, promptInstall } = usePwaInstall()
             </span>
             <span class="min-w-0">
               <span class="block text-base font-bold text-white">Watch the 30-second guide</span>
-              <span class="mt-0.5 block text-xs leading-5 text-teal-100/80">Opens in YouTube — follow along in Chrome</span>
+              <span class="mt-0.5 block text-xs leading-5 text-teal-100/80">Opens in YouTube: follow along in Chrome</span>
             </span>
             <UIcon name="i-lucide-external-link" class="ml-auto size-4 shrink-0 text-teal-200/70" />
           </a>

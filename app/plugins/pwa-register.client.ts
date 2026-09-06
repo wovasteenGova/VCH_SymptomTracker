@@ -12,7 +12,7 @@ export default defineNuxtPlugin(() => {
   }
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    // Intentionally empty — never reload for a new worker.
+    // Intentionally empty: never reload for a new worker.
   })
 
   void navigator.serviceWorker.register('/sw.js').catch(() => {

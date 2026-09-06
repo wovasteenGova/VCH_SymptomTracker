@@ -75,7 +75,7 @@ export function shouldIncludeBackfillReportNote(entries: ReportEntry[]) {
   return entries.some((entry) => isBackdatedEntry(entry))
 }
 
-/** @deprecated Global PDF banner removed — notes render per backdated entry instead. */
+/** @deprecated Global PDF banner removed: notes render per backdated entry instead. */
 export function buildBackfillReportNote(_entries: ReportEntry[]) {
   return null
 }

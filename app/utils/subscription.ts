@@ -7,7 +7,7 @@ export const FREE_ENTRY_LIMIT = FREE_CONDITION_LIMIT
 export const PRO_MONTHLY_PRICE = 6.99
 export const PRO_MONTHLY_PRICE_LABEL = '$6.99/month'
 export const PRO_MONTHLY_PRICE_DETAIL = 'Billed monthly · cancel anytime'
-/** @deprecated Prefer PRO_MONTHLY_PRICE — Pro is billed monthly */
+/** @deprecated Prefer PRO_MONTHLY_PRICE: Pro is billed monthly */
 export const PRO_ANNUAL_PRICE = PRO_MONTHLY_PRICE
 /** @deprecated Prefer PRO_MONTHLY_PRICE_LABEL */
 export const PRO_ANNUAL_PRICE_LABEL = PRO_MONTHLY_PRICE_LABEL
@@ -68,7 +68,7 @@ type BillableEntitlement = {
   stripe_subscription_id?: string | null
 } | null | undefined
 
-/** Stripe Customer Portal — paid subscriptions only (not comped / Claim Maker / manual grants). */
+/** Stripe Customer Portal: paid subscriptions only (not comped / Claim Maker / manual grants). */
 export function canManageStripeBilling(entitlement: BillableEntitlement) {
   if (!entitlement?.stripe_customer_id || !entitlement.stripe_subscription_id) {
     return false

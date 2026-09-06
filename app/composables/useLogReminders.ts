@@ -219,7 +219,7 @@ export function useLogReminders() {
     }
 
     const shown = await showReminderNotification(
-      LOG_REMINDER_TEST_MODE ? LOG_REMINDER_TEST_TITLE : 'VCH — Test notification',
+      LOG_REMINDER_TEST_MODE ? LOG_REMINDER_TEST_TITLE : 'VCH: Test notification',
       LOG_REMINDER_TEST_MODE ? LOG_REMINDER_TEST_BODY : 'If you can read this, this device can show VCH reminder notifications.',
       'vch-log-reminder-test'
     )
@@ -229,7 +229,7 @@ export function useLogReminders() {
         ok: true as const,
         via: 'local' as const,
         message: pushErrorMessage
-          ? 'Local test shown. Background push still needs a fix — turn reminders Off, then Enable again.'
+          ? 'Local test shown. Background push still needs a fix: turn reminders Off, then Enable again.'
           : undefined
       }
     }

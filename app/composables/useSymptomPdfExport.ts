@@ -86,7 +86,7 @@ function drawPageFooter(doc: jsPDF, pageNumber: number, totalPages: number, marg
   doc.setFontSize(8)
   doc.setTextColor(100, 116, 139)
   doc.text(reportBranding.organizationName, margin, pageHeight - 24)
-  doc.text('Personal health record — veteran-reported symptom log', pageWidth / 2, pageHeight - 24, { align: 'center' })
+  doc.text('Personal health record: veteran-reported symptom log', pageWidth / 2, pageHeight - 24, { align: 'center' })
   doc.text(`Page ${pageNumber} of ${totalPages}`, pageWidth - margin, pageHeight - 24, { align: 'right' })
 }
 
@@ -522,7 +522,7 @@ export function useSymptomPdfExport() {
         )
 
         y = ensurePageSpace(doc, y, 160, margin, pageHeight)
-        drawSectionTitle(doc, `Daily logging consistency — ${aggregateMetrics.rangeLabel}`, margin, y)
+        drawSectionTitle(doc, `Daily logging consistency: ${aggregateMetrics.rangeLabel}`, margin, y)
         y += 10
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(8)

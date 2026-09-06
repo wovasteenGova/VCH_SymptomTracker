@@ -222,7 +222,7 @@ export function useSupabaseAuth() {
     try {
       await supabase.auth.signOut({ scope: 'local' })
     } catch {
-      // Ignore — storage may already be empty after a global sign-out.
+      // Ignore: storage may already be empty after a global sign-out.
     }
   }
 
@@ -419,7 +419,7 @@ export function useSupabaseAuth() {
     authError.value = ''
 
     // Must match the current browser origin so the PKCE verifier stays in storage.
-    // Never omit redirectTo — Supabase Site URL may still be the Hub origin.
+    // Never omit redirectTo: Supabase Site URL may still be the Hub origin.
     const redirectTo = authRedirects.callbackUrl()
 
     let error: unknown

@@ -287,7 +287,7 @@
                       How severe it seemed to me
                     </p>
                     <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
-                      Based on what I saw — not a medical rating.
+                      Based on what I saw: not a medical rating.
                     </p>
                   </div>
 
@@ -346,7 +346,7 @@
                 <div>
                   <p class="text-xs font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Impact I noticed</p>
                   <p class="mt-2 text-base leading-6 text-slate-600 dark:text-slate-400">
-                    Describe how this seemed to affect their day — work, sleep, mood, chores, or activity.
+                    Describe how this seemed to affect their day: work, sleep, mood, chores, or activity.
                   </p>
                 </div>
 

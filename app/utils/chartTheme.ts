@@ -1,4 +1,4 @@
-/** Shared Chart.js label/grid colors — follow active workspace theme. */
+/** Shared Chart.js label/grid colors: follow active workspace theme. */
 function readThemeColor(variable: string, fallback: string) {
   if (!import.meta.client) {
     return fallback

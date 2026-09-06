@@ -35,7 +35,7 @@ const emit = defineEmits<{
           </h3>
           <p class="mt-1 text-sm leading-6 text-toned">
             These custom conditions are off your home screen. Restore puts one back on home.
-            Remove name deletes only the saved custom label — your logs stay in History.
+            Remove name deletes only the saved custom label: your logs stay in History.
           </p>
         </div>
         <button

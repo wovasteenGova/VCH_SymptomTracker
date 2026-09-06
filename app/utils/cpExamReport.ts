@@ -158,7 +158,7 @@ function buildTrackingSpan(entries: CpExamEntry[]) {
     .sort((left, right) => left.getTime() - right.getTime())
 
   if (!dates.length) {
-    return { trackingSpanLabel: '—', trackingWeeks: 1 }
+    return { trackingSpanLabel: 'N/A', trackingWeeks: 1 }
   }
 
   const first = dates[0]
@@ -426,6 +426,6 @@ export function buildCpExamSummaries(entries: CpExamEntry[]): CpExamConditionSum
 
 export function buildCpExamReportTitle(conditionLabel: string | null | undefined) {
   return conditionLabel
-    ? `Personal Review Summary — ${conditionLabel}`
+    ? `Personal Review Summary: ${conditionLabel}`
     : 'Personal Review Summary'
 }
