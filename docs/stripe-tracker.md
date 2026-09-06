@@ -15,7 +15,7 @@ Hub donate and ClaimBuilder stay on their own repos and Stripe accounts.
 - Monthly **subscription** Checkout Sessions (`mode: 'subscription'`). No SetupIntent-only monthly path.
 - Dynamic payment methods: code **never** sends `payment_method_types`. Enable methods in the Stripe Dashboard.
 - Return URLs follow the **request origin** when it is an allowed host:
-  - Production: `https://tracker.veteranscentralhub.us` and `https://tracker.veteranscentralhub.com`
+  - Production: `https://tracker.veteranscentralhub.com` (legacy `https://tracker.veteranscentralhub.us` 301s here)
   - Local: `http://localhost:*` / `http://127.0.0.1:*`
   - Preview: `*.onrender.com`, `*.netlify.app`
 - Success: `{origin}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`
@@ -33,10 +33,10 @@ The Tracker sandbox currently has **zero** webhook endpoints. Production will no
 3. Endpoint URL:
 
 ```text
-https://tracker.veteranscentralhub.us/api/stripe/webhook
+https://tracker.veteranscentralhub.com/api/stripe/webhook
 ```
 
-Same Render service also serves `.com`. One production URL is enough; Stripe will POST to that host.
+Use the `.com` host. `tracker.veteranscentralhub.us` 301s to `.com` for browsers and crawlers. Point Stripe at `.com` so webhook POSTs are not sent through that redirect.
 
 4. Select these events:
 
@@ -62,7 +62,7 @@ Set on **vch-tracker** (and keep secrets out of git). Prefer a [restricted API k
 | `STRIPE_PUBLIC_KEY` | `pk_live_...` | `pk_test_...` |
 | `STRIPE_PRO_PRICE_ID` | `price_1Tz1kBHw2LhhEbB93qqKjuz4` ($6.99/month) | `price_1Tz1XyQVbQe31Q8YakrCXJsP` |
 | `STRIPE_WEBHOOK_SECRET` | Production endpoint `whsec_...` | `stripe listen` `whsec_...` |
-| `APP_URL` | `https://tracker.veteranscentralhub.us` (`.com` also works; checkout uses the opened host) | `http://localhost:3001` |
+| `APP_URL` | `https://tracker.veteranscentralhub.com` | `http://localhost:3001` |
 | `SUPABASE_SERVICE_KEY` | VCH service role (unlocks Pro in `tracker.user_entitlements`) | same project |
 
 `render.yaml` already declares the Stripe keys as `sync: false` — values must be pasted in the Render Dashboard.
@@ -70,7 +70,7 @@ Set on **vch-tracker** (and keep secrets out of git). Prefer a [restricted API k
 After deploy:
 
 ```bash
-curl -s https://tracker.veteranscentralhub.us/api/health
+curl -s https://tracker.veteranscentralhub.com/api/health
 ```
 
 Production JSON should have `"ok": true`. Local: `http://localhost:3001/api/stripe/config-check` (blocked in production).

@@ -125,10 +125,12 @@ export default defineNuxtConfig({
         { property: 'og:title', content: 'Veteran Symptom Tracker' },
         { property: 'og:description', content: 'Track symptoms, daily impact, and signed supporter observations from your phone.' },
         { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: 'https://tracker.veteranscentralhub.com/' },
         { property: 'og:image', content: '/brand/vch-symptom-tracker-logo.png' },
         { name: 'twitter:card', content: 'summary' }
       ],
       link: [
+        { rel: 'canonical', href: 'https://tracker.veteranscentralhub.com/' },
         { rel: 'preload', as: 'image', href: '/brand/vch-symptom-tracker-logo.png', type: 'image/png', fetchpriority: 'high' },
         { rel: 'preload', as: 'image', href: '/vch-tank-loader.svg', type: 'image/svg+xml', fetchpriority: 'high' },
         { rel: 'icon', type: 'image/png', href: '/brand/vch-symptom-tracker-logo.png' },

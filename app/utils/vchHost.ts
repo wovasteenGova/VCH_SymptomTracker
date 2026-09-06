@@ -63,6 +63,70 @@ export function isVchProductionHost(hostname: string | null | undefined) {
   return resolveVchPublicTld(hostname) !== null
 }
 
+/** Leftover Tracker hosts on the retired .us TLD. Canonical host is tracker.veteranscentralhub.com. */
+export function isRetiredVchUsHost(hostname: string | null | undefined) {
+  return resolveVchPublicTld(hostname) === 'us'
+}
+
+export function normalizeRedirectPath(pathname: string | null | undefined) {
+  const raw = String(pathname || '').split('?')[0]
+  if (!raw || raw === '/') {
+    return '/'
+  }
+
+  return raw.startsWith('/') ? raw : `/${raw}`
+}
+
+export function normalizeRedirectSearch(search: string | null | undefined) {
+  const raw = String(search || '').trim()
+  if (!raw || raw === '?') {
+    return ''
+  }
+
+  return raw.startsWith('?') ? raw : `?${raw}`
+}
+
+/**
+ * 301 target for any veteranscentralhub.us host that hits Tracker.
+ * Always lands on tracker.veteranscentralhub.com and keeps path + query.
+ */
+export function buildTrackerUsToComRedirectUrl(
+  hostname: string | null | undefined,
+  input: { pathname?: string | null; search?: string | null } = {}
+) {
+  if (!isRetiredVchUsHost(hostname)) {
+    return null
+  }
+
+  return `${VCH_TRACKER_ORIGIN_COM}${normalizeRedirectPath(input.pathname)}${normalizeRedirectSearch(input.search)}`
+}
+
+const RENDER_HEALTH_PATH = '/api/health'
+const STRIPE_WEBHOOK_PATH = '/api/stripe/webhook'
+
+/** Skip liveness and Stripe webhook POSTs so Render and billing keep working on the leftover .us host. */
+export function shouldRedirectRetiredUsTrackerHost(input: {
+  hostname?: string | null
+  path?: string | null
+  method?: string | null
+}) {
+  if (!isRetiredVchUsHost(input.hostname)) {
+    return false
+  }
+
+  const path = normalizeRedirectPath(input.path).replace(/\/+$/, '') || '/'
+  if (path === RENDER_HEALTH_PATH) {
+    return false
+  }
+
+  const method = String(input.method || 'GET').toUpperCase()
+  if (method === 'POST' && path === STRIPE_WEBHOOK_PATH) {
+    return false
+  }
+
+  return true
+}
+
 export function rewriteVchUrlToCurrentTld(url: string, hostname?: string | null) {
   const trimmed = String(url || '').trim()
   const tld = resolveVchPublicTld(hostname)

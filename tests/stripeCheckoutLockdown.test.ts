@@ -54,7 +54,7 @@ describe('Stripe source lockdown', () => {
     const envExample = readFileSync('.env.example', 'utf8')
     const render = readFileSync('render.yaml', 'utf8')
 
-    expect(docs).toContain('https://tracker.veteranscentralhub.us/api/stripe/webhook')
+    expect(docs).toContain('https://tracker.veteranscentralhub.com/api/stripe/webhook')
     expect(docs).toContain('STRIPE_WEBHOOK_SECRET')
     expect(docs).toContain('Tracker sandbox')
     expect(docs).toContain('$6.99/month')

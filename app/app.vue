@@ -10,16 +10,28 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { isIosWebKitBrowser, resolveMobileViewport } from './utils/mobileViewport'
+import { VCH_TRACKER_ORIGIN_COM } from './utils/vchHost'
 
 const { themeId } = useClaimColorTheme()
+const route = useRoute()
+const canonicalUrl = computed(() => {
+  const path = route.path === '/' ? '/' : route.path.replace(/\/+$/, '')
+  return `${VCH_TRACKER_ORIGIN_COM}${path}`
+})
 
 useHead(() => ({
   htmlAttrs: {
     lang: 'en',
     'data-theme': themeId.value
-  }
+  },
+  link: [
+    { rel: 'canonical', href: canonicalUrl.value }
+  ],
+  meta: [
+    { property: 'og:url', content: canonicalUrl.value }
+  ]
 }))
 
 const { showSubmissionToast } = useSubmissionToast()
