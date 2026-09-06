@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyVchCookieDomain,
+  buildTrackerUsToComRedirectUrl,
+  isRetiredVchUsHost,
   isVchProductionHost,
   resolveVchClaimBuilderUrl,
   resolveVchContactUrl,
@@ -11,7 +13,9 @@ import {
   resolveVchTrackerUrl,
   rewriteSetCookieDomain,
   rewriteVchUrlToCurrentTld,
-  VCH_AUTH_COOKIE_DOMAIN
+  shouldRedirectRetiredUsTrackerHost,
+  VCH_AUTH_COOKIE_DOMAIN,
+  VCH_TRACKER_ORIGIN_COM
 } from '../app/utils/vchHost'
 import { resolveAuthSiteOrigin, resolveOAuthCallbackUrl } from '../app/utils/authRedirects'
 import { resolveRequestBaseUrl } from '../server/utils/stripeClient'
@@ -45,6 +49,72 @@ describe('resolveVchCookieDomain', () => {
 
   it('never returns a .us domain for a .com host', () => {
     expect(resolveVchCookieDomain('tracker.veteranscentralhub.com')).not.toBe('.veteranscentralhub.us')
+  })
+})
+
+describe('retired .us Tracker host redirect', () => {
+  it('treats any veteranscentralhub.us host as retired', () => {
+    expect(isRetiredVchUsHost('tracker.veteranscentralhub.us')).toBe(true)
+    expect(isRetiredVchUsHost('www.tracker.veteranscentralhub.us')).toBe(true)
+    expect(isRetiredVchUsHost('veteranscentralhub.us')).toBe(true)
+    expect(isRetiredVchUsHost('TRACKER.VeteransCentralHub.US')).toBe(true)
+    expect(isRetiredVchUsHost('tracker.veteranscentralhub.com')).toBe(false)
+    expect(isRetiredVchUsHost('vch-tracker.onrender.com')).toBe(false)
+    expect(isRetiredVchUsHost('localhost')).toBe(false)
+  })
+
+  it('301s leftover .us hosts to tracker.veteranscentralhub.com with path and query', () => {
+    expect(buildTrackerUsToComRedirectUrl('tracker.veteranscentralhub.us', {
+      pathname: '/',
+      search: ''
+    })).toBe(`${VCH_TRACKER_ORIGIN_COM}/`)
+
+    expect(buildTrackerUsToComRedirectUrl('tracker.veteranscentralhub.us', {
+      pathname: '/upgrade',
+      search: '?foo=1&bar=2'
+    })).toBe(`${VCH_TRACKER_ORIGIN_COM}/upgrade?foo=1&bar=2`)
+
+    expect(buildTrackerUsToComRedirectUrl('www.tracker.veteranscentralhub.us', {
+      pathname: '/auth/callback',
+      search: 'code=abc'
+    })).toBe(`${VCH_TRACKER_ORIGIN_COM}/auth/callback?code=abc`)
+
+    expect(buildTrackerUsToComRedirectUrl('tracker.veteranscentralhub.com', {
+      pathname: '/upgrade',
+      search: '?foo=1'
+    })).toBeNull()
+  })
+
+  it('skips Render health and Stripe webhook POSTs on leftover .us hosts', () => {
+    expect(shouldRedirectRetiredUsTrackerHost({
+      hostname: 'tracker.veteranscentralhub.us',
+      path: '/',
+      method: 'GET'
+    })).toBe(true)
+
+    expect(shouldRedirectRetiredUsTrackerHost({
+      hostname: 'tracker.veteranscentralhub.us',
+      path: '/api/health',
+      method: 'GET'
+    })).toBe(false)
+
+    expect(shouldRedirectRetiredUsTrackerHost({
+      hostname: 'tracker.veteranscentralhub.us',
+      path: '/api/stripe/webhook',
+      method: 'POST'
+    })).toBe(false)
+
+    expect(shouldRedirectRetiredUsTrackerHost({
+      hostname: 'tracker.veteranscentralhub.us',
+      path: '/api/stripe/webhook',
+      method: 'GET'
+    })).toBe(true)
+
+    expect(shouldRedirectRetiredUsTrackerHost({
+      hostname: 'tracker.veteranscentralhub.com',
+      path: '/',
+      method: 'GET'
+    })).toBe(false)
   })
 })
 
@@ -196,6 +266,7 @@ describe('baked production cookie domain', () => {
     expect(netlifyCron).not.toContain('veteranscentralhub.us')
     expect(cronEnv).toContain('APP_URL=https://tracker.veteranscentralhub.com')
     expect(cronEnv).not.toContain('veteranscentralhub.us')
+    expect(render).toContain('healthCheckPath: /api/health')
     expect(subscription).toContain("VCH_HUB_URL = 'https://www.veteranscentralhub.com'")
     expect(subscription).toContain('contact?source=tracker')
     expect(subscription).toContain("VCH_CLAIMBUILDER_URL = 'https://claimbuilder.veteranscentralhub.com'")
@@ -229,5 +300,35 @@ describe('Tracker contact deep-link', () => {
     expect(authNotices).toContain('resolveVchContactUrl()')
     expect(subscription).toContain('hello@veteranscentralhub.com')
     expect(subscription).not.toContain('support@veteranscentralhub.com')
+  })
+})
+
+describe('canonical .com SEO defaults', () => {
+  it('points head, robots, sitemap, and leftover Netlify hosts at .com', () => {
+    const config = readFileSync('nuxt.config.ts', 'utf8')
+    const app = readFileSync('app/app.vue', 'utf8')
+    const robots = readFileSync('public/robots.txt', 'utf8')
+    const sitemap = readFileSync('public/sitemap.xml', 'utf8')
+    const netlify = readFileSync('netlify.toml', 'utf8')
+    const middleware = readFileSync('server/middleware/00-redirect-us-to-com.ts', 'utf8')
+    const webPush = readFileSync('server/utils/webPush.ts', 'utf8')
+
+    expect(config).toContain("property: 'og:url', content: 'https://tracker.veteranscentralhub.com/'")
+    expect(config).toContain("rel: 'canonical', href: 'https://tracker.veteranscentralhub.com/'")
+    expect(app).toContain('VCH_TRACKER_ORIGIN_COM')
+    expect(app).toContain("rel: 'canonical'")
+    expect(app).toContain("property: 'og:url'")
+    expect(robots).toContain('Sitemap: https://tracker.veteranscentralhub.com/sitemap.xml')
+    expect(robots).not.toContain('veteranscentralhub.us')
+    expect(sitemap).toContain('https://tracker.veteranscentralhub.com/')
+    expect(sitemap).toContain('https://tracker.veteranscentralhub.com/welcome')
+    expect(sitemap).not.toContain('veteranscentralhub.us')
+    expect(netlify).toContain('from = "https://tracker.veteranscentralhub.us/*"')
+    expect(netlify).toContain('to = "https://tracker.veteranscentralhub.com/:splat"')
+    expect(netlify).toContain('status = 301')
+    expect(middleware).toContain('sendRedirect(event, target, 301)')
+    expect(middleware).toContain('buildTrackerUsToComRedirectUrl')
+    expect(webPush).toContain('mailto:hello@veteranscentralhub.com')
+    expect(webPush).not.toContain('veteranscentralhub.us')
   })
 })

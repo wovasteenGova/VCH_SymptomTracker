@@ -13,7 +13,7 @@ Netlify used a scheduled function (`netlify/functions/reminder-cron.mjs`, `0 * *
 1. **VCH_Tracker web service** — confirm env vars:
    - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
    - `REMINDER_CRON_SECRET` (same value on web + cron)
-   - `SUPABASE_SERVICE_KEY`, `APP_URL=https://tracker.veteranscentralhub.us`
+   - `SUPABASE_SERVICE_KEY`, `APP_URL=https://tracker.veteranscentralhub.com`
 
 2. **Create cron** (Dashboard → New → Cron Job) **or** apply `render.yaml`:
    - Name: `vch-tracker-reminder-cron`
@@ -28,7 +28,7 @@ Netlify used a scheduled function (`netlify/functions/reminder-cron.mjs`, `0 * *
 ## Verify
 
 ```bash
-curl -s -X POST "https://tracker.veteranscentralhub.us/api/reminders/send" \
+curl -s -X POST "https://tracker.veteranscentralhub.com/api/reminders/send" \
   -H "Authorization: Bearer YOUR_REMINDER_CRON_SECRET" \
   -H "Content-Type: application/json"
 ```

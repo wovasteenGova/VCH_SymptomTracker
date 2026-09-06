@@ -1,7 +1,7 @@
 import webpush from 'web-push'
 import { getVapidPrivateKey, getVapidPublicKey } from './pushReminderAuth'
 
-const VAPID_SUBJECT = 'mailto:support@veteranscentralhub.us'
+const VAPID_SUBJECT = 'mailto:hello@veteranscentralhub.com'
 
 export type PushSubscriptionRecord = {
   id: string
