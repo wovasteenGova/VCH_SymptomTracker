@@ -70,7 +70,7 @@
 /*
  * Z-index ladder (Symptom Tracker app shell)
  * - App content: default (0)
- * - Shared site notice (.vch-site-notice-banner): 50
+ * - Shared site notice (.vch-site-notice-banner): 85
  * - History collapsed (.home-history-panel): 90
  * - History expanded (.home-history-panel.is-history-expanded): 100
  * - Modals / prompts (.app-overlay-shell via AppOverlayShell): 110+

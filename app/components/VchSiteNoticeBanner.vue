@@ -64,7 +64,7 @@ onUnmounted(() => {
   <div
     v-if="notice"
     ref="bannerEl"
-    class="vch-site-notice-banner sticky top-0 z-[50] w-full shrink-0 pt-[env(safe-area-inset-top,0px)]"
+    class="vch-site-notice-banner sticky top-0 z-[85] w-full shrink-0 pt-[env(safe-area-inset-top,0px)]"
     role="status"
     aria-live="polite"
   >
