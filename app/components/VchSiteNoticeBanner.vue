@@ -69,7 +69,7 @@ onUnmounted(() => {
     aria-live="polite"
   >
     <div class="mx-auto flex max-w-5xl items-start justify-between gap-3 px-3 py-2.5 sm:items-center sm:px-4">
-      <p class="min-w-0 flex-1 text-[0.8125rem] leading-5 text-[#fff7ed] sm:text-center sm:text-sm sm:leading-6">
+      <p class="min-w-0 flex-1 text-[0.8125rem] leading-5 sm:text-center sm:text-sm sm:leading-6">
         <strong v-if="notice.title" class="font-bold">{{ notice.title }}</strong>
         <span v-if="notice.title && notice.message">
           {{ ' ' }}
@@ -78,7 +78,7 @@ onUnmounted(() => {
         <a
           v-if="linkHref"
           :href="linkHref"
-          class="ml-2 inline underline decoration-[#fff7ed] decoration-1 underline-offset-2 hover:decoration-2"
+          class="ml-2 inline underline decoration-current decoration-1 underline-offset-2 hover:decoration-2"
           target="_blank"
           rel="noopener noreferrer"
         >{{ linkLabel }}</a>
@@ -86,7 +86,7 @@ onUnmounted(() => {
       <button
         v-if="notice.dismissible"
         type="button"
-        class="grid size-8 shrink-0 place-items-center rounded-full text-[#fff7ed] transition hover:bg-white/10"
+        class="grid size-8 shrink-0 place-items-center rounded-full border border-current transition hover:bg-black/5 dark:hover:bg-white/10"
         aria-label="Dismiss this notice"
         @click="dismiss"
       >

@@ -115,8 +115,15 @@ html.dark body {
 }
 
 .vch-site-notice-banner {
-  background: #7c2d12;
-  color: #fff7ed;
+  background: color-mix(in srgb, var(--color-amber-500) 15%, var(--ui-bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-amber-600) 40%, transparent);
+  color: var(--color-amber-900);
+}
+
+html.dark .vch-site-notice-banner {
+  background: color-mix(in srgb, var(--color-amber-500) 20%, var(--ui-bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-amber-400) 80%, transparent);
+  color: var(--color-amber-100);
 }
 
 .tracker-desktop-workspace {

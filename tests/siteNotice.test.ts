@@ -121,7 +121,7 @@ describe('site notice selection', () => {
 })
 
 describe('tracker site notice wiring', () => {
-  it('mounts the ember banner above chrome and fetches public tracker notices', () => {
+  it('mounts the muted amber badge banner above chrome and fetches public tracker notices', () => {
     const app = readFileSync('app/app.vue', 'utf8')
     const banner = readFileSync('app/components/VchSiteNoticeBanner.vue', 'utf8')
     const composable = readFileSync('app/composables/useSiteNotice.ts', 'utf8')
@@ -131,12 +131,18 @@ describe('tracker site notice wiring', () => {
     expect(app).toContain('<VchSiteNoticeBanner />')
     expect(banner).toContain('vch-site-notice-banner')
     expect(banner).toContain('Dismiss this notice')
+    expect(banner).toContain('border border-current')
+    expect(banner).not.toContain('#fff7ed')
     expect(composable).toContain("'/api/site-notices'")
     expect(api).toContain(".from('site_notices')")
     expect(api).toContain('SITE_NOTICE_TRACKER_SITE')
     expect(api).toContain("schema: 'public'")
     expect(css).toContain('--site-notice-height')
     expect(css).toContain('.vch-site-notice-banner')
+    expect(css).toContain('var(--color-amber-500)')
+    expect(css).toContain('var(--color-amber-900)')
+    expect(css).toContain('html.dark .vch-site-notice-banner')
+    expect(css).not.toContain('#7c2d12')
   })
 })
 
