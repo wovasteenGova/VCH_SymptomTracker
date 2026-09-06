@@ -1,5 +1,6 @@
 <template>
   <UApp>
+    <VchSiteNoticeBanner />
     <NuxtRouteAnnouncer />
     <NuxtPage />
     <SubmissionToast />
