@@ -86,7 +86,7 @@ onUnmounted(() => {
       <button
         v-if="notice.dismissible"
         type="button"
-        class="grid size-8 shrink-0 place-items-center rounded-full border border-current/40 transition hover:bg-black/5 dark:hover:bg-white/10"
+        class="grid size-8 shrink-0 place-items-center rounded-full border border-current/70 transition hover:bg-black/5 dark:hover:bg-white/10"
         aria-label="Dismiss this notice"
         @click="dismiss"
       >
