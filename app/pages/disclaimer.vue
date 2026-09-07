@@ -4,7 +4,7 @@
       <header class="flex shrink-0 items-center justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Disclaimer</p>
-          <h1 class="mt-1 text-2xl font-bold tracking-tight text-white">Important Medical Notice</h1>
+          <h1 class="mt-1 text-2xl font-bold tracking-tight text-white">Important Notice</h1>
         </div>
 
         <NuxtLink
@@ -19,8 +19,8 @@
       <div class="mt-6 flex-1 overflow-y-auto no-scrollbar pb-4">
         <section class="space-y-4 rounded-4xl border border-slate-800 bg-slate-900 p-5 text-sm leading-6 text-slate-300">
           <p>
-            Veteran Symptom Tracker is for personal symptom organization and recordkeeping. It is not
-            medical advice, diagnosis, treatment, legal advice, or a VA claim decision tool.
+            VCH Symptom Tracker is for personal symptom organization and recordkeeping only. It is not
+            medical advice, diagnosis, treatment, legal advice, or a VA claim decision tool. Veterans Central Hub is not affiliated with the U.S. Department of Veterans Affairs.
           </p>
 
           <div>
@@ -43,21 +43,29 @@
             <h2 class="text-base font-bold text-white">Use with judgment</h2>
             <p class="mt-2">
               Symptom logs and supporter observations may help you remember details, but they do not
-              guarantee any medical, legal, benefits, or VA outcome.
+              guarantee any medical, legal, benefits, or VA outcome. Always verify benefits questions with VA.gov or an accredited representative.
             </p>
           </div>
 
           <div class="rounded-3xl border border-slate-800 bg-slate-950/60 p-4">
             <p>
-              By using VCH Symptom Tracker, you agree to the
+              Full legal terms are on Veterans Central Hub:
+              <a
+                :href="disclaimerUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold text-white underline underline-offset-2 hover:text-slate-200"
+              >
+                legal disclaimer
+              </a>,
               <a
                 :href="termsUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="font-bold text-white underline underline-offset-2 hover:text-slate-200"
               >
-                Veterans Central Hub terms of service
-              </a>
+                terms of service
+              </a>,
               and
               <a
                 :href="privacyUrl"
@@ -88,5 +96,5 @@
 <script setup lang="ts">
 import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
-const { privacyUrl, termsUrl } = useVchPublicUrls()
+const { privacyUrl, termsUrl, disclaimerUrl } = useVchPublicUrls()
 </script>

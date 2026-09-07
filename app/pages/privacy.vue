@@ -19,8 +19,7 @@
       <div class="mt-6 flex-1 overflow-y-auto no-scrollbar pb-4">
         <section class="space-y-4 rounded-4xl border border-slate-800 bg-slate-900 p-5 text-sm leading-6 text-slate-300">
           <p>
-            Veteran Symptom Tracker stores the information you enter so you can review symptom patterns,
-            daily impact, and supporter observations.
+            VCH Symptom Tracker is for personal symptom organization only. It is not medical advice, a diagnosis tool, or a VA claim filing service.
           </p>
 
           <div>
@@ -52,8 +51,8 @@
           <div>
             <h2 class="text-base font-bold text-white">Data deletion</h2>
             <p class="mt-2">
-              This beta does not yet have a self-serve delete account button. For now, contact the app owner
-              to request deletion before using this with a large public audience.
+              You can delete symptom logs from Account Settings. To request deletion of your full account and cloud data, contact
+              <a href="mailto:hello@veteranscentralhub.com" class="font-bold text-white underline underline-offset-2 hover:text-slate-200">hello@veteranscentralhub.com</a>.
             </p>
           </div>
 
@@ -61,12 +60,29 @@
             <p>
               By using VCH Symptom Tracker, you agree to the
               <a
+                :href="termsUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold text-white underline underline-offset-2 hover:text-slate-200"
+              >
+                Veterans Central Hub terms of service
+              </a>,
+              <a
                 :href="privacyUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="font-bold text-white underline underline-offset-2 hover:text-slate-200"
               >
-                Veterans Central Hub privacy policy
+                privacy policy
+              </a>,
+              and
+              <a
+                :href="disclaimerUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold text-white underline underline-offset-2 hover:text-slate-200"
+              >
+                legal disclaimer
               </a>.
             </p>
           </div>
@@ -89,5 +105,5 @@
 <script setup lang="ts">
 import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
-const { privacyUrl } = useVchPublicUrls()
+const { privacyUrl, termsUrl, disclaimerUrl } = useVchPublicUrls()
 </script>
