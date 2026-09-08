@@ -11,6 +11,7 @@ defineProps<{
   category: string
   image: string
   hasConditions: boolean
+  conditionsLoading?: boolean
   logging: boolean
   tip?: HomeVisitTip | null
   chartMetrics: SymptomDashboardMetrics
@@ -126,6 +127,14 @@ const scopeButtonClass = (active: boolean) => active
                 {{ VA_CRISIS_LINE_SHORT }}
               </p>
             </div>
+          </template>
+
+          <template v-else-if="conditionsLoading">
+            <div class="size-28 animate-pulse rounded-3xl bg-muted" />
+            <UIcon name="i-lucide-loader-circle" class="mt-6 size-8 animate-spin text-primary" />
+            <p :class="['mt-3 max-w-sm', td.body]">
+              Loading your conditions.
+            </p>
           </template>
 
           <template v-else>

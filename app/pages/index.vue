@@ -276,6 +276,7 @@
         <TrackerDesktopWorkspace
           v-if="isDesktopLayout && !isEmbeddedPreview"
           :conditions="homeConditions"
+          :conditions-loading="homeConditionsView === 'loading'"
           :selected-key="desktopSelectedConditionKey"
           :entitlements-loaded="entitlementsLoaded"
           :is-condition-locked="isConditionLogLocked"
@@ -373,7 +374,7 @@
                   :category="activeCondition.category"
                   :image="activeCondition.image"
                   :has-conditions="homeConditions.length > 0"
-                  :logging="false"
+                  :conditions-loading="homeConditionsView === 'loading'"
                   :tip="homeVisitTip"
                   :chart-metrics="desktopChartMetrics"
                   @log="startDesktopLogEntry"
@@ -590,7 +591,7 @@
             >
               <Transition name="home-state-fade">
                 <ConditionBrowser
-                  v-if="showConditionBrowser"
+                  v-if="homeConditionsView === 'browser'"
                   ref="conditionBrowserRef"
                   key="condition-browser"
                   class="absolute inset-0 z-20 bg-default"
@@ -614,7 +615,7 @@
                 />
 
                 <div
-                  v-else-if="trackedConditionsLoadError && !homeConditions.length"
+                  v-else-if="homeConditionsView === 'error'"
                   key="home-load-error"
                   class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-default px-6 text-center"
                 >
@@ -644,7 +645,7 @@
                 </div>
 
                 <div
-                  v-else-if="homeConditions.length"
+                  v-else-if="homeConditionsView === 'carousel'"
                   key="home-carousel"
                   ref="homeCarouselStageEl"
                   class="home-carousel-stage absolute inset-0 flex min-h-0 flex-col overflow-hidden bg-default"
@@ -826,32 +827,19 @@
 
                 <div
                   v-else
-                  key="home-fallback"
+                  key="home-conditions-loading"
                   class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-default px-6 text-center"
+                  role="status"
+                  aria-live="polite"
                 >
-                  <UIcon name="i-lucide-circle-alert" class="size-10 text-amber-500" />
-                  <h3 class="mt-4 text-lg font-bold text-highlighted">
-                    Something didn't load right
-                  </h3>
-                  <p class="mt-2 max-w-xs text-sm leading-6 text-toned">
-                    The tracker hit an unexpected state. Refresh the page or try again in a moment.
-                  </p>
-                  <div class="mt-5 flex w-full max-w-xs flex-col gap-2">
-                    <button
-                      type="button"
-                      class="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
-                      @click="retryHomeLoad"
-                    >
-                      Try again
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted transition hover:bg-accented"
-                      @click="reloadAppPage"
-                    >
-                      Refresh page
-                    </button>
+                  <div class="w-full max-w-xs space-y-3">
+                    <div class="h-40 animate-pulse rounded-[1.5rem] bg-muted" />
+                    <div class="mx-auto h-4 w-32 animate-pulse rounded-full bg-muted" />
                   </div>
+                  <UIcon name="i-lucide-loader-circle" class="mt-5 size-8 animate-spin text-primary" />
+                  <p class="mt-3 text-sm font-semibold text-toned">
+                    Loading your conditions.
+                  </p>
                 </div>
               </Transition>
             </div>
@@ -2312,6 +2300,7 @@ import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
 import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
 import { shouldShowHomeVueSplash } from '../utils/trackerSplash'
+import { resolveHomeConditionsView } from '../utils/homeConditionsPanel'
 
 const {
   user,
@@ -2352,7 +2341,7 @@ const {
   trackedConditionKeys,
   needsOnboarding,
   hasLoadedTrackedConditions,
-  isLoading: isLoadingTrackedConditions,
+  isHydrating: isHydratingTrackedConditions,
   loadError: trackedConditionsLoadError,
   loadTrackedConditions,
   resetTrackedConditionsLoadState,
@@ -2992,6 +2981,10 @@ const showDesktopConditionBrowserOverlay = computed(() =>
 )
 
 const showConditionBrowser = computed(() => {
+  if (isHydratingTrackedConditions.value) {
+    return false
+  }
+
   if (!hasLoadedTrackedConditions.value && !trackedConditionKeys.value.length) {
     return false
   }
@@ -3000,6 +2993,13 @@ const showConditionBrowser = computed(() => {
     || isConditionBrowserOpen.value
     || !homeConditions.value.length
 })
+
+const homeConditionsView = computed(() => resolveHomeConditionsView({
+  showConditionBrowser: showConditionBrowser.value,
+  isHydrating: isHydratingTrackedConditions.value,
+  loadError: trackedConditionsLoadError.value,
+  conditionsCount: homeConditions.value.length
+}))
 
 function trackedConditionKeysSignature(keys: string[]) {
   return [...keys].sort().join('|')
