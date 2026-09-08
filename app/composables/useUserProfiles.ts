@@ -40,6 +40,10 @@ function isMissingProfileColumnError(error: unknown, columnName: string) {
 }
 
 async function sha256Hex(value: string) {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    throw new Error('This browser cannot create a private link. Open the app over HTTPS and try again.')
+  }
+
   const encodedValue = new TextEncoder().encode(value)
   const hashBuffer = await crypto.subtle.digest('SHA-256', encodedValue)
 

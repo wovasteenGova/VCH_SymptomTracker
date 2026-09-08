@@ -829,12 +829,12 @@
             </label>
 
             <div>
-              <span class="mb-2 block px-1 text-xs font-bold uppercase tracking-[0.14em] text-muted">Visible conditions</span>
+              <span class="mb-2 block px-1 text-xs font-bold uppercase tracking-[0.14em] text-muted">Conditions to share</span>
               <USelectMenu
                 v-model="supporterForm.visible_conditions"
-                :items="conditionOptions"
+                :items="shareConditionOptions"
                 multiple
-                placeholder="Choose visible conditions"
+                placeholder="Choose conditions to share"
                 class="w-full"
                 color="neutral"
                 size="xl"
@@ -842,6 +842,14 @@
                 :content="settingsSelectMenuContent"
               />
             </div>
+
+            <p
+              v-if="supporterError"
+              class="text-center text-sm font-medium text-red-600 dark:text-red-300"
+              aria-live="assertive"
+            >
+              {{ supporterError }}
+            </p>
 
             <button
               type="button"
@@ -853,15 +861,19 @@
             </button>
           </div>
 
-          <div v-if="createdLink" class="mt-4 rounded-3xl border border-emerald-900 bg-emerald-950/40 p-4">
-            <p class="text-sm font-bold text-emerald-200">Private link created</p>
-            <p class="mt-2 break-all text-sm leading-6 text-emerald-100">{{ createdLink }}</p>
-            <p class="mt-2 text-xs leading-5 text-emerald-200/80">
-              Save this now. For privacy, the raw token is only shown when the link is created.
+          <div
+            v-if="createdLink"
+            ref="createdLinkPanelEl"
+            class="mt-4 rounded-3xl border border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40"
+          >
+            <p class="text-sm font-bold text-emerald-950 dark:text-emerald-200">Private reporting link</p>
+            <p class="mt-2 break-all text-sm leading-6 text-emerald-900 dark:text-emerald-100">{{ createdLink }}</p>
+            <p class="mt-2 text-xs leading-5 text-emerald-800 dark:text-emerald-200/80">
+              Click Copy link to put this URL on the clipboard. The raw token is only shown here.
             </p>
             <button
               type="button"
-              class="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-400"
+              class="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
               @click="copyCreatedLink"
             >
               <UIcon :name="createdLinkCopied ? 'i-lucide-check' : 'i-lucide-copy'" class="size-4" />
@@ -915,14 +927,14 @@
                 type="button"
                 class="grid size-11 shrink-0 place-items-center rounded-full bg-elevated text-highlighted ring-1 ring-default transition hover:bg-accented"
                 :disabled="isCopyingSupporterId === profile.id"
-                :aria-label="`Copy link for ${profile.display_name || 'private reporting link'}`"
+                :aria-label="`Show a copyable link for ${profile.display_name || 'private reporting link'}`"
                 @click="copyExistingSupporterLink(profile)"
               >
                 <UIcon
                   :name="copiedSupporterId === profile.id ? 'i-lucide-check' : 'i-lucide-copy'"
                   class="size-4"
                 />
-                <span class="sr-only">{{ copiedSupporterId === profile.id ? 'Copied' : 'Copy link' }}</span>
+                <span class="sr-only">{{ copiedSupporterId === profile.id ? 'Copied' : 'Show copyable link' }}</span>
               </button>
               <button
                 type="button"
@@ -1423,12 +1435,15 @@ import { useUserProfiles } from '../composables/useUserProfiles'
 import { useSymptomEntries } from '../composables/useSymptomEntries'
 import { useEntitlements } from '../composables/useEntitlements'
 import { useAppWelcome } from '../composables/useAppWelcome'
+import { useTrackedConditions } from '../composables/useTrackedConditions'
+import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
 import {
   FREE_CONDITION_LIMIT,
   formatConditionKeyLabel,
   PRO_ANNUAL_PRICE_LABEL,
   buildSupportEmailHref
 } from '../utils/subscription'
+import { buildShareConditionPickerLabels } from '../utils/conditionCatalog'
 import { WEEKLY_LOG_DAY_OPTIONS, type LoggingCadence } from '../utils/loggingCadence'
 import {
   describeLogReminderSchedule,
@@ -1556,6 +1571,8 @@ const {
   deleteSupporterProfile
 } = useUserProfiles()
 const { showSubmissionToast } = useSubmissionToast()
+const { trackedConditionKeys, loadTrackedConditions } = useTrackedConditions()
+const { persistedCustomConditionLabels } = useCustomConditionLabels()
 const {
   listEntries,
   listDeletedEntries,
@@ -1713,15 +1730,10 @@ const freeConditionKeyLabels = computed(() => {
   return freeConditionKeys.value.map((key) => formatConditionKeyLabel(key))
 })
 
-const conditionOptions = [
-  'PTSD / Mental Health',
-  'Back or Joint Pain',
-  'Nerve / Radiculopathy',
-  'Migraine / Headache',
-  'IBS / Bowel Symptoms',
-  'GERD / Acid Reflux',
-  'Sleep Issues'
-]
+const shareConditionOptions = computed(() => buildShareConditionPickerLabels({
+  trackedKeys: trackedConditionKeys.value,
+  customLabels: persistedCustomConditionLabels.value
+}))
 
 const authMode = ref<'login' | 'signup'>('login')
 const authName = ref('')
@@ -1774,6 +1786,8 @@ const supporterProfiles = useState<any[]>('profile-page-supporters', () => [])
 const deletedEntries = ref<any[]>([])
 const createdLink = ref('')
 const createdLinkCopied = ref(false)
+const createdLinkPanelEl = ref<HTMLElement | null>(null)
+const supporterError = ref('')
 const linkedEntryId = ref<string | null>(null)
 const linkedEntryContext = ref<null | { summary: string, condition: string }>(null)
 const pageError = ref('')
@@ -2043,6 +2057,7 @@ async function loadProfilePage(expectedUserId = user.value?.id ?? null) {
 
     await loadEntitlements()
     await loadAppWelcomeState()
+    await loadTrackedConditions()
     if (user.value?.id !== expectedUserId || requestSequence !== profileLoadSequence) return
 
     activeLogCount.value = entries.length
@@ -2364,17 +2379,33 @@ async function sendTestLogReminder() {
   }
 }
 
+async function revealCreatedLink(url: string, toastMessage: string) {
+  createdLink.value = url
+  createdLinkCopied.value = false
+  await nextTick()
+  createdLinkPanelEl.value?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  showSubmissionToast({
+    message: toastMessage,
+    durationMs: 3600
+  })
+}
+
 async function createSupporter() {
   pageError.value = ''
+  supporterError.value = ''
   createdLink.value = ''
 
   if (!canUseFamilyReporting.value) {
-    pageError.value = 'Family reporting requires Pro. Visit Payment center to upgrade.'
+    const message = 'Family reporting requires Pro. Visit Payment center to upgrade.'
+    supporterError.value = message
+    showSubmissionToast({ message, tone: 'error' })
     return
   }
 
   if (!supporterForm.value.visible_conditions.length) {
-    pageError.value = 'Choose at least one visible condition.'
+    const message = 'Choose at least one condition to share.'
+    supporterError.value = message
+    showSubmissionToast({ message, tone: 'error' })
     return
   }
 
@@ -2387,18 +2418,22 @@ async function createSupporter() {
       entry_context_summary: linkedEntryContext.value?.summary || null
     }
     const { token } = await createSupporterProfile(payload)
-    createdLink.value = `${window.location.origin}/report/${token}`
-    createdLinkCopied.value = false
     supporterForm.value = {
       link_label: '',
       visible_conditions: []
     }
     linkedEntryId.value = null
     linkedEntryContext.value = null
+    await revealCreatedLink(
+      `${window.location.origin}/report/${token}`,
+      'Reporting link created. Copy it below.'
+    )
     await loadProfilePage()
-    showSubmissionToast('Reporting link created.')
   } catch (error) {
-    pageError.value = getErrorMessage(error)
+    const message = getErrorMessage(error)
+    supporterError.value = message
+    pageError.value = message
+    showSubmissionToast({ message, tone: 'error' })
   } finally {
     isCreatingSupporter.value = false
   }
@@ -2423,31 +2458,32 @@ async function copyCreatedLink() {
   const copied = await copyToClipboard(createdLink.value)
   createdLinkCopied.value = copied
   if (copied) {
+    supporterError.value = ''
     showSubmissionToast('Private link copied.')
+    return
   }
-  pageError.value = copied ? '' : 'Could not copy link. Copy it manually.'
+
+  const message = 'Could not copy link. Copy it from the box below.'
+  supporterError.value = message
+  pageError.value = message
+  showSubmissionToast({ message, tone: 'error' })
 }
 
 async function copyExistingSupporterLink(profile: any) {
   pageError.value = ''
+  supporterError.value = ''
   copiedSupporterId.value = null
   isCopyingSupporterId.value = profile.id
 
   try {
     const token = await createSupporterProfileLink(profile.id)
     const link = `${window.location.origin}/report/${token}`
-    const copied = await copyToClipboard(link)
-
-    if (copied) {
-      copiedSupporterId.value = profile.id
-      showSubmissionToast('Private link copied.')
-    } else {
-      pageError.value = 'Could not copy link. Copy it manually.'
-      createdLink.value = link
-      createdLinkCopied.value = false
-    }
+    await revealCreatedLink(link, 'Private link ready. Copy it below.')
   } catch (error) {
-    pageError.value = getErrorMessage(error)
+    const message = getErrorMessage(error)
+    supporterError.value = message
+    pageError.value = message
+    showSubmissionToast({ message, tone: 'error' })
   } finally {
     isCopyingSupporterId.value = null
   }
@@ -3032,8 +3068,15 @@ async function handleSignOutEverywhere() {
 }
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
+  if (error instanceof Error && error.message.trim()) {
     return error.message
+  }
+
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = String((error as { message?: unknown }).message || '').trim()
+    if (message) {
+      return message
+    }
   }
 
   return 'Something went wrong. Please try again.'

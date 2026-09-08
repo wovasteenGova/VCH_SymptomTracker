@@ -1,7 +1,9 @@
 <template>
+  <Teleport to="body" :disabled="embedded">
   <div
     class="submission-toast-root pointer-events-none flex justify-center px-4"
     :class="embedded ? 'submission-toast-root--embedded' : 'submission-toast-root--global'"
+    data-submission-toast
     aria-live="polite"
     aria-atomic="true"
   >
@@ -58,6 +60,7 @@
       </div>
     </Transition>
   </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -86,7 +89,8 @@ const compactHighlight = computed(() => {
 .submission-toast-root--global {
   position: fixed;
   inset-inline: 0;
-  z-index: 130;
+  /* Above settings overlay (90), FAQ (120), and settings sheets (130). */
+  z-index: 240;
   top: calc(env(safe-area-inset-top, 0px) + 5.75rem);
   bottom: auto;
 }
@@ -103,7 +107,7 @@ const compactHighlight = computed(() => {
 .submission-toast-root--embedded {
   position: absolute;
   inset-inline: 0;
-  z-index: 130;
+  z-index: 240;
   top: calc(env(safe-area-inset-top, 0px) + 5.75rem);
   bottom: auto;
 }

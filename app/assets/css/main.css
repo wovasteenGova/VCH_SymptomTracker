@@ -248,6 +248,7 @@ button:disabled,
  * 2. Put content in `.app-overlay-panel` (+ `--stack` / `--compact` as needed).
  * 3. On the app page, call `useAppOverlayHistoryInset(historyExpanded, { historyHidden })` so
  *    `--app-overlay-history-inset` tracks History; hidden chrome uses full-frame overlays.
+ * 4. Submission toasts teleport to body at z-index 240 so they stay above settings (90) and sheets (130).
  */
 .app-overlay-shell {
   display: flex;

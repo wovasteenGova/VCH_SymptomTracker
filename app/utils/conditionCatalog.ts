@@ -905,6 +905,38 @@ export function buildConditionPickerOptions(input: {
   return [...customItems, ...catalog]
 }
 
+/** Labels for the Lay Reporting share picker: currently tracked first, then the rest of the catalog. */
+export function buildShareConditionPickerLabels(input: {
+  trackedKeys?: string[]
+  customLabels?: Record<string, string>
+  catalog?: ConditionCatalogItem[]
+}) {
+  const catalog = input.catalog ?? conditionCatalog
+  const seen = new Set<string>()
+  const labels: string[] = []
+
+  function addLabel(label: string | null | undefined) {
+    const trimmed = label?.trim()
+    if (!trimmed || seen.has(trimmed)) {
+      return
+    }
+
+    seen.add(trimmed)
+    labels.push(trimmed)
+  }
+
+  for (const storedKey of input.trackedKeys ?? []) {
+    const resolved = resolveTrackedConditionByStoredKey(storedKey, input.customLabels)
+    addLabel(resolved?.title || formatConditionKeyLabel(storedKey))
+  }
+
+  for (const condition of catalog) {
+    addLabel(condition.title)
+  }
+
+  return labels
+}
+
 export function normalizeConditionLabel(label: string | null | undefined) {
   const trimmedLabel = label?.trim()
 

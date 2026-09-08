@@ -53,6 +53,7 @@ const {
   closeFaq: closeSettingsFaq,
   closeAll: closeSettingsSupportOverlays
 } = supportOverlays
+const { activeToast } = useSubmissionToast()
 
 const initialSettingsSection = ref<string | null>(null)
 
@@ -199,7 +200,7 @@ function isSettingsPanelInteractionTarget(target: EventTarget | null) {
   // USelectMenu / Reka popovers portal under <body>; treat those as inside the panel
   // so choosing an option does not tear down settings before the value commits.
   return !!target.closest(
-    '[data-settings-panel-root], [data-settings-section-menu], [data-settings-panel-trigger], [data-reka-popper-content-wrapper], [data-dismissable-layer], [role="listbox"], [data-settings-support-overlay]'
+    '[data-settings-panel-root], [data-settings-section-menu], [data-settings-panel-trigger], [data-reka-popper-content-wrapper], [data-dismissable-layer], [role="listbox"], [data-settings-support-overlay], [data-submission-toast]'
   )
 }
 
@@ -301,7 +302,7 @@ async function onSignedIn() {
       v-model:open="settingsOpen"
       :content="{ side: 'bottom', align: 'end', sideOffset: 8 }"
       :modal="false"
-      :dismissible="!settingsSectionMenuOpen && !settingsSupportOverlayOpen"
+      :dismissible="!settingsSectionMenuOpen && !settingsSupportOverlayOpen && !activeToast"
     >
       <UTooltip
         :text="ACCOUNT_SETTINGS_ACTION.tooltip"
