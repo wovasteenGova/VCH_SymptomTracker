@@ -8,6 +8,7 @@ import {
 import {
   buildCustomConditionItem,
   buildConditionPickerOptions,
+  buildShareConditionPickerLabels,
   collectCustomConditionBrowserKeys,
   isCustomTrackedConditionKey,
   mergeCustomConditionLabelMaps,
@@ -123,5 +124,38 @@ describe('custom tracked conditions', () => {
       { skin_flare_up: 'Skin flare-up' },
       { skin_flare_up: 'Updated label' }
     )).toBe(true)
+  })
+})
+
+describe('share condition picker order', () => {
+  it('puts currently tracked conditions at the top, then the rest of the catalog', () => {
+    const labels = buildShareConditionPickerLabels({
+      trackedKeys: ['migraine', 'ptsd'],
+      catalog: [
+        { key: 'lower_back_pain', title: 'Lower back pain' },
+        { key: 'ptsd', title: 'PTSD' },
+        { key: 'migraine', title: 'Migraine' },
+        { key: 'tinnitus', title: 'Tinnitus' }
+      ] as any
+    })
+
+    expect(labels.slice(0, 2)).toEqual(['Migraine', 'PTSD'])
+    expect(labels).toEqual(['Migraine', 'PTSD', 'Lower back pain', 'Tinnitus'])
+  })
+
+  it('includes custom tracked conditions first with their saved labels', () => {
+    const labels = buildShareConditionPickerLabels({
+      trackedKeys: ['skin_flare_up', 'ptsd'],
+      customLabels: { skin_flare_up: 'Skin flare-up' },
+      catalog: [
+        { key: 'ptsd', title: 'PTSD' },
+        { key: 'tinnitus', title: 'Tinnitus' }
+      ] as any
+    })
+
+    expect(labels[0]).toBe('Skin flare-up')
+    expect(labels[1]).toBe('PTSD')
+    expect(labels).toContain('Tinnitus')
+    expect(new Set(labels).size).toBe(labels.length)
   })
 })

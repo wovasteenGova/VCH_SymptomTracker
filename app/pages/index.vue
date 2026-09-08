@@ -1695,6 +1695,9 @@
           <p class="break-all rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
             {{ shareLinkCreatedUrl }}
           </p>
+          <p class="text-xs leading-5 text-muted">
+            Click Copy link to put this URL on the clipboard.
+          </p>
           <button
             type="button"
             class="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white"
