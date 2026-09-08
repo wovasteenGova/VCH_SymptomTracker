@@ -5,6 +5,7 @@ import { useTrackerDb } from './useTrackerDb'
 import { TRACKER_DEMO_KEY } from './useTrackerLayout'
 import { conditionKeyFromLabel } from '../utils/subscription'
 import { normalizeTrackedConditionKeys } from '../utils/conditionCatalog'
+import { isTrackedConditionsHydrating } from '../utils/homeConditionsPanel'
 
 const TRACKED_CONDITIONS_STORAGE_KEY = 'symptom-tracker-tracked-condition-keys'
 const ONBOARDING_COMPLETED_STORAGE_KEY = 'symptom-tracker-conditions-onboarding-completed'
@@ -84,6 +85,15 @@ export function useTrackedConditions() {
     return !onboardingCompleted.value
   })
   const trackedConditionCount = computed(() => trackedConditionKeys.value.length)
+  const isHydrating = computed(() => isTrackedConditionsHydrating({
+    isDemoMode,
+    isAuthLoading: isAuthLoading.value,
+    isLoading: isLoading.value,
+    hasLoaded: hasLoadedTrackedConditions.value,
+    userId: user.value?.id ?? null,
+    loadedOwnerId: loadedOwnerId.value,
+    trackedKeyCount: trackedConditionKeys.value.length
+  }))
 
   function applyLocalState(keys: string[], completed: boolean, ownerId = user.value?.id ?? null) {
     if (!isDemoMode && (user.value?.id ?? null) !== ownerId) return
@@ -140,8 +150,8 @@ export function useTrackedConditions() {
     }
 
     const expectedOwnerId = user.value?.id ?? null
-
-    const showBootstrapLoading = !hasLoadedTrackedConditions.value
+    const ownerChanged = loadedOwnerId.value !== expectedOwnerId
+    const showBootstrapLoading = !hasLoadedTrackedConditions.value || ownerChanged
     if (showBootstrapLoading) {
       isLoading.value = true
     }
@@ -242,6 +252,9 @@ export function useTrackedConditions() {
       if ((user.value?.id ?? null) === expectedOwnerId) {
         isLoading.value = false
         hasLoadedTrackedConditions.value = true
+        if (loadedOwnerId.value !== expectedOwnerId) {
+          loadedOwnerId.value = expectedOwnerId
+        }
       }
     }
   }
@@ -275,6 +288,7 @@ export function useTrackedConditions() {
     needsOnboarding,
     trackedConditionCount,
     isLoading,
+    isHydrating,
     hasLoadedTrackedConditions,
     loadError,
     loadTrackedConditions,

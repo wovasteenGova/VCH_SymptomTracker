@@ -11,6 +11,7 @@ type Condition = {
 
 defineProps<{
   conditions: Condition[]
+  conditionsLoading?: boolean
   selectedKey: string
   entitlementsLoaded: boolean
   isConditionLocked: (key: string) => boolean
@@ -47,8 +48,31 @@ const panelClass = trackerDesktopPanelClass()
       </div>
 
       <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
+        <div
+          v-if="conditionsLoading"
+          class="space-y-2 px-1 py-2"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading your conditions"
+        >
+          <div
+            v-for="index in 4"
+            :key="`condition-skeleton-${index}`"
+            class="flex items-center gap-3 rounded-2xl px-2 py-2.5"
+          >
+            <div class="size-14 shrink-0 animate-pulse rounded-xl bg-muted" />
+            <div class="min-w-0 flex-1 space-y-2">
+              <div class="h-4 w-28 animate-pulse rounded-full bg-muted" />
+              <div class="h-3 w-16 animate-pulse rounded-full bg-muted" />
+            </div>
+          </div>
+          <p class="px-2 pt-2 text-center text-sm text-muted">
+            Loading your conditions.
+          </p>
+        </div>
+
         <p
-          v-if="!conditions.length"
+          v-else-if="!conditions.length"
           class="px-2 py-6 text-center text-sm text-muted"
         >
           Add conditions to start logging.
