@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const toast = readFileSync('app/components/SubmissionToast.vue', 'utf8')
+const app = readFileSync('app/app.vue', 'utf8')
+const toaster = readFileSync('app/components/VchGroupedToaster.vue', 'utf8')
+const groupedToastPlugin = readFileSync('app/plugins/grouped-toast.client.ts', 'utf8')
 const profile = readFileSync('app/pages/profile.vue', 'utf8')
 const accountMenu = readFileSync('app/components/TrackerAccountMenu.vue', 'utf8')
 const index = readFileSync('app/pages/index.vue', 'utf8')
@@ -14,11 +16,13 @@ function functionBody(source: string, name: string) {
 }
 
 describe('supporter share link create UX', () => {
-  it('teleports the global toast above settings overlays', () => {
-    expect(toast).toContain('<Teleport to="body"')
-    expect(toast).toContain('data-submission-toast')
-    expect(toast).toMatch(/z-index:\s*240/)
-    expect(accountMenu).toContain('[data-submission-toast]')
+  it('uses the grouped app toaster without the default Nuxt toaster', () => {
+    expect(app).toContain('<UApp :toaster="null">')
+    expect(app).toContain('<VchGroupedToaster')
+    expect(toaster).toContain('<ToastPortal')
+    expect(toaster).toContain('<ToastViewport')
+    expect(groupedToastPlugin).toContain('resolveToastGroupKey')
+    expect(accountMenu).toContain('[data-slot="viewport"]')
     expect(accountMenu).toContain('!activeToast')
   })
 

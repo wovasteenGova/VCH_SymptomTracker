@@ -75,7 +75,7 @@
  * - History expanded (.home-history-panel.is-history-expanded): 100
  * - Modals / prompts (.app-overlay-shell via AppOverlayShell): 110+
  * - Critical confirms (delete, log details): 120
- * - Toasts (SubmissionToast): 130
+ * - Toasts (VchGroupedToaster): 130
  */
 
 html {

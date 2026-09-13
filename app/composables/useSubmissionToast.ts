@@ -1,5 +1,3 @@
-import { useState } from '#imports'
-
 type SubmissionToastPayload = {
   message: string
   highlight?: string
@@ -25,50 +23,46 @@ function normalizeSubmissionToastPayload(payload: string | SubmissionToastPayloa
 export { normalizeSubmissionToastPayload }
 export type { SubmissionToastPayload }
 
-let dismissTimer: ReturnType<typeof setTimeout> | undefined
-
-function normalizePayload(payload: string | SubmissionToastPayload): SubmissionToastPayload {
-  return normalizeSubmissionToastPayload(payload)
-}
-
 export function useSubmissionToast() {
-  const activeToast = useState<SubmissionToastPayload | null>('submission-toast', () => null)
-  const toastKey = useState('submission-toast-key', () => 0)
+  const toast = useToast()
+  const activeToast = computed(() => toast.toasts.value.length > 0)
 
   function showSubmissionToast(payload: string | SubmissionToastPayload) {
-    if (dismissTimer) {
-      clearTimeout(dismissTimer)
-    }
-
     const normalized = normalizeSubmissionToastPayload(payload)
-    const isReplacement = activeToast.value !== null
+    const compactHighlight = normalized.highlight?.trim()
+    const title = compactHighlight && compactHighlight.length <= 8
+      ? `${compactHighlight} ${normalized.message}`
+      : normalized.message
+    const duration = normalized.tone === 'error'
+      ? normalized.durationMs ?? 4200
+      : normalized.durationMs ?? 2400
 
-    if (!isReplacement) {
-      toastKey.value += 1
-    }
-
-    activeToast.value = normalized
-
-    const durationMs = activeToast.value.tone === 'error'
-      ? activeToast.value.durationMs ?? 4200
-      : activeToast.value.durationMs ?? 1800
-
-    dismissTimer = setTimeout(() => {
-      activeToast.value = null
-    }, durationMs)
+    toast.add({
+      title,
+      description: compactHighlight && compactHighlight.length > 8 ? compactHighlight : undefined,
+      color: normalized.tone === 'error' ? 'error' : 'success',
+      icon: normalized.tone === 'error' ? 'i-lucide-alert-circle' : 'i-lucide-check-circle-2',
+      duration,
+      actions: normalized.action
+        ? [{
+            label: normalized.action.label,
+            to: normalized.action.href,
+            target: '_blank',
+            color: 'neutral',
+            variant: 'link'
+          }]
+        : undefined
+    })
   }
 
   function clearSubmissionToast() {
-    if (dismissTimer) {
-      clearTimeout(dismissTimer)
+    for (const entry of toast.toasts.value) {
+      toast.remove(entry.id)
     }
-
-    activeToast.value = null
   }
 
   return {
     activeToast,
-    toastKey,
     showSubmissionToast,
     clearSubmissionToast
   }

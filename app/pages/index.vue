@@ -1271,7 +1271,12 @@
       </div>
     </Transition>
 
-    <SubmissionToast v-if="isEmbeddedPreview" embedded />
+    <VchGroupedToaster
+      v-if="isEmbeddedPreview"
+      position="top-center"
+      :expand="false"
+      :max="5"
+    />
   </main>
 
   <Transition

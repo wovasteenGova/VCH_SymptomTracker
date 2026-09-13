@@ -1,9 +1,13 @@
 <template>
-  <UApp>
+  <UApp :toaster="null">
     <VchSiteNoticeBanner />
     <NuxtRouteAnnouncer />
     <NuxtPage />
-    <SubmissionToast />
+    <VchGroupedToaster
+      position="top-center"
+      :expand="false"
+      :max="5"
+    />
     <PwaInstallPrompt />
     <VchCookieConsentBanner />
   </UApp>

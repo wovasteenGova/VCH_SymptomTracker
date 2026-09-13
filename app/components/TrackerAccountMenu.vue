@@ -200,7 +200,7 @@ function isSettingsPanelInteractionTarget(target: EventTarget | null) {
   // USelectMenu / Reka popovers portal under <body>; treat those as inside the panel
   // so choosing an option does not tear down settings before the value commits.
   return !!target.closest(
-    '[data-settings-panel-root], [data-settings-section-menu], [data-settings-panel-trigger], [data-reka-popper-content-wrapper], [data-dismissable-layer], [role="listbox"], [data-settings-support-overlay], [data-submission-toast]'
+    '[data-settings-panel-root], [data-settings-section-menu], [data-settings-panel-trigger], [data-reka-popper-content-wrapper], [data-dismissable-layer], [role="listbox"], [data-settings-support-overlay], [data-slot="viewport"], [data-slot="root"]'
   )
 }
 
