@@ -3219,6 +3219,7 @@ const hasEntryDraft = computed(() => {
 
   return isMeaningfulEntryDraft({
     entryStep: entryStep.value,
+    severityValue: severityValue.value,
     entryForm: entryForm.value,
     selectedSearchCondition: selectedSearchCondition.value,
     customConditionInput: customConditionInput.value
@@ -4188,6 +4189,7 @@ function refreshEntryDraftPreview() {
     && !editingEntryId.value
     && isMeaningfulEntryDraft({
       entryStep: entryStep.value,
+      severityValue: severityValue.value,
       entryForm: entryForm.value,
       selectedSearchCondition: selectedSearchCondition.value,
       customConditionInput: customConditionInput.value
@@ -4266,12 +4268,12 @@ function restoreEntryDraftSnapshot(snapshot: EntryDraftSnapshot) {
   editingEntryConditionKey.value = null
   editingEntryConditionLabel.value = null
   entryError.value = ''
-  entryStep.value = snapshot.entryStep
   severityValue.value = snapshot.severityValue
   entryForm.value = { ...snapshot.entryForm }
   selectedSearchCondition.value = snapshot.selectedSearchCondition
     ? { ...snapshot.selectedSearchCondition }
     : null
+  entryStep.value = Math.max(0, Math.min(snapshot.entryStep, entrySteps.value.length - 1))
   customConditionInput.value = snapshot.customConditionInput
   debouncedCustomConditionPreview.value = snapshot.customConditionInput
   isConditionPickerOpen.value = false
@@ -4291,6 +4293,7 @@ function resumeEntryDraft() {
     hasActiveDraft.value
     && isMeaningfulEntryDraft({
       entryStep: entryStep.value,
+      severityValue: severityValue.value,
       entryForm: entryForm.value,
       selectedSearchCondition: selectedSearchCondition.value,
       customConditionInput: customConditionInput.value
@@ -4304,7 +4307,8 @@ function resumeEntryDraft() {
 
   const snapshot = readEntryDraft(user.value?.id)
 
-  if (!snapshot) {
+  if (!snapshot || !isMeaningfulEntryDraft(snapshot)) {
+    if (snapshot) clearEntryDraft(user.value?.id)
     refreshEntryDraftPreview()
     return
   }
@@ -4620,7 +4624,10 @@ watch(
       return
     }
 
-    hasActiveDraft.value = true
+    hasActiveDraft.value = isMeaningfulEntryDraft({
+      severityValue: severityValue.value,
+      entryForm: entryForm.value
+    })
     scheduleEntryDraftSave()
   },
   { deep: true }
@@ -7215,6 +7222,7 @@ function handleCancelEntry() {
   if (
     isMeaningfulEntryDraft({
       entryStep: entryStep.value,
+      severityValue: severityValue.value,
       entryForm: entryForm.value,
       selectedSearchCondition: selectedSearchCondition.value,
       customConditionInput: customConditionInput.value
@@ -8287,6 +8295,7 @@ async function handleEntryDone() {
 
   if (isMeaningfulEntryDraft({
     entryStep: entryStep.value,
+    severityValue: severityValue.value,
     entryForm: entryForm.value,
     selectedSearchCondition: selectedSearchCondition.value,
     customConditionInput: customConditionInput.value
@@ -8328,6 +8337,7 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
   } else if (!editingEntryId.value) {
     hasActiveDraft.value = isMeaningfulEntryDraft({
       entryStep: entryStep.value,
+      severityValue: severityValue.value,
       entryForm: entryForm.value,
       selectedSearchCondition: selectedSearchCondition.value,
       customConditionInput: customConditionInput.value

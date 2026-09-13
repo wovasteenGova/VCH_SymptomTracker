@@ -64,26 +64,21 @@ export function clearEntryDraft(userId: string | null | undefined) {
 
 export function isMeaningfulEntryDraft(snapshot: {
   entryStep?: number
+  severityValue?: number
   entryForm?: Record<string, string>
   selectedSearchCondition?: EntryDraftCondition | null
   customConditionInput?: string
 }) {
-  if (snapshot.customConditionInput?.trim()) {
-    return true
-  }
-
-  if (snapshot.entryForm?.condition_name?.trim()) {
-    return true
-  }
-
-  if ((snapshot.entryStep ?? 0) > 0) {
+  // Opening a condition, advancing through steps, and the default severity do
+  // not constitute a log. The condition's PDF statement may be prefilled too.
+  if (snapshot.severityValue != null && snapshot.severityValue !== 5) {
     return true
   }
 
   const form = snapshot.entryForm || {}
 
   for (const [key, value] of Object.entries(form)) {
-    if (key === 'date_and_time') {
+    if (key === 'date_and_time' || key === 'condition_name' || key === 'pdf_condition_statement') {
       continue
     }
 
