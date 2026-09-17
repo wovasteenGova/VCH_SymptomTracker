@@ -4373,21 +4373,12 @@ onMounted(async () => {
 
   if (import.meta.client) {
     const { hash, search } = window.location
-    const hashParams = new URLSearchParams(hash.replace(/^#/, ''))
-    const linkType = hashParams.get('type')
-    const hasAuthPayload = hashParams.has('access_token')
+    const hasAuthPayload = hash.includes('access_token')
       || search.includes('code=')
       || search.includes('token_hash=')
 
     if (hasAuthPayload) {
       homeBootstrapComplete.value = true
-
-      if (linkType === 'recovery') {
-        window.location.replace(`/auth/reset-password${search}${hash}`)
-        return
-      }
-
-      window.location.replace(`/auth/confirm${search}${hash}`)
       return
     }
   }
