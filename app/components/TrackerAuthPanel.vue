@@ -214,34 +214,40 @@ async function onResendConfirmation() {
 const fieldClass = 'w-full rounded-xl border border-default/80 bg-default/40 px-3.5 py-2.5 text-sm text-highlighted outline-none transition placeholder:text-muted/60 focus:border-primary/60 focus:ring-2 focus:ring-primary/15'
 const labelClass = 'mb-1.5 block text-xs font-semibold text-highlighted'
 
+const colorMode = useColorMode()
+const authProviderButtonTheme = computed(() => (
+  colorMode.value === 'dark' ? 'dark' : 'light'
+))
+
+const panelRootRef = ref<HTMLElement | null>(null)
+const { keyboardOpen, narrowViewport } = useAuthPanelKeyboard(panelRootRef)
+const hideFooterForKeyboard = computed(() => keyboardOpen.value)
+const mobileAuthLayout = computed(() => props.compact || narrowViewport.value)
+
 const compactFormClass = computed(() => (
-  props.compact
-    ? 'grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden'
+  mobileAuthLayout.value
+    ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
     : 'flex flex-col'
 ))
 
 const scrollBodyClass = computed(() => (
-  props.compact
-    ? 'custom-scrollbar min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-6'
+  mobileAuthLayout.value
+    ? 'custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-6'
     : ''
 ))
 
 const footerClass = computed(() => (
-  props.compact
-    ? 'auth-panel-footer shrink-0 space-y-2.5 border-t border-default/60 bg-elevated/30 px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]'
-    : 'auth-panel-footer mt-4 space-y-2.5 border-t border-default/60 bg-elevated/30 p-0 pt-4'
+  mobileAuthLayout.value
+    ? 'auth-panel-footer h-auto shrink-0 space-y-2.5 border-t border-default/60 bg-elevated/30 px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]'
+    : 'auth-panel-footer mt-4 h-auto space-y-2.5 border-t border-default/60 bg-elevated/30 p-0 pt-4'
 ))
-
-const panelRootRef = ref<HTMLElement | null>(null)
-const { keyboardOpen } = useAuthPanelKeyboard(panelRootRef)
-const hideFooterForKeyboard = computed(() => keyboardOpen.value)
 </script>
 
 <template>
   <div
     ref="panelRootRef"
     class="auth-panel-root flex min-h-0 flex-col overflow-hidden"
-    :class="compact ? 'h-full flex-1' : ''"
+    :class="mobileAuthLayout ? 'max-h-full min-h-0 flex-1' : ''"
   >
     <div
       v-if="compact"
@@ -390,7 +396,7 @@ const hideFooterForKeyboard = computed(() => keyboardOpen.value)
         <GoogleSignInButton
           class="mt-2.5"
           :text="authMode === 'signup' ? 'signup_with' : 'signin_with'"
-          theme="outline"
+          :theme="authProviderButtonTheme"
           :size="compact ? 'medium' : 'large'"
           :disabled="submitting"
           @click="onGoogleSignIn"
@@ -399,10 +405,17 @@ const hideFooterForKeyboard = computed(() => keyboardOpen.value)
         <PasskeySignInButton
           v-if="authMode === 'login' && isPasskeySupported"
           class="mt-2.5"
-          theme="outline"
+          :theme="authProviderButtonTheme"
           :disabled="submitting"
           @click="onPasskeySignIn"
         />
+
+        <p
+          v-else-if="authMode === 'signup' && isPasskeySupported"
+          class="mt-2.5 text-center text-xs leading-5 text-muted"
+        >
+          Prefer passkeys? Create your account first, then add one under Settings &rarr; Passkeys.
+        </p>
       </div>
     </form>
   </div>

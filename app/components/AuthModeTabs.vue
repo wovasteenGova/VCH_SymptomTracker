@@ -30,7 +30,7 @@ withDefaults(defineProps<{
         :key="mode.value"
         type="button"
         role="tab"
-        class="rounded-full px-4 py-3 text-sm font-semibold transition"
+        class="auth-mode-tab rounded-full font-semibold transition"
         :class="model === mode.value
           ? tone === 'dark'
             ? 'bg-slate-700 text-white shadow-sm ring-1 ring-slate-600/70'
@@ -50,3 +50,19 @@ withDefaults(defineProps<{
     </div>
   </div>
 </template>
+
+<style scoped>
+.auth-mode-tab {
+  min-width: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .auth-mode-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+</style>

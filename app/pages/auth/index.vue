@@ -41,21 +41,19 @@ watch([user, isAuthLoading], async ([nextUser, loading]) => {
       </header>
 
       <div class="mt-6 flex min-h-0 flex-1 flex-col">
-        <div class="flex-1 overflow-y-auto no-scrollbar">
-          <section class="rounded-2xl border border-default/80 bg-elevated/30 p-5">
-            <TrackerAuthPanel />
-          </section>
+        <section class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-default/80 bg-elevated/30 p-5 max-[560px]:p-4">
+          <TrackerAuthPanel class="min-h-0 flex-1" />
+        </section>
 
-          <p class="mt-4 text-center text-xs leading-5 text-muted">
-            Local logs stay in your browser until you sign in.
-            <NuxtLink
-              to="/"
-              class="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition hover:opacity-80"
-            >
-              Continue without signing in
-            </NuxtLink>
-          </p>
-        </div>
+        <p class="mt-4 shrink-0 text-center text-xs leading-5 text-muted">
+          Local logs stay in your browser until you sign in.
+          <NuxtLink
+            to="/"
+            class="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition hover:opacity-80"
+          >
+            Continue without signing in
+          </NuxtLink>
+        </p>
       </div>
     </section>
     </template>
