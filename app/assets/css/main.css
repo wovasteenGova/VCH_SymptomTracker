@@ -452,3 +452,10 @@ html.dark .sym-entry-time-select {
     transform: scale(1);
   }
 }
+
+/* Auth overlays: hide pinned Sign in / Google / passkey while the keyboard is open. */
+@media (max-width: 560px) {
+  html[data-auth-keyboard="open"] .auth-panel-footer {
+    display: none !important;
+  }
+}

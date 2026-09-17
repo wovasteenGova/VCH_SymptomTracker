@@ -157,14 +157,6 @@
         </div>
 
         <StickyActionBar tone="dark">
-          <p
-            v-if="authValidationMessage"
-            class="mb-3 text-center text-sm font-medium text-amber-300"
-            aria-live="polite"
-          >
-            {{ authValidationMessage }}
-          </p>
-
           <button
             type="submit"
             class="w-full rounded-2xl bg-primary px-5 py-4 text-base font-bold text-inverted shadow-lg transition hover:bg-primary/90 disabled:opacity-60"
@@ -2757,7 +2749,7 @@ async function handleAuthSubmit() {
   })
 
   if (validationMessage) {
-    authValidationMessage.value = validationMessage
+    showSubmissionToast(authErrorToast(validationMessage))
     return
   }
 
@@ -2787,9 +2779,7 @@ async function handleAuthSubmit() {
     handleAuthApiFailure({
       message: resolveAuthApiErrorMessage(authError.value, 'Could not sign in. Check your email and password.'),
       authEmail: authEmail.value,
-      setValidationMessage: (message) => {
-        authValidationMessage.value = message
-      },
+      setValidationMessage: () => {},
       clearAuthError: () => {
         authError.value = ''
       },
@@ -2814,7 +2804,7 @@ async function handleResendConfirmation() {
   authValidationMessage.value = ''
 
   if (!authEmail.value.trim()) {
-    authValidationMessage.value = AUTH_VALIDATION.enterEmailForResendConfirmation
+    showSubmissionToast(authErrorToast(AUTH_VALIDATION.enterEmailForResendConfirmation))
     return
   }
 
@@ -2830,9 +2820,7 @@ async function handleResendConfirmation() {
     handleAuthApiFailure({
       message: resolveAuthApiErrorMessage(authError.value, 'Could not resend the confirmation email.'),
       authEmail: authEmail.value,
-      setValidationMessage: (message) => {
-        authValidationMessage.value = message
-      },
+      setValidationMessage: () => {},
       clearAuthError: () => {
         authError.value = ''
       },
@@ -2852,7 +2840,7 @@ async function handleForgotPassword() {
   authError.value = ''
 
   if (!authEmail.value.trim()) {
-    authValidationMessage.value = AUTH_VALIDATION.enterEmailForForgotPassword
+    showSubmissionToast(authErrorToast(AUTH_VALIDATION.enterEmailForForgotPassword))
     return
   }
 
@@ -2866,9 +2854,7 @@ async function handleForgotPassword() {
     handleAuthApiFailure({
       message: resolveAuthApiErrorMessage(authError.value, 'Could not send the reset email.'),
       authEmail: authEmail.value,
-      setValidationMessage: (message) => {
-        authValidationMessage.value = message
-      },
+      setValidationMessage: () => {},
       clearAuthError: () => {
         authError.value = ''
       },

@@ -39,7 +39,11 @@ export function useSupabaseAuth() {
   }
 
   function markPendingConfirmEmail(email: string) {
-    pendingConfirmEmail.value = normalizeAuthEmail(email)
+    const normalized = normalizeAuthEmail(email)
+    pendingConfirmEmail.value = normalized
+    if (import.meta.client && normalized) {
+      window.sessionStorage.setItem('vch-pending-confirm-email', normalized)
+    }
   }
 
   async function bootstrapAuth() {

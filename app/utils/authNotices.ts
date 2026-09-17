@@ -72,7 +72,7 @@ export function isAuthValidationMessage(message: string) {
 }
 
 export function isEmailConfirmationNotice(message: string) {
-  return /confirm your email/i.test(message)
+  return /confirm your email|email not confirmed|check your email and click the confirmation link/i.test(message)
 }
 
 export function isAuthRateLimitMessage(message: string) {
@@ -162,13 +162,13 @@ export function handleAuthApiFailure(options: {
   }
 
   if (isAuthValidationMessage(message)) {
-    options.setValidationMessage(message)
+    options.showToast(authErrorToast(message))
     options.clearAuthError()
     return
   }
 
   if (isAuthEmailCooldownMessage(message)) {
-    options.setValidationMessage(message)
+    options.showToast(authErrorToast(message))
     options.clearAuthError()
     return
   }

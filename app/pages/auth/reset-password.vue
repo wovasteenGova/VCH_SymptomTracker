@@ -52,10 +52,6 @@
             />
           </label>
 
-          <p v-if="formError" class="rounded-2xl border border-red-900 bg-red-950/60 px-4 py-3 text-sm leading-6 text-red-200">
-            {{ formError }}
-          </p>
-
           <button
             type="submit"
             class="inline-flex w-full items-center justify-center rounded-3xl bg-white px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -115,8 +111,8 @@ const errorMessage = ref('This password reset link may have expired. Request a n
 const password = ref('')
 const confirmPassword = ref('')
 const passwordReveal = useTimedPasswordReveal()
-const formError = ref('')
 const isSubmitting = ref(false)
+const { showSubmissionToast } = useSubmissionToast()
 
 onMounted(async () => {
   try {
@@ -138,15 +134,13 @@ onMounted(async () => {
 })
 
 async function handleSubmit() {
-  formError.value = ''
-
   if (password.value.length < 8) {
-    formError.value = 'Password must be at least 8 characters.'
+    showSubmissionToast({ message: 'Password must be at least 8 characters.', tone: 'error' })
     return
   }
 
   if (password.value !== confirmPassword.value) {
-    formError.value = 'Passwords do not match.'
+    showSubmissionToast({ message: 'Passwords do not match.', tone: 'error' })
     return
   }
 
@@ -162,8 +156,12 @@ async function handleSubmit() {
     }
 
     status.value = 'success'
+    showSubmissionToast('Password updated.')
   } catch (error) {
-    formError.value = error instanceof Error ? error.message : 'Could not update your password.'
+    showSubmissionToast({
+      message: error instanceof Error ? error.message : 'Could not update your password.',
+      tone: 'error'
+    })
   } finally {
     isSubmitting.value = false
   }

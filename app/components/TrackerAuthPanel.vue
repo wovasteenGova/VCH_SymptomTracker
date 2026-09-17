@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { AUTH_NOTICES, AUTH_VALIDATION, validateSignupForm } from '../utils/authNotices'
+import {
+  AUTH_NOTICES,
+  AUTH_VALIDATION,
+  authErrorToast,
+  authNoticeToast,
+  handleAuthApiFailure,
+  isEmailConfirmationNotice,
+  resolveAuthApiErrorMessage,
+  validateSignupForm
+} from '../utils/authNotices'
 import { isPasskeyProductionHost, PASSKEY_PRODUCTION_HOST_MESSAGE } from '../utils/passkeyHost'
 
 const props = withDefaults(defineProps<{
@@ -29,13 +38,17 @@ const {
   sendPasswordReset
 } = useSupabaseAuth()
 const { isPasskeySupported, signInWithPasskey } = usePasskeys()
+const { showSubmissionToast } = useSubmissionToast()
+
+function showAuthFeedback(payload: Parameters<typeof showSubmissionToast>[0]) {
+  showSubmissionToast(payload)
+}
 
 const authMode = ref<'login' | 'signup'>(props.defaultAuthMode)
 const name = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
-const authValidationMessage = ref('')
 const submitting = ref(false)
 const needsEmailConfirmation = ref(false)
 const signupPasswordReveal = useTimedPasswordReveal()
@@ -52,7 +65,6 @@ watch([user, isAuthLoading], async ([nextUser, loading]) => {
 })
 
 watch(authMode, () => {
-  authValidationMessage.value = ''
   needsEmailConfirmation.value = false
 })
 
@@ -66,12 +78,11 @@ async function onSubmit() {
   })
 
   if (validationError) {
-    authValidationMessage.value = validationError
+    showAuthFeedback(authErrorToast(validationError))
     return
   }
 
   submitting.value = true
-  authValidationMessage.value = ''
 
   try {
     if (authMode.value === 'login') {
@@ -82,11 +93,26 @@ async function onSubmit() {
     const result = await signUp(email.value, password.value, name.value.trim())
     if (result.needsEmailConfirmation) {
       needsEmailConfirmation.value = true
-      authValidationMessage.value = AUTH_NOTICES.signupCheckEmail
+      authMode.value = 'login'
+      showAuthFeedback(authNoticeToast(AUTH_NOTICES.signupCheckEmail))
       return
     }
   } catch {
-    authValidationMessage.value = authError.value || 'Authentication failed.'
+    handleAuthApiFailure({
+      message: resolveAuthApiErrorMessage(authError.value, 'Authentication failed.'),
+      authEmail: email.value,
+      setValidationMessage: () => {},
+      clearAuthError: () => {
+        authError.value = ''
+      },
+      showToast: showAuthFeedback,
+      setNeedsEmailConfirmation: (value) => {
+        needsEmailConfirmation.value = value
+      },
+      setAuthModeLogin: () => {
+        authMode.value = 'login'
+      }
+    })
   } finally {
     submitting.value = false
   }
@@ -94,32 +120,39 @@ async function onSubmit() {
 
 async function onGoogleSignIn() {
   submitting.value = true
-  authValidationMessage.value = ''
 
   try {
     await signInWithGoogle(props.postAuthRedirect)
   } catch {
-    authValidationMessage.value = authError.value || 'Google sign-in failed.'
+    showAuthFeedback(authErrorToast(resolveAuthApiErrorMessage(authError.value, 'Google sign-in failed.')))
+    authError.value = ''
     submitting.value = false
   }
 }
 
 async function onPasskeySignIn() {
   if (!isPasskeyProductionHost()) {
-    authValidationMessage.value = PASSKEY_PRODUCTION_HOST_MESSAGE
+    showAuthFeedback(authErrorToast(PASSKEY_PRODUCTION_HOST_MESSAGE))
     return
   }
 
   submitting.value = true
-  authValidationMessage.value = ''
 
   try {
     await signInWithPasskey()
     await syncAuthSession({ attempts: 3, delayMs: 150 })
   } catch (error) {
-    authValidationMessage.value = error instanceof Error
+    const message = error instanceof Error
       ? error.message
       : 'Could not sign in with a passkey.'
+
+    if (isEmailConfirmationNotice(message)) {
+      needsEmailConfirmation.value = true
+      showAuthFeedback(authNoticeToast(AUTH_NOTICES.emailConfirmationRequired))
+      return
+    }
+
+    showAuthFeedback(authErrorToast(message))
   } finally {
     submitting.value = false
   }
@@ -127,18 +160,25 @@ async function onPasskeySignIn() {
 
 async function onForgotPassword() {
   if (!email.value.trim()) {
-    authValidationMessage.value = AUTH_VALIDATION.enterEmailForForgotPassword
+    showAuthFeedback(authErrorToast(AUTH_VALIDATION.enterEmailForForgotPassword))
     return
   }
 
   submitting.value = true
-  authValidationMessage.value = ''
 
   try {
     await sendPasswordReset(email.value)
-    authValidationMessage.value = AUTH_NOTICES.passwordResetSent
+    showAuthFeedback(authNoticeToast(AUTH_NOTICES.passwordResetSent))
   } catch {
-    authValidationMessage.value = authError.value || 'Could not send reset email.'
+    handleAuthApiFailure({
+      message: resolveAuthApiErrorMessage(authError.value, 'Could not send reset email.'),
+      authEmail: email.value,
+      setValidationMessage: () => {},
+      clearAuthError: () => {
+        authError.value = ''
+      },
+      showToast: showAuthFeedback
+    })
   } finally {
     submitting.value = false
   }
@@ -146,18 +186,26 @@ async function onForgotPassword() {
 
 async function onResendConfirmation() {
   if (!email.value.trim()) {
-    authValidationMessage.value = AUTH_VALIDATION.enterEmailForResendConfirmation
+    showAuthFeedback(authErrorToast(AUTH_VALIDATION.enterEmailForResendConfirmation))
     return
   }
 
   submitting.value = true
-  authValidationMessage.value = ''
 
   try {
     await resendConfirmationEmail(email.value)
-    authValidationMessage.value = AUTH_NOTICES.confirmationEmailSent
+    needsEmailConfirmation.value = true
+    showAuthFeedback(authNoticeToast(AUTH_NOTICES.confirmationEmailSent))
   } catch {
-    authValidationMessage.value = authError.value || 'Could not resend confirmation email.'
+    handleAuthApiFailure({
+      message: resolveAuthApiErrorMessage(authError.value, 'Could not resend confirmation email.'),
+      authEmail: email.value,
+      setValidationMessage: () => {},
+      clearAuthError: () => {
+        authError.value = ''
+      },
+      showToast: showAuthFeedback
+    })
   } finally {
     submitting.value = false
   }
@@ -165,11 +213,6 @@ async function onResendConfirmation() {
 
 const fieldClass = 'w-full rounded-xl border border-default/80 bg-default/40 px-3.5 py-2.5 text-sm text-highlighted outline-none transition placeholder:text-muted/60 focus:border-primary/60 focus:ring-2 focus:ring-primary/15'
 const labelClass = 'mb-1.5 block text-xs font-semibold text-highlighted'
-
-const pinnedAuthMessages = computed(() => {
-  const validation = authValidationMessage.value.trim()
-  return validation ? [validation] : []
-})
 
 const compactFormClass = computed(() => (
   props.compact
@@ -185,14 +228,19 @@ const scrollBodyClass = computed(() => (
 
 const footerClass = computed(() => (
   props.compact
-    ? 'shrink-0 space-y-2.5 border-t border-default/60 bg-elevated/30 px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]'
-    : 'mt-4 space-y-2.5 border-t border-default/60 bg-elevated/30 p-0 pt-4'
+    ? 'auth-panel-footer shrink-0 space-y-2.5 border-t border-default/60 bg-elevated/30 px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]'
+    : 'auth-panel-footer mt-4 space-y-2.5 border-t border-default/60 bg-elevated/30 p-0 pt-4'
 ))
+
+const panelRootRef = ref<HTMLElement | null>(null)
+const { keyboardOpen } = useAuthPanelKeyboard(panelRootRef)
+const hideFooterForKeyboard = computed(() => keyboardOpen.value)
 </script>
 
 <template>
   <div
-    class="flex min-h-0 flex-col overflow-hidden"
+    ref="panelRootRef"
+    class="auth-panel-root flex min-h-0 flex-col overflow-hidden"
     :class="compact ? 'h-full flex-1' : ''"
   >
     <div
@@ -326,21 +374,10 @@ const footerClass = computed(() => (
         </div>
       </div>
 
-      <div :class="footerClass">
-        <div
-          v-if="pinnedAuthMessages.length"
-          class="mb-3 space-y-2"
-        >
-          <p
-            v-for="(message, index) in pinnedAuthMessages"
-            :key="`${index}-${message}`"
-            class="text-xs font-medium leading-5 text-warning"
-            :aria-live="index === 0 ? 'polite' : undefined"
-          >
-            {{ message }}
-          </p>
-        </div>
-
+      <div
+        v-show="!hideFooterForKeyboard"
+        :class="footerClass"
+      >
         <UButton
           type="submit"
           color="primary"

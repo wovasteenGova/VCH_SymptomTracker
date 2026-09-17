@@ -47,20 +47,14 @@
           <p class="text-sm leading-6 text-slate-400">
             {{ errorMessage }}
           </p>
-          <div class="flex flex-col gap-3">
-            <NuxtLink
-              to="/?login=1"
-              class="inline-flex w-full items-center justify-center rounded-3xl bg-white px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-100"
-            >
-              Back to sign in
-            </NuxtLink>
-            <NuxtLink
-              to="/profile"
-              class="inline-flex w-full items-center justify-center rounded-3xl border border-slate-700 px-4 py-4 text-base font-semibold text-white transition hover:bg-slate-800"
-            >
-              Open profile
-            </NuxtLink>
-          </div>
+          <AuthConfirmResend />
+
+          <NuxtLink
+            to="/?login=1"
+            class="inline-flex w-full items-center justify-center rounded-3xl bg-white px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-100"
+          >
+            Back to sign in
+          </NuxtLink>
         </div>
       </div>
     </section>
@@ -69,6 +63,7 @@
 
 <script setup lang="ts">
 import { establishSessionFromEmailLink, isPkceVerifierMissingError } from '~/composables/useAuthEmailLink'
+import { clearPendingConfirmEmail } from '~/utils/pendingConfirmEmail'
 
 definePageMeta({
   layout: false
@@ -76,7 +71,7 @@ definePageMeta({
 
 const router = useRouter()
 const status = ref<'loading' | 'success' | 'confirmed' | 'error'>('loading')
-const errorMessage = ref('This link may have expired. Request a new confirmation email from the sign-in screen.')
+const errorMessage = ref('This link may have expired. Request a new confirmation email below or from the sign-in screen.')
 
 function stripAuthQueryFromUrl() {
   if (!import.meta.client) {
@@ -113,6 +108,7 @@ onMounted(async () => {
       return
     }
 
+    clearPendingConfirmEmail()
     status.value = 'success'
     window.sessionStorage.setItem('symptom-tracker-auth-success', '1')
 
