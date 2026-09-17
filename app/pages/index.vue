@@ -587,7 +587,10 @@
           >
             <div
               class="relative min-h-0 w-full flex-1 overflow-hidden rounded-[1.75rem]"
-              :class="{ 'is-home-morph-active': homeSharedTransitionActive && transitionDirection === 'expand' }"
+              :class="{
+                'is-home-morph-active': homeSharedTransitionActive && transitionDirection === 'expand',
+                'pointer-events-none': historyBlocksWorkspacePointer
+              }"
             >
               <Transition name="home-state-fade">
                 <ConditionBrowser
@@ -2535,6 +2538,7 @@ const transitionDirection = ref<HomeTransitionDirection>('next')
 const { installPlatform, canPromptInstall, promptInstall } = usePwaInstall()
 const historyExpanded = ref(false)
 const historyPanelAnimating = ref(false)
+const historyBlocksWorkspacePointer = ref(false)
 const historyScrollEl = ref<HTMLElement | null>(null)
 const desktopHistoryRef = ref<{ scrollEntryIntoView: (entryId: string) => Promise<void> } | null>(null)
 const conditionSlideEntryBlocked = ref(false)
@@ -4582,7 +4586,45 @@ watch(historyExpanded, (expanded, wasExpanded) => {
   }
 
   blockConditionSlideEntry(HISTORY_TRANSITION_LOCK_MS)
+  blurConditionBrowserIfFocused()
 })
+
+const HISTORY_WORKSPACE_POINTER_GUARD_MS = 400
+let historyWorkspacePointerTimer: ReturnType<typeof setTimeout> | undefined
+
+function blurConditionBrowserIfFocused() {
+  if (!import.meta.client) {
+    return
+  }
+
+  const active = document.activeElement
+  if (!(active instanceof HTMLElement)) {
+    return
+  }
+
+  if (active.id === 'custom-condition-name' || active.closest('.condition-browser-root')) {
+    active.blur()
+  }
+}
+
+function syncHistoryWorkspacePointerBlock() {
+  const shouldBlock = historyExpanded.value || historyPanelAnimating.value
+  if (shouldBlock) {
+    if (historyWorkspacePointerTimer) {
+      clearTimeout(historyWorkspacePointerTimer)
+      historyWorkspacePointerTimer = undefined
+    }
+    historyBlocksWorkspacePointer.value = true
+    return
+  }
+
+  historyWorkspacePointerTimer = window.setTimeout(() => {
+    historyBlocksWorkspacePointer.value = false
+    historyWorkspacePointerTimer = undefined
+  }, HISTORY_WORKSPACE_POINTER_GUARD_MS)
+}
+
+watch([historyExpanded, historyPanelAnimating], syncHistoryWorkspacePointerBlock)
 
 watch(() => route.query.login, (value) => {
   if (value === '1') {

@@ -44,3 +44,13 @@ describe('auth reset password page', () => {
     expect(confirm).toContain('/auth/reset-password${window.location.search}${window.location.hash}')
   })
 })
+
+describe('tracker auth overlay scroll', () => {
+  it('uses the ClaimBuilder desktop sign-in card scroll shell', () => {
+    const menu = readFileSync('app/components/TrackerAccountMenu.vue', 'utf8')
+
+    expect(menu).toContain('flex h-auto min-h-0 max-h-[min(80dvh,36rem)] flex-col overflow-y-auto overscroll-contain')
+    expect(menu).toContain('class="min-h-0"')
+    expect(menu).not.toContain("overflow-y-auto overscroll-contain rounded-2xl")
+  })
+})

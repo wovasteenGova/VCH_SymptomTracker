@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex h-full min-h-0 flex-col overflow-hidden">
+  <div class="condition-browser-root flex h-full min-h-0 flex-col overflow-hidden">
 
     <div class="shrink-0 px-2 pt-2">
 
@@ -61,12 +61,15 @@
 
       </div>
 
-      <p
+      <div
         v-if="mode === 'manage' && selectedCount === 0"
-        class="mt-2 text-sm leading-6 text-toned"
+        class="condition-browser-help"
+        :class="{ 'condition-browser-help--compact': helpCompact }"
       >
-        Tap conditions below or search to add a custom one to your home screen.
-      </p>
+        <p class="condition-browser-help__copy mt-2 text-sm leading-6 text-toned">
+          Tap conditions below or search to add a custom one to your home screen.
+        </p>
+      </div>
 
 
 
@@ -117,9 +120,14 @@
             Add
           </button>
         </div>
-        <p class="mt-2 text-xs leading-5 text-toned">
-          Not in the list? Type your condition and tap Add to track it on your home screen.
-        </p>
+        <div
+          class="condition-browser-help"
+          :class="{ 'condition-browser-help--compact': helpCompact }"
+        >
+          <p class="condition-browser-help__copy mt-2 text-xs leading-5 text-toned">
+            Not in the list? Type your condition and tap Add to track it on your home screen.
+          </p>
+        </div>
         <button
           v-if="inactiveCustomConditionCount > 0"
           type="button"
@@ -142,7 +150,10 @@
 
     <div class="relative mt-3 min-h-0 flex-1">
 
-      <div class="no-scrollbar h-full space-y-1 overflow-y-auto px-1 pb-24">
+      <div
+        class="no-scrollbar h-full space-y-1 overflow-y-auto px-1 pb-24"
+        @scroll="onConditionListScroll"
+      >
 
         <div
 
@@ -395,6 +406,7 @@
 
 import { computed, ref, watch } from 'vue'
 
+import { useAccumulatedScrollHeaderCollapse } from '../composables/useAccumulatedScrollHeaderCollapse'
 import { filterAndRankConditions } from '../utils/conditionSearch'
 
 
@@ -465,6 +477,14 @@ const emit = defineEmits<{
 
 
 
+const {
+  compact: helpCompact,
+  onScroll: onConditionListScroll,
+  reset: resetHelpCollapse
+} = useAccumulatedScrollHeaderCollapse({
+  revealOnUpward: true
+})
+
 const searchQuery = ref('')
 
 const debouncedSearchQuery = ref('')
@@ -502,6 +522,7 @@ watch(() => props.demoSearchQuery, (value) => {
 
   searchQuery.value = value
   debouncedSearchQuery.value = value
+  resetHelpCollapse()
 })
 
 const lockedKeySet = computed(() => new Set(props.lockedKeys || []))
@@ -651,5 +672,23 @@ function handleConditionClick(key: string) {
 }
 
 </script>
+
+<style scoped>
+.condition-browser-help {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.condition-browser-help--compact {
+  grid-template-rows: 0fr;
+}
+
+.condition-browser-help__copy {
+  min-height: 0;
+  overflow: hidden;
+}
+</style>
+
 
 

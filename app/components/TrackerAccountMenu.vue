@@ -502,7 +502,7 @@ async function onSignedIn() {
           ref="authDialogRef"
           :class="narrowAuthViewport
             ? mobileOverlayShellClass(90)
-            : 'absolute right-0 top-[calc(100%+0.5rem)] z-[90] max-h-[min(80dvh,36rem)] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-2xl border border-default/80 bg-default shadow-xl ring-1 ring-black/5'"
+            : 'absolute right-0 top-[calc(100%+0.5rem)] z-[90] flex h-auto max-h-[min(80dvh,36rem)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-default/80 bg-default shadow-xl ring-1 ring-black/5'"
           role="dialog"
           aria-modal="true"
           aria-label="Sign in"
@@ -520,12 +520,17 @@ async function onSignedIn() {
               @signed-in="onSignedIn"
             />
           </div>
-          <TrackerAuthPanel
+          <div
             v-else
-            compact
-            @close="closeAuth"
-            @signed-in="onSignedIn"
-          />
+            class="flex h-auto min-h-0 max-h-[min(80dvh,36rem)] flex-col overflow-y-auto overscroll-contain"
+          >
+            <TrackerAuthPanel
+              compact
+              class="min-h-0"
+              @close="closeAuth"
+              @signed-in="onSignedIn"
+            />
+          </div>
         </div>
       </Transition>
     </Teleport>
