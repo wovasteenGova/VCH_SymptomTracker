@@ -1,5 +1,6 @@
 import { useRoute, useSupabaseClient } from '#imports'
 import type { Session } from '@supabase/supabase-js'
+import { applyImplicitAuthHashSession } from '../utils/passwordResetEmail'
 
 export type EmailLinkStatus = 'signed-in' | 'confirmed-needs-sign-in' | 'no-session'
 
@@ -336,6 +337,17 @@ export async function establishSessionFromEmailLink(): Promise<EmailLinkResult> 
       session: data.session,
       linkType: queryType || otpType,
       status: data.session ? 'signed-in' : 'no-session'
+    }
+  }
+
+  if (import.meta.client) {
+    const implicit = await applyImplicitAuthHashSession(supabase, window.location.hash)
+    if (implicit?.session) {
+      return {
+        session: implicit.session,
+        linkType: implicit.type || queryType,
+        status: 'signed-in'
+      }
     }
   }
 

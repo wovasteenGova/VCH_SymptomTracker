@@ -6,6 +6,7 @@ import { AUTH_NOTICES, AUTH_VALIDATION, normalizeAuthEmail, validateAuthEmailFie
 import { assertAuthEmailCooldown, formatAuthEmailCooldownMessage, isAuthEmailCooldownMessage, markAuthEmailSent } from '../utils/authEmailCooldown'
 import { clearOAuthFlowMarker, markOAuthFlowStarted } from './useAuthEmailLink'
 import { clearLocalSymptomData } from '../utils/localSymptomPrivacy'
+import { sendPasswordResetEmail } from '../utils/passwordResetEmail'
 
 type AuthFailure = {
   message?: string
@@ -461,21 +462,18 @@ export function useSupabaseAuth() {
     enforceAuthEmailCooldown(normalizedEmail)
 
     const redirectTo = authRedirects.resetPasswordUrl()
-
-    let error: unknown
+    const config = useRuntimeConfig()
 
     try {
-      const result = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      await sendPasswordResetEmail({
+        supabaseUrl: String(config.public.supabaseUrl || ''),
+        supabaseAnonKey: String(config.public.supabaseAnonKey || config.public.supabaseKey || ''),
+        email: normalizedEmail,
         redirectTo
       })
-      error = result.error
     } catch (caughtError) {
-      error = caughtError
-    }
-
-    if (error) {
-      authError.value = getAuthErrorMessage(error)
-      throw error
+      authError.value = getAuthErrorMessage(caughtError)
+      throw caughtError
     }
 
     markAuthEmailSent(normalizedEmail)

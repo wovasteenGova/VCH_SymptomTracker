@@ -8,15 +8,21 @@ describe('auth reset password page', () => {
     expect(source).toContain('if (isConfirmRoute || isResetPasswordRoute)')
   })
 
-  it('explains Gmail opening a different browser and does not dump PKCE', () => {
+  it('lets veterans open reset links in any browser and uses privacy loading copy', () => {
     const page = readFileSync('app/pages/auth/reset-password.vue', 'utf8')
     const notices = readFileSync('app/utils/authNotices.ts', 'utf8')
+    const mailer = readFileSync('app/utils/passwordResetEmail.ts', 'utf8')
 
-    expect(notices).toContain('passwordResetWrongBrowser')
-    expect(page).toContain('AUTH_NOTICES.passwordResetWrongBrowser')
+    expect(notices).toContain('passwordResetInvalidLink')
+    expect(notices).toContain('passwordResetPrivacy')
+    expect(notices).not.toContain('Gmail may have opened')
+    expect(page).toContain('AUTH_NOTICES.passwordResetInvalidLink')
+    expect(page).toContain('AUTH_NOTICES.passwordResetPrivacy')
     expect(page).toContain('isPkceVerifierMissingError')
-    expect(page).toContain('Send a new reset link from this browser')
+    expect(page).toContain('Send a new reset link')
+    expect(page).not.toContain('from this browser')
     expect(page).not.toContain('PKCE code verifier not found')
+    expect(mailer).toContain("flowType: 'implicit'")
   })
 
   it('keeps password reset toasts on the panel, not inside sendPasswordReset', () => {

@@ -6,10 +6,11 @@
           <VchOpeningWorkspaceLoader
             :full-screen="false"
             show-brand
+            :label="AUTH_NOTICES.passwordResetPrivacy"
           />
-          <h1 class="text-xl font-bold text-white">Verifying reset link</h1>
+          <h1 class="text-xl font-bold text-white">Checking your reset link</h1>
           <p class="text-sm leading-6 text-slate-400">
-            Checking your secure password reset session.
+            {{ AUTH_NOTICES.passwordResetChecking }}
           </p>
         </div>
 
@@ -109,7 +110,7 @@
               class="inline-flex w-full items-center justify-center rounded-3xl bg-white px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="sendingReset"
             >
-              {{ sendingReset ? 'Sending...' : 'Send a new reset link from this browser' }}
+              {{ sendingReset ? 'Sending...' : 'Send a new reset link' }}
             </button>
           </form>
 
@@ -144,7 +145,7 @@ definePageMeta({
 const supabase = useSupabaseClient()
 const { sendPasswordReset, signInWithGoogle, authError } = useSupabaseAuth()
 const status = ref<'loading' | 'ready' | 'success' | 'error'>('loading')
-const errorMessage = ref(AUTH_NOTICES.passwordResetWrongBrowser)
+const errorMessage = ref(AUTH_NOTICES.passwordResetInvalidLink)
 const password = ref('')
 const confirmPassword = ref('')
 const resetEmail = ref('')
@@ -165,13 +166,13 @@ onMounted(async () => {
 
     status.value = 'error'
     if (linkStatus === 'confirmed-needs-sign-in') {
-      errorMessage.value = AUTH_NOTICES.passwordResetWrongBrowser
+      errorMessage.value = AUTH_NOTICES.passwordResetInvalidLink
     }
   } catch (error) {
     status.value = 'error'
     errorMessage.value = isPkceVerifierMissingError(error)
-      ? AUTH_NOTICES.passwordResetWrongBrowser
-      : (error instanceof Error && error.message ? error.message : AUTH_NOTICES.passwordResetWrongBrowser)
+      ? AUTH_NOTICES.passwordResetInvalidLink
+      : (error instanceof Error && error.message ? error.message : AUTH_NOTICES.passwordResetInvalidLink)
   }
 })
 
