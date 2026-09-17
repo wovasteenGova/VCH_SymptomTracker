@@ -31,9 +31,9 @@
               placeholder="At least 8 characters"
               :revealed="passwordReveal.visible"
               :countdown="passwordReveal.countdown"
-              @reveal="passwordReveal.start"
               :required="true"
               :minlength="8"
+              @reveal="passwordReveal.start"
             />
           </label>
 
@@ -77,20 +77,50 @@
           </NuxtLink>
         </div>
 
-        <div v-else class="space-y-4 text-center">
-          <div class="mx-auto grid size-12 place-items-center rounded-full bg-red-950 ring-1 ring-red-900">
-            <UIcon name="i-lucide-alert-circle" class="size-6 text-red-400" />
+        <div v-else class="space-y-4 text-left">
+          <div class="space-y-2 text-center">
+            <div class="mx-auto grid size-12 place-items-center rounded-full bg-red-950 ring-1 ring-red-900">
+              <UIcon name="i-lucide-alert-circle" class="size-6 text-red-400" />
+            </div>
+            <h1 class="text-xl font-bold text-white">Could not open this reset link</h1>
+            <p class="text-sm leading-6 text-slate-400">
+              {{ errorMessage }}
+            </p>
           </div>
-          <h1 class="text-xl font-bold text-white">Reset link invalid</h1>
-          <p class="text-sm leading-6 text-slate-400">
-            {{ errorMessage }}
-          </p>
-          <NuxtLink
-            to="/"
-            class="inline-flex w-full items-center justify-center rounded-3xl bg-white px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-100"
+
+          <form
+            class="space-y-3"
+            @submit.prevent="onRequestNewLink"
           >
-            Back to sign in
-          </NuxtLink>
+            <label class="block">
+              <span class="mb-2 block px-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Email</span>
+              <input
+                v-model="resetEmail"
+                type="email"
+                autocomplete="email"
+                class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white/40"
+                placeholder="you@example.com"
+                :disabled="sendingReset"
+                required
+              >
+            </label>
+            <button
+              type="submit"
+              class="inline-flex w-full items-center justify-center rounded-3xl bg-white px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="sendingReset"
+            >
+              {{ sendingReset ? 'Sending...' : 'Send a new reset link from this browser' }}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-3xl border border-slate-700 px-4 py-4 text-base font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+            :disabled="googleSubmitting"
+            @click="onGoogleSignIn"
+          >
+            Sign in with Google
+          </button>
         </div>
       </div>
     </section>
@@ -98,40 +128,81 @@
 </template>
 
 <script setup lang="ts">
-import { establishSessionFromEmailLink } from '~/composables/useAuthEmailLink'
+import { establishSessionFromEmailLink, isPkceVerifierMissingError } from '~/composables/useAuthEmailLink'
 import { useTimedPasswordReveal } from '~/composables/useTimedPasswordReveal'
+import {
+  AUTH_NOTICES,
+  AUTH_VALIDATION,
+  authErrorToast,
+  authNoticeToast
+} from '~/utils/authNotices'
 
 definePageMeta({
   layout: false
 })
 
 const supabase = useSupabaseClient()
+const { sendPasswordReset, signInWithGoogle, authError } = useSupabaseAuth()
 const status = ref<'loading' | 'ready' | 'success' | 'error'>('loading')
-const errorMessage = ref('This password reset link may have expired. Request a new one from the sign-in screen.')
+const errorMessage = ref(AUTH_NOTICES.passwordResetWrongBrowser)
 const password = ref('')
 const confirmPassword = ref('')
+const resetEmail = ref('')
 const passwordReveal = useTimedPasswordReveal()
 const isSubmitting = ref(false)
+const sendingReset = ref(false)
+const googleSubmitting = ref(false)
 const { showSubmissionToast } = useSubmissionToast()
 
 onMounted(async () => {
   try {
-    const { session } = await establishSessionFromEmailLink()
+    const { session, status: linkStatus } = await establishSessionFromEmailLink()
 
-    if (!session) {
-      status.value = 'error'
+    if (session) {
+      status.value = 'ready'
       return
     }
 
-    status.value = 'ready'
+    status.value = 'error'
+    if (linkStatus === 'confirmed-needs-sign-in') {
+      errorMessage.value = AUTH_NOTICES.passwordResetWrongBrowser
+    }
   } catch (error) {
     status.value = 'error'
-
-    if (error instanceof Error && error.message) {
-      errorMessage.value = error.message
-    }
+    errorMessage.value = isPkceVerifierMissingError(error)
+      ? AUTH_NOTICES.passwordResetWrongBrowser
+      : (error instanceof Error && error.message ? error.message : AUTH_NOTICES.passwordResetWrongBrowser)
   }
 })
+
+async function onRequestNewLink() {
+  if (!resetEmail.value.trim()) {
+    showSubmissionToast(authErrorToast(AUTH_VALIDATION.enterEmailForForgotPassword))
+    return
+  }
+
+  sendingReset.value = true
+
+  try {
+    await sendPasswordReset(resetEmail.value)
+    showSubmissionToast(authNoticeToast(AUTH_NOTICES.passwordResetSent))
+  } catch {
+    showSubmissionToast(authErrorToast(authError.value || 'Could not send reset email.'))
+  } finally {
+    sendingReset.value = false
+  }
+}
+
+async function onGoogleSignIn() {
+  googleSubmitting.value = true
+
+  try {
+    await signInWithGoogle()
+  } catch {
+    showSubmissionToast(authErrorToast(authError.value || 'Google sign-in failed.'))
+    googleSubmitting.value = false
+  }
+}
 
 async function handleSubmit() {
   if (password.value.length < 8) {

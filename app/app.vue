@@ -4,7 +4,13 @@
     <NuxtRouteAnnouncer />
     <NuxtPage />
     <VchGroupedToaster
+      account-only
       position="top-center"
+      :expand="false"
+      :max="3"
+    />
+    <VchGroupedToaster
+      position="bottom-right"
       :expand="false"
       :max="5"
     />

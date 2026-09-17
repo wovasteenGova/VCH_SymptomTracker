@@ -19,6 +19,8 @@ export const AUTH_NOTICES = {
   signupCheckEmail: 'Check your email to confirm your account.',
   confirmationEmailSent: 'Confirmation email sent. Check spam if you do not see it.',
   passwordResetSent: 'Password reset email sent. Check spam if it does not arrive.',
+  passwordResetWrongBrowser:
+    'Gmail may have opened this in a different browser than the one that requested the reset. Request a new link from this browser, then open that email here. If you sign in with Google, you can use Google instead of a password.',
   authRateLimit:
     'We had an error logging you in due to an auth limit. If this error is unexpected, please contact us.'
 } as const

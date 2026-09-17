@@ -11,7 +11,7 @@ export default defineAppConfig({
     },
     toaster: {
       defaultVariants: {
-        position: 'top-center'
+        position: 'bottom-right'
       }
     }
   }

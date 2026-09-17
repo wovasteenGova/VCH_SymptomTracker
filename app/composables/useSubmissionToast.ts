@@ -1,3 +1,5 @@
+import { AUTH_ACCOUNT_TOAST_PLACEMENT } from '#shared/toastPlacement'
+
 type SubmissionToastPayload = {
   message: string
   highlight?: string
@@ -38,6 +40,7 @@ export function useSubmissionToast() {
       : normalized.durationMs ?? 2400
 
     toast.add({
+      placement: AUTH_ACCOUNT_TOAST_PLACEMENT,
       title,
       description: compactHighlight && compactHighlight.length > 8 ? compactHighlight : undefined,
       color: normalized.tone === 'error' ? 'error' : 'success',
@@ -57,7 +60,9 @@ export function useSubmissionToast() {
 
   function clearSubmissionToast() {
     for (const entry of toast.toasts.value) {
-      toast.remove(entry.id)
+      if (entry.placement === AUTH_ACCOUNT_TOAST_PLACEMENT) {
+        toast.remove(entry.id)
+      }
     }
   }
 

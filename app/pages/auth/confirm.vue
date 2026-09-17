@@ -92,6 +92,16 @@ onMounted(async () => {
     const { session, linkType, status: linkStatus } = await establishSessionFromEmailLink()
 
     if (linkType === 'recovery') {
+      if (session) {
+        await router.replace('/auth/reset-password')
+        return
+      }
+
+      if (import.meta.client && (window.location.search || window.location.hash)) {
+        window.location.replace(`/auth/reset-password${window.location.search}${window.location.hash}`)
+        return
+      }
+
       await router.replace('/auth/reset-password')
       return
     }

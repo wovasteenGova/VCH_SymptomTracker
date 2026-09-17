@@ -24,7 +24,7 @@ withDefaults(defineProps<{
     role="tablist"
     aria-label="Account access"
   >
-    <div class="grid grid-cols-2 gap-1">
+    <div class="auth-mode-tab-grid grid gap-1">
       <button
         v-for="mode in authModes"
         :key="mode.value"
@@ -52,6 +52,10 @@ withDefaults(defineProps<{
 </template>
 
 <style scoped>
+.auth-mode-tab-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
 .auth-mode-tab {
   min-width: 0;
   padding: 0.625rem 0.75rem;

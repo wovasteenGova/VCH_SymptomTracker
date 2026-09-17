@@ -295,13 +295,14 @@ export async function establishSessionFromEmailLink(): Promise<EmailLinkResult> 
   const routePath = normalizeRoutePath(route.path)
   const isOAuthCallbackRoute = routePath === '/auth/callback'
   const isConfirmRoute = routePath === '/auth/confirm'
+  const isResetPasswordRoute = routePath === '/auth/reset-password'
 
   if (typeof queryCode === 'string' && queryCode) {
     if (isOAuthCallbackRoute) {
       return completeOAuthCallback(supabase, queryCode, queryType)
     }
 
-    if (isConfirmRoute) {
+    if (isConfirmRoute || isResetPasswordRoute) {
       return completeEmailConfirmation(supabase, queryCode, queryType)
     }
 
@@ -312,7 +313,7 @@ export async function establishSessionFromEmailLink(): Promise<EmailLinkResult> 
         'signed-in'
       )
     } catch (error) {
-      if (routePath.startsWith('/auth/confirm')) {
+      if (routePath.startsWith('/auth/confirm') || routePath.startsWith('/auth/reset-password')) {
         return resolveEmailConfirmationFailure(supabase, error, queryType)
       }
 

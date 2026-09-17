@@ -8,16 +8,20 @@ import { omit } from '@nuxt/ui/utils'
 import { tv } from '@nuxt/ui/utils/tv'
 import theme from '#build/ui/toaster'
 import { isGroupedToastId } from '#shared/groupedToast'
+import { isAuthAccountToast } from '#shared/toastPlacement'
 
 const props = withDefaults(defineProps<{
   position?: 'top-center' | 'top-right' | 'top-left' | 'bottom-center' | 'bottom-right' | 'bottom-left'
+  /** When true, only login/signup/password-reset toasts. When false, everything else. */
+  accountOnly?: boolean
   expand?: boolean
   progress?: boolean
   portal?: boolean | string
   max?: number
   duration?: number
 }>(), {
-  position: 'top-center',
+  position: 'bottom-right',
+  accountOnly: false,
   expand: false,
   progress: true,
   portal: true,
@@ -28,6 +32,12 @@ const props = withDefaults(defineProps<{
 const { toasts, remove } = useToast()
 const { getGroup } = useGroupedToast()
 const appConfig = useAppConfig()
+
+const visibleToasts = computed(() =>
+  toasts.value.filter(entry =>
+    props.accountOnly ? isAuthAccountToast(entry) : !isAuthAccountToast(entry)
+  )
+)
 
 provide(toastMaxInjectionKey, toRef(() => props.max))
 
@@ -90,7 +100,7 @@ function isGroupExpanded(id: string | number) {
     v-bind="providerProps"
   >
     <template
-      v-for="(toast, index) of toasts"
+      v-for="(toast, index) of visibleToasts"
       :key="toast.id"
     >
       <VchGroupedToast
@@ -101,11 +111,11 @@ function isGroupExpanded(id: string | number) {
         :progress="props.progress"
         :expanded="isGroupExpanded(toast.id)"
         :data-expanded="expandedStack"
-        :data-front="!expandedStack && index === toasts.length - 1"
+        :data-front="!expandedStack && index === visibleToasts.length - 1"
         :data-pulsing="toast._duplicate ? toast._duplicate % 2 === 0 ? 'even' : 'odd' : undefined"
         :style="{
-          '--index': index - toasts.length + toasts.length,
-          '--before': toasts.length - 1 - index,
+          '--index': index - visibleToasts.length + visibleToasts.length,
+          '--before': visibleToasts.length - 1 - index,
           '--offset': getOffset(index),
           '--scale': expandedStack ? '1' : 'calc(1 - var(--before) * var(--scale-factor))',
           '--translate': expandedStack ? 'calc(var(--offset) * var(--translate-factor))' : 'calc(var(--before) * var(--gap))',
@@ -124,11 +134,11 @@ function isGroupExpanded(id: string | number) {
         v-bind="omit(toast, ['id', 'close', '_duplicate', '_updated', 'onClick'])"
         :close="toast.close"
         :data-expanded="expandedStack"
-        :data-front="!expandedStack && index === toasts.length - 1"
+        :data-front="!expandedStack && index === visibleToasts.length - 1"
         :data-pulsing="toast._duplicate ? toast._duplicate % 2 === 0 ? 'even' : 'odd' : undefined"
         :style="{
-          '--index': index - toasts.length + toasts.length,
-          '--before': toasts.length - 1 - index,
+          '--index': index - visibleToasts.length + visibleToasts.length,
+          '--before': visibleToasts.length - 1 - index,
           '--offset': getOffset(index),
           '--scale': expandedStack ? '1' : 'calc(1 - var(--before) * var(--scale-factor))',
           '--translate': expandedStack ? 'calc(var(--offset) * var(--translate-factor))' : 'calc(var(--before) * var(--gap))',
