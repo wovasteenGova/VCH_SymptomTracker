@@ -373,7 +373,7 @@
 
     <div
 
-      v-if="mode === 'onboarding'"
+      v-if="mode === 'onboarding' && selectedCount > 0"
 
       class="shrink-0 border-t border-default bg-elevated px-2 py-3"
 
@@ -385,7 +385,7 @@
 
         class="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-base font-bold text-white shadow-lg transition hover:opacity-90 disabled:opacity-40"
 
-        :disabled="selectedCount === 0 || saving"
+        :disabled="saving"
 
         @click="emit('confirm')"
 

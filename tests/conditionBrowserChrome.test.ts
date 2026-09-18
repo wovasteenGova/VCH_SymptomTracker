@@ -9,6 +9,7 @@ describe('condition browser chrome', () => {
     expect(source).toContain('Tap conditions below or search to add a custom one to your home screen.')
     expect(source).toContain('Pick catalog conditions or search to add your own')
     expect(source).toContain('Not in the list? Type your condition and tap Add to track it on your home screen.')
+    expect(source).toContain("mode === 'onboarding' && selectedCount > 0")
   })
 })
 
