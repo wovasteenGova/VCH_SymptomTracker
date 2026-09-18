@@ -32,12 +32,15 @@
 
           </h2>
 
-          <p
+          <div
             v-if="mode === 'onboarding'"
-            class="mt-2 text-sm leading-6 text-toned"
+            class="condition-browser-help"
+            :class="{ 'condition-browser-help--compact': helpCompact }"
           >
-            Pick catalog conditions or search to add your own: anything you want quick access to on your home screen.
-          </p>
+            <p class="condition-browser-help__copy mt-2 text-sm leading-6 text-toned">
+              Pick catalog conditions or search to add your own: anything you want quick access to on your home screen.
+            </p>
+          </div>
 
         </div>
 
