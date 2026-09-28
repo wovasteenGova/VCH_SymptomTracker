@@ -6,10 +6,10 @@ import {
   detectKnownAnalyticsBot,
   isAnalyticsExcludedUser,
   isValidInet
-} from '../../shared/productSiteAnalytics'
-import { getSupabaseNodeOptions } from '../utils/supabaseNodeOptions'
-import { resolveSupabaseEnv } from '../utils/supabaseEnv'
-import { describeServiceRoleKey } from '../utils/supabaseKeyInspect'
+} from '../../utils/productAnalyticsTrack'
+import { getSupabaseNodeOptions } from '../../utils/supabaseNodeOptions'
+import { resolveSupabaseEnv } from '../../utils/supabaseEnv'
+import { describeServiceRoleKey } from '../../utils/supabaseKeyInspect'
 
 let skippedBotCount = 0
 
