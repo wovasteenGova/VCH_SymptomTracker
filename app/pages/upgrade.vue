@@ -311,7 +311,7 @@ import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 import {
   formatProAccessUntilDate,
   resolveDisplayedProAccessUntilIso
-} from '../../shared/proAccessUntil'
+} from '#shared/proAccessUntil'
 
 const { claimMakerUrl, contactUrl } = useVchPublicUrls()
 

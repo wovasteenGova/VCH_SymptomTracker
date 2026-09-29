@@ -1429,7 +1429,7 @@ import { useEntitlements } from '../composables/useEntitlements'
 import {
   formatProAccessUntilDate,
   resolveDisplayedProAccessUntilIso
-} from '../../shared/proAccessUntil'
+} from '#shared/proAccessUntil'
 import { useAppWelcome } from '../composables/useAppWelcome'
 import { useTrackedConditions } from '../composables/useTrackedConditions'
 import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
