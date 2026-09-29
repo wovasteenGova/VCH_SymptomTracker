@@ -55,7 +55,7 @@
           <p class="mt-2 text-sm leading-6 text-amber-50/90">
             <span v-if="isClaimBuilderPro">
               Pro is included with your VCH Claim Maker subscription.
-              <span v-if="claimBuilderFoundingProUntil"> Access until {{ claimBuilderFoundingProUntil }}.</span>
+              <span v-if="claimBuilderAccessUntil"> Access until {{ claimBuilderAccessUntil }}.</span>
             </span>
             <span v-else-if="isComped">Your access was granted at no cost. Thank you for using the tracker.</span>
             <span v-else>
@@ -308,6 +308,10 @@ import {
   buildSupportEmailHref
 } from '../utils/subscription'
 import { useVchPublicUrls } from '../composables/useVchPublicUrls'
+import {
+  formatProAccessUntilDate,
+  resolveDisplayedProAccessUntilIso
+} from '../../shared/proAccessUntil'
 
 const { claimMakerUrl, contactUrl } = useVchPublicUrls()
 
@@ -321,6 +325,7 @@ const {
   isComped,
   canManageBilling,
   claimBuilderFoundingPro,
+  claimBuilderCurrentPeriodEnd,
   renewalLabel,
   loadEntitlements,
   openBillingPortal,
@@ -341,24 +346,13 @@ const billingPortalNotice = computed(() => {
   return 'There is no active paid subscription linked to this account to manage here.'
 })
 
-const claimBuilderFoundingProUntil = computed(() => {
-  const until = claimBuilderFoundingPro.value?.until
-
-  if (!until) {
-    return ''
-  }
-
-  const parsed = new Date(until)
-
-  if (Number.isNaN(parsed.getTime())) {
-    return ''
-  }
-
-  return parsed.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
+const claimBuilderAccessUntil = computed(() => {
+  const untilIso = resolveDisplayedProAccessUntilIso({
+    currentPeriodEnd: claimBuilderCurrentPeriodEnd.value,
+    foundingProUntil: claimBuilderFoundingPro.value?.until
   })
+  if (!untilIso) return ''
+  return formatProAccessUntilDate(untilIso)
 })
 
 const isCheckoutLoading = ref(false)

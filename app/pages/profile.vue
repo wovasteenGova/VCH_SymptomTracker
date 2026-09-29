@@ -299,7 +299,7 @@
               :class="PRO_STATUS_TEXT_CLASS"
             >
               Pro included with VCH Claim Maker.
-              <span v-if="claimBuilderFoundingProUntil"> Access until {{ claimBuilderFoundingProUntil }}.</span>
+              <span v-if="claimBuilderAccessUntil"> Access until {{ claimBuilderAccessUntil }}.</span>
             </p>
             <p
               v-else-if="renewalLabel && !isComped"
@@ -1426,6 +1426,10 @@ import { usePasskeys, type TrackerPasskey } from '../composables/usePasskeys'
 import { useUserProfiles } from '../composables/useUserProfiles'
 import { useSymptomEntries } from '../composables/useSymptomEntries'
 import { useEntitlements } from '../composables/useEntitlements'
+import {
+  formatProAccessUntilDate,
+  resolveDisplayedProAccessUntilIso
+} from '../../shared/proAccessUntil'
 import { useAppWelcome } from '../composables/useAppWelcome'
 import { useTrackedConditions } from '../composables/useTrackedConditions'
 import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
@@ -1578,6 +1582,7 @@ const {
   isClaimBuilderPro,
   isComped,
   claimBuilderFoundingPro,
+  claimBuilderCurrentPeriodEnd,
   freeConditionKeys,
   canUseFamilyReporting,
   canTrackCondition,
@@ -1586,24 +1591,13 @@ const {
   loadEntitlements
 } = useEntitlements()
 
-const claimBuilderFoundingProUntil = computed(() => {
-  const until = claimBuilderFoundingPro.value?.until
-
-  if (!until) {
-    return ''
-  }
-
-  const parsed = new Date(until)
-
-  if (Number.isNaN(parsed.getTime())) {
-    return ''
-  }
-
-  return parsed.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
+const claimBuilderAccessUntil = computed(() => {
+  const untilIso = resolveDisplayedProAccessUntilIso({
+    currentPeriodEnd: claimBuilderCurrentPeriodEnd.value,
+    foundingProUntil: claimBuilderFoundingPro.value?.until
   })
+  if (!untilIso) return ''
+  return formatProAccessUntilDate(untilIso)
 })
 const {
   loggingCadence,

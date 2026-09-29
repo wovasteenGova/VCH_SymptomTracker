@@ -66,6 +66,7 @@ export function useEntitlements() {
   const entitlement = useState<EntitlementRow | null>('tracker-entitlement', () => null)
   const claimBuilderProEntitled = useState('tracker-claimbuilder-pro-entitled', () => false)
   const claimBuilderFoundingPro = useState<ClaimBuilderFoundingPro>('tracker-claimbuilder-founding-pro', () => null)
+  const claimBuilderCurrentPeriodEnd = useState<string | null>('tracker-claimbuilder-current-period-end', () => null)
   const freeConditionKeys = useState<string[]>('tracker-free-condition-keys', () => [])
   const isLoading = useState('tracker-entitlements-loading', () => false)
   const loadError = useState('tracker-entitlements-error', () => '')
@@ -81,6 +82,7 @@ export function useEntitlements() {
       entitlement.value = null
       claimBuilderProEntitled.value = false
       claimBuilderFoundingPro.value = null
+      claimBuilderCurrentPeriodEnd.value = null
       freeConditionKeys.value = []
       entitlementsLoaded.value = false
       loadedUserId.value = null
@@ -148,6 +150,7 @@ export function useEntitlements() {
     entitlement.value = null
     claimBuilderProEntitled.value = false
     claimBuilderFoundingPro.value = null
+    claimBuilderCurrentPeriodEnd.value = null
     freeConditionKeys.value = []
     entitlementsLoaded.value = false
     loadedUserId.value = null
@@ -159,6 +162,7 @@ export function useEntitlements() {
       const response = await $fetch<{
         entitled: boolean
         planId: string
+        currentPeriodEnd?: string | null
         foundingPro: ClaimBuilderFoundingPro
       }>('/api/claimbuilder/pro-entitlement', {
         headers: {
@@ -167,9 +171,11 @@ export function useEntitlements() {
       })
 
       claimBuilderProEntitled.value = response.entitled
+      claimBuilderCurrentPeriodEnd.value = response.currentPeriodEnd ?? null
       claimBuilderFoundingPro.value = response.foundingPro ?? null
     } catch {
       claimBuilderProEntitled.value = false
+      claimBuilderCurrentPeriodEnd.value = null
       claimBuilderFoundingPro.value = null
     }
   }
@@ -533,6 +539,7 @@ export function useEntitlements() {
     isClaimBuilderPro,
     isComped,
     claimBuilderFoundingPro,
+    claimBuilderCurrentPeriodEnd,
     canUseLoggingCharts,
     canUseAdvancedCharts,
     canUseCharts,

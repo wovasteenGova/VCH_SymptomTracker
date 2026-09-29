@@ -5,6 +5,7 @@ import { resolveVchClaimBuilderUrl } from '../../../app/utils/vchHost'
 type ClaimBuilderEntitlementResponse = {
   entitled: boolean
   planId: string
+  currentPeriodEnd: string | null
   foundingPro: {
     source: string
     until: string
@@ -14,6 +15,7 @@ type ClaimBuilderEntitlementResponse = {
 const FALLBACK: ClaimBuilderEntitlementResponse = {
   entitled: false,
   planId: 'free',
+  currentPeriodEnd: null,
   foundingPro: null
 }
 
