@@ -16,10 +16,54 @@ export type EntryDraftSnapshot = {
   conditionTitle: string
 }
 
+const PENDING_ENTRY_SAVE_AFTER_SIGN_IN_KEY = 'symptom-tracker-pending-entry-save'
+
 export function getEntryDraftStorageKey(userId: string | null | undefined) {
   return userId
     ? `symptom-tracker-entry-draft:${userId}`
     : 'symptom-tracker-entry-draft:guest'
+}
+
+export function markPendingEntrySaveAfterSignIn() {
+  if (!import.meta.client) {
+    return
+  }
+
+  window.sessionStorage.setItem(PENDING_ENTRY_SAVE_AFTER_SIGN_IN_KEY, '1')
+}
+
+export function consumePendingEntrySaveAfterSignIn() {
+  if (!import.meta.client) {
+    return false
+  }
+
+  const pending = window.sessionStorage.getItem(PENDING_ENTRY_SAVE_AFTER_SIGN_IN_KEY) === '1'
+
+  if (pending) {
+    window.sessionStorage.removeItem(PENDING_ENTRY_SAVE_AFTER_SIGN_IN_KEY)
+  }
+
+  return pending
+}
+
+export function clearPendingEntrySaveAfterSignIn() {
+  if (!import.meta.client) {
+    return
+  }
+
+  window.sessionStorage.removeItem(PENDING_ENTRY_SAVE_AFTER_SIGN_IN_KEY)
+}
+
+export function migrateGuestEntryDraftToUser(userId: string) {
+  const guestSnapshot = readEntryDraft(null)
+
+  if (!guestSnapshot) {
+    return false
+  }
+
+  writeEntryDraft(userId, guestSnapshot)
+  clearEntryDraft(null)
+  return true
 }
 
 export function readEntryDraft(userId: string | null | undefined): EntryDraftSnapshot | null {
