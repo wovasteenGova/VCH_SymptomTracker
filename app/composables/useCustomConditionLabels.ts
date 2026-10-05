@@ -98,7 +98,8 @@ export function useCustomConditionLabels() {
     }
 
     if (!expectedOwnerId) {
-      throw new Error(TRACKER_SIGN_IN.saveCustomConditions)
+      applyLocalLabels(normalized, null)
+      return normalized
     }
 
     const { data: userData, error: userError } = await supabase.auth.getUser()

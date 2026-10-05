@@ -5149,13 +5149,6 @@ function toggleDraftCondition(key: string) {
 async function toggleDraftConditionAsync(key: string) {
   trackedConditionsError.value = ''
 
-  if (
-    !draftSelectedKeys.value.includes(key)
-    && !ensureSignedInForConditions()
-  ) {
-    return
-  }
-
   if (mentalHealthRestrictedKeys.value.includes(key)) {
     trackedConditionsError.value = MENTAL_HEALTH_ONE_CONDITION_MESSAGE
     return
@@ -5198,10 +5191,6 @@ async function toggleDraftConditionAsync(key: string) {
 
 async function persistDraftTrackedConditions() {
   if (isSavingTrackedConditions.value) {
-    return
-  }
-
-  if (!ensureSignedInForConditions()) {
     return
   }
 
@@ -5327,10 +5316,6 @@ function addCustomDraftCondition(label: string) {
     return
   }
 
-  if (!ensureSignedInForConditions()) {
-    return
-  }
-
   void rememberCustomConditionLabel(key, trimmed)
 
   if (isDemoMode || !isPro.value) {
@@ -5344,10 +5329,6 @@ function addCustomDraftCondition(label: string) {
 }
 
 async function confirmConditionOnboarding() {
-  if (!ensureSignedInForConditions()) {
-    return
-  }
-
   isSavingTrackedConditions.value = true
   trackedConditionsError.value = ''
 
@@ -5357,6 +5338,13 @@ async function confirmConditionOnboarding() {
       return
     }
     draftSelectedKeys.value = keysToSave
+
+    if (!isDemoMode && !user.value) {
+      await persistGuestConditionDraftLocally(keysToSave)
+      isConditionBrowserOpen.value = false
+      return
+    }
+
     await completeOnboarding(keysToSave)
     await syncFreeConditionWithTrackedKeys(keysToSave)
 
@@ -5379,10 +5367,6 @@ async function confirmConditionOnboarding() {
 }
 
 async function finishConditionBrowser() {
-  if (!ensureSignedInForConditions()) {
-    return
-  }
-
   isSavingTrackedConditions.value = true
   trackedConditionsError.value = ''
 
@@ -5392,6 +5376,12 @@ async function finishConditionBrowser() {
       return
     }
     draftSelectedKeys.value = keysToSave
+
+    if (!isDemoMode && !user.value) {
+      await persistGuestConditionDraftLocally(keysToSave)
+      isConditionBrowserOpen.value = false
+      return
+    }
 
     await updateTrackedConditions(keysToSave)
     await syncFreeConditionWithTrackedKeys(keysToSave)
@@ -5649,7 +5639,7 @@ async function saveEntry() {
   }
 
   if (!user.value) {
-    entryError.value = 'Please sign in before saving symptom entries.'
+    entryError.value = TRACKER_SIGN_IN.saveEntries
     openAuthPanel()
     return
   }
@@ -6196,18 +6186,20 @@ function toggleAuthPanel() {
   openAuthPanel()
 }
 
-function ensureSignedInForConditions() {
-  if (isDemoMode || isAuthLoading.value || user.value) {
-    return true
+async function persistGuestConditionDraftLocally(keysToSave: string[]) {
+  applyLocalState(keysToSave, true, null)
+
+  for (const key of keysToSave) {
+    if (!isCustomTrackedConditionKey(key)) {
+      continue
+    }
+
+    promoteHomeConditionOrderKey(key)
+    const label = persistedCustomConditionLabels.value[key]
+      || customConditionLabels.value[key]
+      || formatConditionKeyLabel(key)
+    await rememberCustomConditionLabel(key, label)
   }
-
-  notifySignInRequiredForConditions()
-  return false
-}
-
-function notifySignInRequiredForConditions() {
-  trackedConditionsError.value = TRACKER_SIGN_IN.saveTrackedConditions
-  openAuthPanel()
 }
 
 function reportTrackedConditionsError(error: unknown) {
@@ -8189,7 +8181,7 @@ async function openEntryPanelAsync(options: {
   }
 
   if (!user.value) {
-    openAuthPanel()
+    requestEntryPanelOpen(options)
     return
   }
 
