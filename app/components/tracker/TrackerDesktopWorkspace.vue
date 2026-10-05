@@ -27,7 +27,7 @@ const panelClass = trackerDesktopPanelClass()
 </script>
 
 <template>
-  <div class="tracker-desktop-workspace flex min-h-0 flex-1 gap-4 overflow-hidden pb-1">
+  <div class="tracker-desktop-workspace flex min-h-0 flex-1 gap-4 overflow-hidden pt-4 pb-1">
     <aside
       :class="[panelClass, 'w-72 shrink-0']"
       aria-label="Your conditions"
