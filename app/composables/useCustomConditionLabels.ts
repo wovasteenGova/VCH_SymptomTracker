@@ -7,6 +7,7 @@ import {
   shouldUploadLocalCustomConditionLabels
 } from '../utils/customConditionLabels'
 import { resolveTrackedConditionKey } from '../utils/conditionCatalog'
+import { TRACKER_SIGN_IN } from '../utils/trackerSignInMessages'
 import { useSupabaseAuth } from './useSupabaseAuth'
 import { useTrackerDb } from './useTrackerDb'
 import { TRACKER_DEMO_KEY } from './useTrackerLayout'
@@ -96,9 +97,17 @@ export function useCustomConditionLabels() {
       return normalized
     }
 
+    if (!expectedOwnerId) {
+      throw new Error(TRACKER_SIGN_IN.saveCustomConditions)
+    }
+
     const { data: userData, error: userError } = await supabase.auth.getUser()
-    if (userError || !userData.user || !expectedOwnerId) {
-      throw userError || new Error('Please sign in before saving custom conditions.')
+    if (!userData.user) {
+      throw new Error(TRACKER_SIGN_IN.saveCustomConditions)
+    }
+
+    if (userError) {
+      throw userError
     }
 
     if (userData.user.id !== expectedOwnerId || user.value?.id !== expectedOwnerId) {

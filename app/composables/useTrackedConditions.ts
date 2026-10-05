@@ -6,6 +6,7 @@ import { TRACKER_DEMO_KEY } from './useTrackerLayout'
 import { conditionKeyFromLabel } from '../utils/subscription'
 import { normalizeTrackedConditionKeys } from '../utils/conditionCatalog'
 import { isTrackedConditionsHydrating } from '../utils/homeConditionsPanel'
+import { TRACKER_SIGN_IN } from '../utils/trackerSignInMessages'
 
 const TRACKED_CONDITIONS_STORAGE_KEY = 'symptom-tracker-tracked-condition-keys'
 const ONBOARDING_COMPLETED_STORAGE_KEY = 'symptom-tracker-conditions-onboarding-completed'
@@ -113,9 +114,17 @@ export function useTrackedConditions() {
     }
 
     const expectedOwnerId = user.value?.id ?? null
+    if (!expectedOwnerId) {
+      throw new Error(TRACKER_SIGN_IN.saveTrackedConditions)
+    }
+
     const { data: userData, error: userError } = await supabase.auth.getUser()
-    if (userError || !userData.user || !expectedOwnerId) {
-      throw userError || new Error('Please sign in before saving tracked conditions.')
+    if (!userData.user) {
+      throw new Error(TRACKER_SIGN_IN.saveTrackedConditions)
+    }
+
+    if (userError) {
+      throw userError
     }
     if (userData.user.id !== expectedOwnerId || user.value?.id !== expectedOwnerId) {
       throw new Error('Your account changed before these conditions could be saved.')
