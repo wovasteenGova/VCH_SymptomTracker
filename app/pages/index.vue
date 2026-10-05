@@ -2224,6 +2224,7 @@ import {
 } from '../utils/symptomEntrySavePayload'
 import { copyToClipboard } from '../utils/copyToClipboard'
 import { AUTH_NOTICES, authNoticeToast, authSuccessToast, handleAuthApiFailure, resolveAuthApiErrorMessage, validateSignupForm, AUTH_VALIDATION, authErrorToast, isEmailConfirmationNotice } from '../utils/authNotices'
+import { TRACKER_SIGN_IN, resolveTrackerSignInMessage } from '../utils/trackerSignInMessages'
 import { PDF_EXPORT_ACKNOWLEDGMENT_LABEL } from '../utils/pdfExportCertification'
 import {
   buildReportingPeriodSlug,
@@ -5148,6 +5149,13 @@ function toggleDraftCondition(key: string) {
 async function toggleDraftConditionAsync(key: string) {
   trackedConditionsError.value = ''
 
+  if (
+    !draftSelectedKeys.value.includes(key)
+    && !ensureSignedInForConditions()
+  ) {
+    return
+  }
+
   if (mentalHealthRestrictedKeys.value.includes(key)) {
     trackedConditionsError.value = MENTAL_HEALTH_ONE_CONDITION_MESSAGE
     return
@@ -5193,6 +5201,10 @@ async function persistDraftTrackedConditions() {
     return
   }
 
+  if (!ensureSignedInForConditions()) {
+    return
+  }
+
   const keysToSave = resolveTrackedKeysToSave(draftSelectedKeys.value)
   if (!validateDraftMentalHealthSelection(keysToSave)) {
     return
@@ -5205,7 +5217,7 @@ async function persistDraftTrackedConditions() {
     await updateTrackedConditions(keysToSave)
     await syncFreeConditionWithTrackedKeys(keysToSave)
   } catch (error) {
-    trackedConditionsError.value = getErrorMessage(error)
+    reportTrackedConditionsError(error)
   } finally {
     isSavingTrackedConditions.value = false
   }
@@ -5315,6 +5327,10 @@ function addCustomDraftCondition(label: string) {
     return
   }
 
+  if (!ensureSignedInForConditions()) {
+    return
+  }
+
   void rememberCustomConditionLabel(key, trimmed)
 
   if (isDemoMode || !isPro.value) {
@@ -5328,6 +5344,10 @@ function addCustomDraftCondition(label: string) {
 }
 
 async function confirmConditionOnboarding() {
+  if (!ensureSignedInForConditions()) {
+    return
+  }
+
   isSavingTrackedConditions.value = true
   trackedConditionsError.value = ''
 
@@ -5352,13 +5372,17 @@ async function confirmConditionOnboarding() {
 
     isConditionBrowserOpen.value = false
   } catch (error) {
-    trackedConditionsError.value = getErrorMessage(error)
+    reportTrackedConditionsError(error)
   } finally {
     isSavingTrackedConditions.value = false
   }
 }
 
 async function finishConditionBrowser() {
+  if (!ensureSignedInForConditions()) {
+    return
+  }
+
   isSavingTrackedConditions.value = true
   trackedConditionsError.value = ''
 
@@ -5384,7 +5408,7 @@ async function finishConditionBrowser() {
 
     isConditionBrowserOpen.value = false
   } catch (error) {
-    trackedConditionsError.value = getErrorMessage(error)
+    reportTrackedConditionsError(error)
   } finally {
     isSavingTrackedConditions.value = false
   }
@@ -6170,6 +6194,29 @@ function toggleAuthPanel() {
   }
 
   openAuthPanel()
+}
+
+function ensureSignedInForConditions() {
+  if (isDemoMode || isAuthLoading.value || user.value) {
+    return true
+  }
+
+  notifySignInRequiredForConditions()
+  return false
+}
+
+function notifySignInRequiredForConditions() {
+  trackedConditionsError.value = TRACKER_SIGN_IN.saveTrackedConditions
+  openAuthPanel()
+}
+
+function reportTrackedConditionsError(error: unknown) {
+  const message = resolveTrackerSignInMessage(error, TRACKER_SIGN_IN.saveTrackedConditions)
+  trackedConditionsError.value = message
+
+  if (message === TRACKER_SIGN_IN.saveTrackedConditions) {
+    openAuthPanel()
+  }
 }
 
 function openAuthPanel() {
