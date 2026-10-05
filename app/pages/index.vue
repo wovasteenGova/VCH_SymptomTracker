@@ -262,7 +262,6 @@
         </div>
 
         <p
-          v-if="homeGreetingLine"
           class="text-xs font-semibold uppercase tracking-[0.2em] text-muted"
           :class="isMobileLayout
             ? 'px-3 pb-2 pt-1'
@@ -2289,12 +2288,17 @@ import { computed, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, s
 import {
   buildEntryDraftSnapshot,
   clearEntryDraft,
+  clearPendingEntrySaveAfterSignIn,
+  consumePendingEntrySaveAfterSignIn,
   formatEntryDraftTimeLabel,
   isMeaningfulEntryDraft,
+  markPendingEntrySaveAfterSignIn,
+  migrateGuestEntryDraftToUser,
   readEntryDraft,
   writeEntryDraft,
   type EntryDraftSnapshot
 } from '../composables/useEntryDraft'
+import { resolveHomeGreetingLine } from '../utils/homeGreeting'
 import { useTrackerLayout, TRACKER_CLOSE_EMBED_PROFILE_KEY, TRACKER_DEMO_ACTIONS_KEY, TRACKER_DEMO_CONTROL_KEY, TRACKER_DEMO_KEY } from '../composables/useTrackerLayout'
 import { useTrackerDemoScript, type TrackerDemoActions } from '../composables/useTrackerDemoScript'
 import { trackerDemoFieldDefaults, trackerDemoTiming } from '../utils/trackerDemoConfig'
@@ -3574,20 +3578,11 @@ function resolveHomeGreetingFirstName() {
   return (profileDisplayName.value || metadataName).trim().split(/\s+/)[0] || ''
 }
 
-const homeGreetingLine = computed(() => {
-  if (!user.value) {
-    return ''
-  }
-
-  const firstName = resolveHomeGreetingFirstName()
-  const greetingWord = homeGreetingWord.value || 'Hello'
-
-  if (!firstName) {
-    return greetingWord
-  }
-
-  return `${greetingWord}, ${firstName}`
-})
+const homeGreetingLine = computed(() => resolveHomeGreetingLine({
+  isSignedIn: Boolean(user.value),
+  firstName: resolveHomeGreetingFirstName(),
+  greetingWord: homeGreetingWord.value
+}))
 const freeConditionLabels = computed(() => {
   return freeConditionKeys.value.map((key) => {
     const matchedEntry = savedEntries.value.find((entry) => entry.condition_key === key)
@@ -4262,6 +4257,7 @@ function cancelEntryDraftSave() {
 function clearPersistedEntryDraft() {
   cancelEntryDraftSave()
   clearEntryDraft(user.value?.id)
+  clearPendingEntrySaveAfterSignIn()
   entryDraftPreview.value = null
 }
 
@@ -4318,8 +4314,51 @@ function resumeEntryDraft() {
     return
   }
 
+  openEntryFromDraftSnapshot(snapshot)
+}
+
+function openEntryFromDraftSnapshot(snapshot: EntryDraftSnapshot) {
   restoreEntryDraftSnapshot(snapshot)
   isEntryOpen.value = true
+}
+
+async function resumePendingEntryDraftAfterSignIn() {
+  const userId = user.value?.id
+
+  if (!userId) {
+    return
+  }
+
+  if (!consumePendingEntrySaveAfterSignIn()) {
+    migrateGuestEntryDraftToUser(userId)
+    refreshEntryDraftPreview()
+    return
+  }
+
+  migrateGuestEntryDraftToUser(userId)
+
+  await loadEntitlements()
+  await refreshTrackedConditions()
+
+  const snapshot = readEntryDraft(userId)
+
+  if (!snapshot || !isMeaningfulEntryDraft(snapshot)) {
+    refreshEntryDraftPreview()
+    return
+  }
+
+  if (needsAppWelcome.value) {
+    refreshEntryDraftPreview()
+    return
+  }
+
+  openEntryFromDraftSnapshot(snapshot)
+  refreshEntryDraftPreview()
+  entryError.value = ''
+  showSubmissionToast({
+    message: 'Draft restored with your condition and log. Tap Save when you are ready to submit.',
+    tone: 'success'
+  })
 }
 
 function requestDeleteEntryDraft() {
@@ -4483,16 +4522,21 @@ watch(() => user.value?.id ?? null, async (nextId, prevId) => {
     restoreCachedHomeConditionOrderKeys()
     await loadEntries()
     refreshEntryDraftPreview()
+    await resumePendingEntryDraftAfterSignIn()
     return
   }
 
   // Skip until the first bootstrap finishes; onMounted owns that path.
   if (!homeBootstrapComplete.value) {
+    if (!prevId && nextId) {
+      await resumePendingEntryDraftAfterSignIn()
+    }
     return
   }
 
   // Signed out: clear data without replaying the opening loader.
   if (!nextId && prevId) {
+    clearPendingEntrySaveAfterSignIn()
     profileDisplayName.value = ''
     savedEntries.value = []
     homeConditionOrderKeys.value = []
@@ -5638,13 +5682,27 @@ async function saveEntry() {
     return
   }
 
-  if (!user.value) {
-    entryError.value = TRACKER_SIGN_IN.saveEntries
-    openAuthPanel()
+  if (!validateEntryDateTimeStep()) {
     return
   }
 
-  if (!validateEntryDateTimeStep()) {
+  if (!user.value) {
+    cancelEntryDraftSave()
+    persistEntryDraftNow(null)
+
+    if (!readEntryDraft(null)) {
+      entryError.value = 'Add symptom details before signing in to save this log.'
+      return
+    }
+
+    markPendingEntrySaveAfterSignIn()
+    entryError.value = ''
+    closeEntryPanel(false)
+    openAuthPanel()
+    showAuthFeedback({
+      message: TRACKER_SIGN_IN.saveEntries,
+      tone: 'error'
+    })
     return
   }
 
@@ -6283,6 +6341,7 @@ async function onTrackerSignedIn() {
   loadEntitlements()
   await loadEntries()
   refreshEntryDraftPreview()
+  await resumePendingEntryDraftAfterSignIn()
 }
 
 
@@ -6315,12 +6374,14 @@ async function handleAuthSubmit() {
       await signIn(authEmail.value, authPassword.value)
       isAuthPanelOpen.value = false
       showSubmissionToast(authSuccessToast('Signed in.'))
+      await resumePendingEntryDraftAfterSignIn()
     } else {
       const data = await signUp(authEmail.value, authPassword.value, authName.value.trim())
 
       if (data.session || user.value) {
         isAuthPanelOpen.value = false
         showSubmissionToast(authSuccessToast('Account created. You are signed in.'))
+        await resumePendingEntryDraftAfterSignIn()
       } else if (data.needsEmailConfirmation || data.user) {
         needsEmailConfirmation.value = true
         refreshCooldown()
@@ -6419,6 +6480,7 @@ async function handlePasskeySignIn() {
     await signInWithPasskey()
     isAuthPanelOpen.value = false
     showSubmissionToast(authSuccessToast('Signed in with your passkey.'))
+    await resumePendingEntryDraftAfterSignIn()
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not sign in with a passkey.'
 
