@@ -46,6 +46,7 @@
 
 <script setup lang="ts">
 import { clearOAuthFlowMarker, establishSessionFromEmailLink, isPkceVerifierMissingError } from '~/composables/useAuthEmailLink'
+import { markAuthHydratePending } from '~/utils/authHydrate'
 
 definePageMeta({
   layout: false
@@ -53,6 +54,7 @@ definePageMeta({
 
 const router = useRouter()
 const route = useRoute()
+const { applySessionUser, syncAuthSession } = useSupabaseAuth()
 const status = ref<'loading' | 'success' | 'error'>('loading')
 const errorMessage = ref('We could not complete sign-in. Please try again.')
 const isPkceError = ref(false)
@@ -102,6 +104,8 @@ onMounted(async () => {
       return
     }
 
+    applySessionUser(session.user)
+    markAuthHydratePending()
     status.value = 'success'
     window.sessionStorage.setItem('symptom-tracker-auth-success', '1')
     stripAuthQueryFromUrl()
@@ -115,6 +119,9 @@ onMounted(async () => {
 
     // Supabase may finish OAuth in the background after our first exchange attempt.
     if (recoveredSession) {
+      applySessionUser(recoveredSession.user)
+      await syncAuthSession({ attempts: 3, delayMs: 150 })
+      markAuthHydratePending()
       status.value = 'success'
       window.sessionStorage.setItem('symptom-tracker-auth-success', '1')
       stripAuthQueryFromUrl()

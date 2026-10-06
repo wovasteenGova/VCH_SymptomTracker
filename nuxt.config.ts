@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { config as loadDotenv } from 'dotenv'
 import { VCH_AUTH_COOKIE_DOMAIN } from './app/utils/vchHost'
+import { oauthPkceBrowserStorage } from './app/utils/oauthPkceStorage'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -67,7 +68,10 @@ export default defineNuxtConfig({
     key: supabaseAnonKey,
     clientOptions: {
       auth: {
-        // Opt in to Supabase's beta passkey (WebAuthn) API.
+        storage: oauthPkceBrowserStorage,
+        flowType: 'pkce',
+        // Exchange email confirm and OAuth codes on /auth/* only (avoids double exchange races).
+        detectSessionInUrl: false,
         experimental: {
           passkey: true
         }

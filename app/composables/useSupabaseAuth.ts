@@ -7,6 +7,8 @@ import { assertAuthEmailCooldown, formatAuthEmailCooldownMessage, isAuthEmailCoo
 import { clearOAuthFlowMarker, markOAuthFlowStarted } from './useAuthEmailLink'
 import { clearLocalSymptomData } from '../utils/localSymptomPrivacy'
 import { sendPasswordResetEmail } from '../utils/passwordResetEmail'
+import { clearAuthHydratePending, hasAuthHydratePending } from '../utils/authHydrate'
+import { useAuthSessionRecovery } from '../utils/authSessionRecovery'
 
 type AuthFailure = {
   message?: string
@@ -34,6 +36,12 @@ export function useSupabaseAuth() {
   const authError = useState('tracker-auth-error', () => '')
   const authBootstrapStarted = useState('tracker-auth-bootstrap-started', () => false)
   const pendingConfirmEmail = useState<string | null>('tracker-pending-confirm-email', () => null)
+  const {
+    blockAuthSessionRecovery,
+    clearAuthSessionRecoveryBlock,
+    isAuthSessionRecoveryBlocked
+  } = useAuthSessionRecovery()
+  let sessionSyncPromise: Promise<boolean> | null = null
 
   function clearPendingConfirmEmail() {
     pendingConfirmEmail.value = null
@@ -47,44 +55,179 @@ export function useSupabaseAuth() {
     }
   }
 
+  function shouldClearLocalSession(error: unknown) {
+    if (!error || typeof error !== 'object') return false
+
+    const failure = error as AuthFailure
+    const message = (failure.message || failure.msg || '').toLowerCase()
+    const code = (failure.error_code || failure.code || '').toLowerCase()
+
+    if (/auth session missing/i.test(message) && !/refresh.?token/i.test(message)) {
+      return false
+    }
+
+    return /refresh.?token.*(not found|already used|invalid)|session_not_found|refresh_token_not_found|refresh_token_already_used|invalid_refresh_token/i.test(`${message} ${code}`)
+  }
+
+  async function clearLocalAuthSession() {
+    clearAuthHydratePending()
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch {
+      // Ignore — storage may already be empty.
+    }
+  }
+
+  function applySessionUser(nextUser: User | null) {
+    user.value = nextUser
+    if (nextUser) {
+      authError.value = ''
+      clearAuthHydratePending()
+      clearAuthSessionRecoveryBlock()
+      if (nextUser.email_confirmed_at) {
+        clearPendingConfirmEmail()
+      }
+    }
+  }
+
+  async function runAuthSessionSync(options?: { attempts?: number, delayMs?: number }) {
+    if (isAuthSessionRecoveryBlocked()) return false
+
+    const attempts = Math.max(1, options?.attempts ?? 1)
+    const delayMs = Math.max(0, options?.delayMs ?? 0)
+
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (sessionData.session?.user) {
+        applySessionUser(sessionData.session.user)
+        return true
+      }
+
+      if (shouldClearLocalSession(sessionError)) {
+        await clearLocalAuthSession()
+        user.value = null
+        authError.value = ''
+        return false
+      }
+
+      const { data: userData, error } = await supabase.auth.getUser()
+      if (userData.user) {
+        applySessionUser(userData.user)
+        return true
+      }
+
+      if (error && shouldClearLocalSession(error)) {
+        await clearLocalAuthSession()
+        user.value = null
+        authError.value = ''
+        return false
+      }
+
+      if (attempt < attempts - 1 && delayMs > 0) {
+        await new Promise<void>((resolve) => {
+          window.setTimeout(resolve, delayMs)
+        })
+      }
+    }
+
+    return false
+  }
+
+  function syncAuthSession(options?: { attempts?: number, delayMs?: number }) {
+    if (sessionSyncPromise) return sessionSyncPromise
+
+    sessionSyncPromise = runAuthSessionSync(options).finally(() => {
+      sessionSyncPromise = null
+    })
+
+    return sessionSyncPromise
+  }
+
   async function bootstrapAuth() {
     if (authBootstrapStarted.value) {
       return
     }
 
     authBootstrapStarted.value = true
+    const hydratePending = hasAuthHydratePending()
+
+    const bootTimeout = setTimeout(() => {
+      if (isAuthLoading.value) {
+        isAuthLoading.value = false
+      }
+    }, hydratePending ? 8_000 : 4_000)
 
     supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session?.user) {
+      if (event === 'SIGNED_OUT') {
+        blockAuthSessionRecovery()
         user.value = null
+        clearAuthHydratePending()
         return
       }
 
-      user.value = session.user
-
-      if (session.user.email_confirmed_at) {
-        clearPendingConfirmEmail()
+      if (session?.user) {
+        applySessionUser(session.user)
+        return
       }
+
+      if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return
     })
 
     try {
-      // Hydrate from the local session first so signed-in users never flash the login UI.
-      const { data: sessionData } = await supabase.auth.getSession()
-
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
       if (sessionData.session?.user) {
-        user.value = sessionData.session.user
+        applySessionUser(sessionData.session.user)
+      } else if (shouldClearLocalSession(sessionError)) {
+        await clearLocalAuthSession()
+        user.value = null
+        authError.value = ''
+        return
       }
 
       const { data, error } = await supabase.auth.getUser()
-
       if (error) {
-        authError.value = getAuthErrorMessage(error)
+        const { data: retrySession } = await supabase.auth.getSession()
+        if (retrySession.session?.user) {
+          applySessionUser(retrySession.session.user)
+        } else if (shouldClearLocalSession(error)) {
+          await clearLocalAuthSession()
+          user.value = null
+          authError.value = ''
+        } else if (isStaleSessionError(error)) {
+          if (!user.value) user.value = null
+          authError.value = ''
+        } else {
+          authError.value = getAuthErrorMessage(error)
+          if (!user.value) user.value = null
+        }
       } else if (data.user) {
-        user.value = data.user
+        applySessionUser(data.user)
+      } else if (!user.value) {
+        user.value = null
       }
     } catch (error) {
-      authError.value = getAuthErrorMessage(error)
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (sessionData.session?.user) {
+        applySessionUser(sessionData.session.user)
+      } else if (shouldClearLocalSession(sessionError) || shouldClearLocalSession(error)) {
+        await clearLocalAuthSession()
+        user.value = null
+        authError.value = ''
+      } else if (isStaleSessionError(error)) {
+        if (!user.value) user.value = null
+        authError.value = ''
+      } else {
+        authError.value = getAuthErrorMessage(error)
+        if (!user.value) user.value = null
+      }
     } finally {
+      clearTimeout(bootTimeout)
+      if (!user.value) {
+        await syncAuthSession({
+          attempts: hydratePending ? 8 : 4,
+          delayMs: hydratePending ? 250 : 200
+        })
+      }
       isAuthLoading.value = false
     }
   }
@@ -223,14 +366,6 @@ export function useSupabaseAuth() {
       || /session_not_found|auth_session_missing/i.test(code)
   }
 
-  async function clearLocalAuthSession() {
-    try {
-      await supabase.auth.signOut({ scope: 'local' })
-    } catch {
-      // Ignore: storage may already be empty after a global sign-out.
-    }
-  }
-
   onMounted(() => {
     if (!authBootstrapStarted.value) {
       void bootstrapAuth()
@@ -275,6 +410,11 @@ export function useSupabaseAuth() {
     if (error) {
       authError.value = getAuthErrorMessage(error)
       throw error
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (sessionData.session?.user) {
+      applySessionUser(sessionData.session.user)
     }
 
     clearPendingConfirmEmail()
@@ -481,7 +621,9 @@ export function useSupabaseAuth() {
 
   async function signOut() {
     authError.value = ''
+    blockAuthSessionRecovery()
     const signedOutUserId = user.value?.id ?? null
+    user.value = null
 
     let error: unknown
 
@@ -552,6 +694,8 @@ export function useSupabaseAuth() {
     user,
     isAuthLoading,
     authError,
+    applySessionUser,
+    syncAuthSession,
     signIn,
     signUp,
     resendConfirmationEmail,

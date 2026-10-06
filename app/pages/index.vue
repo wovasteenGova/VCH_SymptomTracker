@@ -6321,6 +6321,12 @@ function openLoginFromQuery() {
   authMode.value = 'login'
   authError.value = ''
   authValidationMessage.value = ''
+
+  const emailFromQuery = typeof route.query.email === 'string' ? route.query.email.trim() : ''
+  if (emailFromQuery) {
+    authEmail.value = emailFromQuery
+  }
+
   openAuthPanel()
 
   void router.replace({ path: '/', query: {} })

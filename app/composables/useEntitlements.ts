@@ -116,15 +116,24 @@ export function useEntitlements() {
   })
 
   async function getAccessToken() {
-    await supabase.auth.refreshSession()
+    const { data: existing } = await supabase.auth.getSession()
+    const session = existing.session
 
-    const session = (await supabase.auth.getSession()).data.session
+    if (session?.access_token) {
+      const expiresAtMs = session.expires_at ? session.expires_at * 1000 : 0
+      if (!expiresAtMs || expiresAtMs - Date.now() > 60_000) {
+        return session.access_token
+      }
+    }
 
-    if (!session?.access_token) {
+    const { data, error } = await supabase.auth.refreshSession()
+    const refreshed = data.session
+
+    if (error || !refreshed?.access_token) {
       throw new Error('Sign in to continue.')
     }
 
-    return session.access_token
+    return refreshed.access_token
   }
 
   async function persistFreeConditionKeys(userId: string, keys: string[]) {

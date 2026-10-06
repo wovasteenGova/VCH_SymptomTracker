@@ -63,13 +63,15 @@
 
 <script setup lang="ts">
 import { establishSessionFromEmailLink, isPkceVerifierMissingError } from '~/composables/useAuthEmailLink'
-import { clearPendingConfirmEmail } from '~/utils/pendingConfirmEmail'
+import { clearPendingConfirmEmail, readPendingConfirmEmail } from '~/utils/pendingConfirmEmail'
+import { markAuthHydratePending } from '~/utils/authHydrate'
 
 definePageMeta({
   layout: false
 })
 
 const router = useRouter()
+const { applySessionUser, syncAuthSession } = useSupabaseAuth()
 const status = ref<'loading' | 'success' | 'confirmed' | 'error'>('loading')
 const errorMessage = ref('This link may have expired. Request a new confirmation email below or from the sign-in screen.')
 
@@ -110,6 +112,13 @@ onMounted(async () => {
 
     if (linkStatus === 'confirmed-needs-sign-in') {
       status.value = 'confirmed'
+      const pendingEmail = readPendingConfirmEmail()
+      if (pendingEmail) {
+        await router.replace({
+          path: '/',
+          query: { login: '1', email: pendingEmail }
+        })
+      }
       return
     }
 
@@ -118,6 +127,13 @@ onMounted(async () => {
       return
     }
 
+    if (session?.user) {
+      applySessionUser(session.user)
+    } else {
+      await syncAuthSession({ attempts: 4, delayMs: 150 })
+    }
+
+    markAuthHydratePending()
     clearPendingConfirmEmail()
     status.value = 'success'
     window.sessionStorage.setItem('symptom-tracker-auth-success', '1')
@@ -130,6 +146,13 @@ onMounted(async () => {
 
     if (isPkceVerifierMissingError(error)) {
       status.value = 'confirmed'
+      const pendingEmail = readPendingConfirmEmail()
+      if (pendingEmail) {
+        await router.replace({
+          path: '/',
+          query: { login: '1', email: pendingEmail }
+        })
+      }
       return
     }
 
