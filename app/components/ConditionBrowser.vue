@@ -289,7 +289,7 @@
 
           >
 
-            <span class="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-toned">
+            <span class="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-toned">
 
               One MH
 
@@ -317,7 +317,7 @@
 
           >
 
-            <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-amber-800 dark:bg-amber-950 dark:text-amber-200">
 
               Pro
 

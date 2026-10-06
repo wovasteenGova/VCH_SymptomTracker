@@ -54,7 +54,7 @@ const isDark = computed(() => colorMode.value === 'dark')
 
       <template #content>
         <div class="w-[11.5rem] p-2.5">
-            <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+            <p class="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-muted">
               Color theme
             </p>
             <div class="grid grid-cols-3 gap-2">
@@ -78,7 +78,7 @@ const isDark = computed(() => colorMode.value === 'dark')
                 />
               </button>
             </div>
-            <p class="mt-2 text-[11px] leading-snug text-muted">
+            <p class="mt-2 text-[0.6875rem] leading-snug text-muted">
               {{ activeTheme.label }}
             </p>
         </div>

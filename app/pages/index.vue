@@ -1899,7 +1899,7 @@
               </p>
               <p
                 v-if="exportPeriodPreviewLabel"
-                class="text-right text-[11px] font-semibold text-primary"
+                class="text-right text-[0.6875rem] font-semibold text-primary"
               >
                 {{ exportPeriodPreviewLabel }}
               </p>
@@ -1909,7 +1909,7 @@
               <div class="grid grid-cols-3 gap-1">
                 <button
                   type="button"
-                  class="rounded-full px-2 py-2.5 text-[11px] font-semibold transition"
+                  class="rounded-full px-2 py-2.5 text-[0.6875rem] font-semibold transition"
                   :class="pdfExportPeriodPreset === 'full'
                     ? 'bg-elevated text-highlighted shadow-sm'
                     : 'text-muted'"
@@ -1919,7 +1919,7 @@
                 </button>
                 <button
                   type="button"
-                  class="rounded-full px-2 py-2.5 text-[11px] font-semibold transition"
+                  class="rounded-full px-2 py-2.5 text-[0.6875rem] font-semibold transition"
                   :class="pdfExportPeriodPreset === 'since-last-va'
                     ? 'bg-elevated text-highlighted shadow-sm'
                     : 'text-muted'"
@@ -1929,7 +1929,7 @@
                 </button>
                 <button
                   type="button"
-                  class="rounded-full px-2 py-2.5 text-[11px] font-semibold transition"
+                  class="rounded-full px-2 py-2.5 text-[0.6875rem] font-semibold transition"
                   :class="pdfExportPeriodPreset === 'custom'
                     ? 'bg-elevated text-highlighted shadow-sm'
                     : 'text-muted'"

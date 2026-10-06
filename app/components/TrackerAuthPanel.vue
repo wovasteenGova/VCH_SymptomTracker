@@ -257,7 +257,7 @@ const footerClass = computed(() => (
         <p class="text-sm font-semibold text-highlighted">
           Account
         </p>
-        <p class="text-[11px] text-muted">
+        <p class="text-[0.6875rem] text-muted">
           Sign in to sync your symptom logs
         </p>
       </div>

@@ -127,7 +127,7 @@ function goHome() {
 .vch-brand-subtitle--hero {
   width: 7.25rem;
   height: 0.75rem;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -138,7 +138,7 @@ function goHome() {
   margin-left: 1rem;
   width: 6.75rem;
   height: 0.875rem;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.25;
   color: color-mix(in srgb, var(--ui-text) 80%, transparent);

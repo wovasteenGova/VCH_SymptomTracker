@@ -78,12 +78,34 @@
  * - Toasts (VchGroupedToaster): 130
  */
 
+/*
+ * Large desktop readability (typical 27" at 100% browser zoom).
+ * Keep in sync with VCH ClaimBuilder: docs/vch-desktop-root-scale.md
+ * Tailwind spacing/type use rem, so bumping root size scales the UI like
+ * ~125% zoom without affecting phones/tablets or narrow laptop widths.
+ *
+ * Breakpoint 1536px (not 1920): Windows/macOS display scaling shrinks the CSS
+ * viewport (e.g. 2560×1440 at 150% → ~1707px wide), so 1920px never matched.
+ */
 html {
   background: var(--ui-bg);
+  font-size: 100%;
   scrollbar-width: none;
   overscroll-behavior: none;
   height: var(--app-height);
   min-height: var(--app-height);
+}
+
+@media (min-width: 1536px) {
+  html {
+    font-size: 125%;
+  }
+}
+
+@media (min-width: 2560px) {
+  html {
+    font-size: 131.25%;
+  }
 }
 
 html.dark {

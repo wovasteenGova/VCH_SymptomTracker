@@ -343,7 +343,7 @@
           <div class="mt-3 flex w-full flex-col items-stretch gap-2">
             <label
               for="tracker-settings-real-name"
-              class="block text-[10px] font-bold uppercase tracking-[0.12em] text-muted"
+              class="block text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted"
             >
               Real name
             </label>
@@ -365,7 +365,7 @@
 
             <label
               for="tracker-settings-phone"
-              class="mt-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-muted"
+              class="mt-1 block text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted"
             >
               Phone number
             </label>
@@ -384,7 +384,7 @@
 
             <label
               for="tracker-settings-dob"
-              class="mt-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-muted"
+              class="mt-1 block text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted"
             >
               Date of birth
             </label>
@@ -406,7 +406,7 @@
                 @click="projectSettingsExpanded = !projectSettingsExpanded"
               >
                 <div class="min-w-0 flex-1">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
+                  <p class="text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted">
                     Project settings
                   </p>
                   <p
@@ -430,7 +430,7 @@
                 <div>
                   <label
                     for="tracker-settings-service-branch"
-                    class="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-muted"
+                    class="mb-1 block text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted"
                   >
                     Branch
                   </label>
@@ -453,7 +453,7 @@
                 <div>
                   <label
                     for="tracker-settings-rank"
-                    class="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-muted"
+                    class="mb-1 block text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted"
                   >
                     Rank
                   </label>
@@ -473,7 +473,7 @@
                   <div>
                     <label
                       for="tracker-settings-year-in"
-                      class="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-muted"
+                      class="mb-1 block text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted"
                     >
                       Year in
                     </label>
@@ -493,7 +493,7 @@
                   <div>
                     <label
                       for="tracker-settings-year-out"
-                      class="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-muted"
+                      class="mb-1 block text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted"
                     >
                       Year out
                     </label>

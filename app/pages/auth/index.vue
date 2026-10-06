@@ -31,7 +31,7 @@ watch([user, isAuthLoading], async ([nextUser, loading]) => {
         </NuxtLink>
 
         <div class="min-w-0 flex-1">
-          <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+          <p class="text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-primary">
             Account
           </p>
           <h1 class="mt-0.5 truncate text-xl font-bold tracking-tight text-highlighted">
