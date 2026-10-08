@@ -775,7 +775,7 @@
                 <!-- Dots → tip → crisis: grid row under list (overview) or under hero (slideshow). DO NOT move to footer. -->
                 <div
                   data-home-carousel-chrome
-                  class="home-carousel-chrome shrink-0 px-2 pb-1"
+                  class="home-carousel-chrome shrink-0 px-2"
                   :class="{
                     'is-chrome-retreat': homeChromeRetreat,
                     'is-chrome-retreat-instant': homeChromeRetreatInstant
@@ -809,7 +809,7 @@
                     </Transition>
                   </div>
 
-                  <p class="mt-3 text-xs leading-5 text-muted">
+                  <p class="home-carousel-crisis-line mt-3 text-xs leading-5 text-muted">
                     {{ VA_CRISIS_LINE_SHORT }}
                   </p>
                 </div>
@@ -949,7 +949,7 @@
                   data-history-interactive
                   class="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-3.5 py-2 text-xs font-bold uppercase tracking-[0.12em] text-toned ring-1 ring-default/60 transition hover:bg-accented"
                   aria-label="Sign in to save and view symptom history"
-                  @click="openAuthPanel"
+                  @click="requestGuestSignIn"
                 >
                   <UIcon name="i-lucide-log-in" class="size-3.5" />
                   Not logged in
@@ -1695,6 +1695,12 @@
     @close="isHomeTipsOverlayOpen = false"
   />
 
+  <GuestLoginIntroOverlay
+    :open="isGuestLoginIntroOpen"
+    @close="closeGuestLoginIntro"
+    @sign-in="confirmGuestLoginIntro"
+  />
+
   <Transition
     enter-active-class="transition duration-200 ease-out"
     enter-from-class="opacity-0"
@@ -2104,6 +2110,11 @@ import {
   acknowledgeEditHistoryNotice,
   hasAcknowledgedEditHistoryNotice
 } from '../utils/editHistoryNotice'
+import {
+  acknowledgeGuestLoginIntro,
+  hasAcknowledgedGuestLoginIntro,
+  recordGuestLoginIntroShown
+} from '../utils/guestLoginIntro'
 import {
   buildSymptomEntrySavePayload,
   buildSymptomEntrySavePayloadFromRecord,
@@ -2618,11 +2629,13 @@ const pendingCadenceEntryOptions = ref<{
   }
 } | null>(null)
 const isConditionBrowserOpen = ref(false)
+const isGuestLoginIntroOpen = ref(false)
 
 /** Hide History chrome whenever a blocking overlay owns the screen. */
 const shouldHideHistoryChrome = computed(() => (
   needsAppWelcome.value
   || isAuthPanelOpen.value
+  || isGuestLoginIntroOpen.value
   || isHomeTipsOverlayOpen.value
   || isLoggingCadencePromptOpen.value
   || pendingDeleteDraft.value
@@ -5848,10 +5861,15 @@ type AppOverlayKey =
   | 'logging-cadence'
   | 'edit-history-notice'
   | 'entry-edit-locked'
+  | 'guest-login-intro'
 
 function closeAppOverlaysExcept(keep?: AppOverlayKey) {
   if (keep !== 'auth') {
     setAuthPanelOpen(false)
+  }
+
+  if (keep !== 'guest-login-intro') {
+    isGuestLoginIntroOpen.value = false
   }
 
   if (keep !== 'delete-draft') {
@@ -5953,6 +5971,38 @@ function toggleAuthPanel() {
     return
   }
 
+  if (!user.value) {
+    requestGuestSignIn()
+    return
+  }
+
+  openAuthPanel()
+}
+
+function requestGuestSignIn() {
+  if (isAuthLoading.value || user.value) {
+    return
+  }
+
+  if (hasAcknowledgedGuestLoginIntro()) {
+    openAuthPanel()
+    return
+  }
+
+  closeAppOverlaysExcept('guest-login-intro')
+  historyExpanded.value = false
+  isSubmissionDropdownOpen.value = false
+  recordGuestLoginIntroShown()
+  isGuestLoginIntroOpen.value = true
+}
+
+function closeGuestLoginIntro() {
+  isGuestLoginIntroOpen.value = false
+}
+
+function confirmGuestLoginIntro() {
+  acknowledgeGuestLoginIntro()
+  isGuestLoginIntroOpen.value = false
   openAuthPanel()
 }
 
@@ -6441,7 +6491,7 @@ function updateHomeConditionsMaxScroll() {
   const stageHeight = stage.getBoundingClientRect().height
   const chromeBlockPx = homeChromeBlockHeightPx.value || 0
   const headerPx = homeOverviewHeaderHeightPx.value || 0
-  const listBottomGapPx = 16
+  const listBottomGapPx = 8
   const availableScrollPx = Math.max(0, stageHeight - chromeBlockPx - headerPx - listBottomGapPx)
   const contentHeightPx = scrollEl.scrollHeight
 
@@ -8555,6 +8605,10 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   margin-bottom: 0.8rem;
 }
 
+.home-carousel-stage.absolute.is-overview {
+  margin-bottom: 0.4rem;
+}
+
 .home-workspace {
   padding-bottom: var(--history-sheet-collapsed-height);
 }
@@ -8652,8 +8706,8 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
 }
 
 .home-carousel-stage.is-overview {
-  grid-template-rows: 0fr auto auto;
-  align-content: start;
+  grid-template-rows: 0fr minmax(0, 1fr) auto;
+  align-content: stretch;
 }
 
 .home-carousel-stage.is-condition {
@@ -8732,14 +8786,15 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
 .home-carousel-stage.is-overview .home-carousel-overview {
   opacity: 1;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-self: start;
+  align-self: stretch;
 }
 
 .home-carousel-stage.is-overview [data-home-conditions-scroll] {
-  flex: none;
-  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
   height: var(--home-conditions-scroll-h, auto);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -8775,6 +8830,19 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   overflow: hidden;
   margin-top: 1.5rem;
   opacity: 1;
+}
+
+.home-carousel-stage.is-overview .home-carousel-chrome {
+  margin-top: 0;
+  align-self: end;
+}
+
+.home-carousel-stage.is-overview .home-carousel-tip {
+  margin-top: 0.75rem;
+}
+
+.home-carousel-crisis-line {
+  margin-bottom: 0;
 }
 
 .home-carousel-stage.is-shared-transition .home-carousel-chrome {
