@@ -296,7 +296,6 @@
                 :list-order-keys="conditionBrowserListOrder"
                 :locked-keys="[]"
                 :restricted-keys="mentalHealthRestrictedKeys"
-                :show-pro-limit="false"
                 :saving="isSavingTrackedConditions"
                 :error="trackedConditionsError"
                 :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
@@ -393,7 +392,6 @@
                 :list-order-keys="conditionBrowserListOrder"
                 :locked-keys="[]"
                 :restricted-keys="mentalHealthRestrictedKeys"
-                :show-pro-limit="false"
                 :saving="isSavingTrackedConditions"
                 :error="trackedConditionsError"
                 :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
@@ -603,7 +601,6 @@
                   :list-order-keys="conditionBrowserListOrder"
                   :locked-keys="[]"
                   :restricted-keys="mentalHealthRestrictedKeys"
-                  :show-pro-limit="false"
                   :saving="isSavingTrackedConditions"
                   :error="trackedConditionsError"
                   :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
@@ -946,35 +943,8 @@
                   :open="isMonthlyBackupReminderVisible"
                   @dismiss="dismissMonthlyBackupReminder"
                 />
-                <span
-                  v-if="user && !entitlementsLoaded"
-                  class="relative inline-flex shrink-0 items-center rounded-full bg-muted px-3 py-1.5 ring-1 ring-default/60"
-                  aria-hidden="true"
-                >
-                  <span class="inline-block h-3 w-10 animate-pulse rounded-full bg-accented/70" />
-                </span>
-                <span
-                  v-else-if="user"
-                  class="relative inline-flex shrink-0 items-center gap-1 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-[0.12em] ring-1"
-                  :class="isPro
-                    ? 'bg-amber-400/15 text-amber-700 ring-amber-400/40 dark:bg-amber-500/20 dark:text-amber-100 dark:ring-amber-400/80'
-                    : 'bg-primary/10 text-primary ring-primary/30 dark:bg-primary/15 dark:text-primary dark:ring-primary/40'"
-                >
-                  <UIcon
-                    :name="isPro ? 'i-lucide-crown' : 'i-lucide-sparkles'"
-                    class="size-3.5"
-                    :class="isPro ? 'text-amber-600 dark:text-amber-300' : 'text-primary'"
-                  />
-                  {{ isPro ? 'Pro' : 'Free' }}
-                  <span
-                    class="absolute -right-0.5 -top-0.5 grid size-[0.825rem] place-items-center rounded-full bg-highlighted ring-[1.5px] ring-elevated"
-                    aria-hidden="true"
-                  >
-                    <UIcon name="i-lucide-check" class="size-[0.55rem] text-emerald-400" />
-                  </span>
-                </span>
                 <button
-                  v-else-if="!isAuthLoading"
+                  v-if="!user && !isAuthLoading"
                   type="button"
                   data-history-interactive
                   class="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-3.5 py-2 text-xs font-bold uppercase tracking-[0.12em] text-toned ring-1 ring-default/60 transition hover:bg-accented"
@@ -993,28 +963,14 @@
               </p>
               <p
                 v-if="exportNotice"
-                class="mt-2 flex items-start gap-2 rounded-2xl border px-3 py-2 text-xs leading-5"
-                :class="isPro
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100'
-                  : 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'"
+                class="mt-2 flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100"
                 aria-live="polite"
               >
                 <UIcon
-                  :name="isPro ? 'i-lucide-circle-check' : 'i-lucide-crown'"
-                  class="mt-0.5 size-3.5 shrink-0"
-                  :class="isPro ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'"
+                  name="i-lucide-circle-check"
+                  class="mt-0.5 size-3.5 shrink-0 text-emerald-600 dark:text-emerald-300"
                 />
-                <span>
-                  {{ exportNotice }}
-                  <NuxtLink
-                    v-if="!isPro"
-                    to="/upgrade"
-                    data-history-interactive
-                    class="font-bold underline decoration-amber-600/60 underline-offset-2 hover:text-amber-800 dark:decoration-amber-300/60 dark:hover:text-amber-50"
-                  >
-                    Get Pro now
-                  </NuxtLink>
-                </span>
+                <span>{{ exportNotice }}</span>
               </p>
 
               <div
@@ -1733,78 +1689,11 @@
     @continue="confirmLoggingCadencePrompt"
   />
 
-  <UpgradePromptModal
-    :open="isUpgradePromptOpen"
-    :title="upgradePromptTitle"
-    :description="upgradePromptDescription"
-    :is-checkout-loading="isUpgradeCheckoutLoading"
-    @close="closeUpgradePrompt"
-    @upgrade="handleUpgradeCheckout"
-  />
-
   <HomeTipsOverlay
     :open="isHomeTipsOverlayOpen"
     :tips="homeVisitTips"
     @close="isHomeTipsOverlayOpen = false"
   />
-
-  <Transition
-    enter-active-class="transition duration-200 ease-out"
-    enter-from-class="opacity-0"
-    enter-to-class="opacity-100"
-    leave-active-class="transition duration-150 ease-in"
-    leave-from-class="opacity-100"
-    leave-to-class="opacity-0"
-  >
-    <AppOverlayShell
-      v-if="isConditionSlotOpen"
-      @dismiss="closeConditionSlotModal"
-    >
-      <div class="app-overlay-panel app-overlay-panel--compact rounded-[1.75rem] border border-default bg-elevated p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="condition-slot-title">
-        <p class="text-xs font-bold uppercase tracking-[0.16em] text-primary">Free plan</p>
-        <h3 id="condition-slot-title" class="mt-2 text-xl font-bold text-white">
-          {{ pendingConditionSlotMode === 'replace' ? 'Switch to' : 'Use' }} {{ pendingConditionSlotLabel }}?
-        </h3>
-        <p class="mt-3 text-sm leading-6 text-toned">
-          <template v-if="pendingConditionSlotMode === 'replace'">
-            <span v-if="pendingConditionSlotLoggedEntryCount === 0">
-              You have not logged anything yet, so you can change your free condition to this one.
-            </span>
-            <span v-else>
-              You have already logged entries on your free plan, so you cannot switch conditions without upgrading.
-            </span>
-          </template>
-          <template v-else>
-            Free includes {{ FREE_CONDITION_LIMIT }} conditions with unlimited entries in each.
-            <span v-if="freeConditionSlotsRemaining === FREE_CONDITION_LIMIT">Pick one condition to start.</span>
-            <span v-else-if="freeConditionSlotsRemaining === 1">This will use your free condition slot.</span>
-            <span v-else>Your free condition slot is already used.</span>
-          </template>
-        </p>
-        <p v-if="freeConditionKeys.length" class="mt-3 text-xs leading-5 text-muted">
-          Current: {{ freeConditionLabels.join(', ') || 'None yet' }}
-        </p>
-        <p v-if="conditionSlotError" class="mt-3 text-sm font-medium text-red-300" aria-live="assertive">{{ conditionSlotError }}</p>
-        <div class="mt-5 grid gap-3">
-          <button
-            type="button"
-            class="w-full rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition hover:opacity-90"
-            :disabled="isConfirmingConditionSlot || (pendingConditionSlotMode === 'replace' && pendingConditionSlotLoggedEntryCount > 0)"
-            @click="confirmConditionSlot"
-          >
-            {{ isConfirmingConditionSlot ? 'Saving...' : pendingConditionSlotMode === 'replace' ? `Switch to ${pendingConditionSlotLabel}` : `Use ${pendingConditionSlotLabel}` }}
-          </button>
-          <button
-            type="button"
-            class="w-full rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted ring-1 ring-default"
-            @click="closeConditionSlotModal"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </AppOverlayShell>
-  </Transition>
 
   <Transition
     enter-active-class="transition duration-200 ease-out"
@@ -2196,7 +2085,7 @@ import { useUserProfiles } from '../composables/useUserProfiles'
 import { useEntitlements } from '../composables/useEntitlements'
 import { useAppWelcome } from '../composables/useAppWelcome'
 import { useTimedPasswordReveal } from '../composables/useTimedPasswordReveal'
-import { FREE_CONDITION_LIMIT, PRO_ANNUAL_PRICE_LABEL, formatConditionKeyLabel, conditionKeyFromLabel } from '../utils/subscription'
+import { formatConditionKeyLabel, conditionKeyFromLabel } from '../utils/subscription'
 import {
   CLAIMBUILDER_ACTION,
   LAY_REPORTING_ACTION,
@@ -2331,15 +2220,6 @@ const router = useRouter()
 const route = useRoute()
 const { getProfile } = useUserProfiles()
 const {
-  isPro,
-  freeConditionKeys,
-  freeConditionSlotsRemaining,
-  canUseFamilyReporting,
-  canTrackCondition,
-  canAddFreeCondition,
-  addFreeCondition,
-  canReplaceFreeCondition,
-  replaceFreeCondition,
   entitlementsLoaded,
   loadEntitlements
 } = useEntitlements()
@@ -2616,10 +2496,6 @@ const profileButtonRingClass = computed(() => {
     return 'ring-1 ring-default'
   }
 
-  if (entitlementsLoaded.value && isPro.value) {
-    return 'ring-2 ring-amber-400/80 dark:ring-amber-400/70'
-  }
-
   return 'ring-2 ring-primary/35'
 })
 
@@ -2727,28 +2603,9 @@ const shareLinkCreatedUrl = ref('')
 const shareLinkCopied = ref(false)
 const shareLinkError = ref('')
 const isCreatingShareLink = ref(false)
-const isUpgradePromptOpen = ref(false)
-const upgradePromptTitle = ref('Upgrade to Pro')
-const upgradePromptDescription = ref('')
-const isUpgradeCheckoutLoading = ref(false)
 const isEditHistoryNoticeOpen = ref(false)
 const isEntryEditLockedOpen = ref(false)
 const pendingEditAfterNoticeEntryId = ref<string | null>(null)
-const isConditionSlotOpen = ref(false)
-const pendingConditionSlotKey = ref('')
-const pendingConditionSlotLabel = ref('')
-const pendingConditionSlotMode = ref<'add' | 'replace'>('add')
-const pendingConditionSlotLoggedEntryCount = ref(0)
-const pendingEntryPanelOptions = ref<{
-  prefillCustomCondition?: string
-  condition?: {
-    title: string
-    category: string
-    description: string
-    image: string
-  }
-} | null>(null)
-const isConfirmingConditionSlot = ref(false)
 const isLoggingCadencePromptOpen = ref(false)
 const weeklyLogCaution = ref<WeeklyLogCaution | null>(null)
 const pendingCadenceEntryOptions = ref<{
@@ -2760,7 +2617,6 @@ const pendingCadenceEntryOptions = ref<{
     image: string
   }
 } | null>(null)
-const conditionSlotError = ref('')
 const isConditionBrowserOpen = ref(false)
 
 /** Hide History chrome whenever a blocking overlay owns the screen. */
@@ -2768,7 +2624,6 @@ const shouldHideHistoryChrome = computed(() => (
   needsAppWelcome.value
   || isAuthPanelOpen.value
   || isHomeTipsOverlayOpen.value
-  || isUpgradePromptOpen.value
   || isLoggingCadencePromptOpen.value
   || pendingDeleteDraft.value
   || Boolean(pendingDelete.value)
@@ -2776,7 +2631,6 @@ const shouldHideHistoryChrome = computed(() => (
   || isRemovedCustomConditionsOpen.value
   || Boolean(viewedHistoryEntryId.value)
   || (isShareLinkOpen.value && Boolean(shareLinkEntry.value))
-  || isConditionSlotOpen.value
   || isEditHistoryNoticeOpen.value
   || isEntryEditLockedOpen.value
   || isPdfExportOverlayOpen.value
@@ -3450,16 +3304,8 @@ const isConditionSlideEntryEnabled = computed(() => {
 
 const homeCarouselSlideCount = computed(() => homeConditions.value.length + 1)
 
-function isConditionLogLocked(key: string) {
-  if (!entitlementsLoaded.value || isPro.value || !user.value) {
-    return false
-  }
-
-  if (savedEntries.value.length === 0) {
-    return false
-  }
-
-  return !canTrackCondition(key)
+function isConditionLogLocked(_key: string) {
+  return false
 }
 
 function resolveActiveMentalHealthConditionKey() {
@@ -3583,13 +3429,6 @@ const homeGreetingLine = computed(() => resolveHomeGreetingLine({
   firstName: resolveHomeGreetingFirstName(),
   greetingWord: homeGreetingWord.value
 }))
-const freeConditionLabels = computed(() => {
-  return freeConditionKeys.value.map((key) => {
-    const matchedEntry = savedEntries.value.find((entry) => entry.condition_key === key)
-    return normalizeConditionLabel(matchedEntry?.condition_label || formatConditionKeyLabel(key))
-  })
-})
-
 type ExportableCondition = {
   key: string
   label: string
@@ -3651,11 +3490,7 @@ const pdfExportContentDescription = computed(() => {
     return 'Summary stats and your full entry log without logging charts or advanced analytics.'
   }
 
-  if (isPro.value) {
-    return 'Includes logging consistency charts, severity trends, and advanced analytics plus your full entry log.'
-  }
-
-  return 'Includes logging consistency charts plus your full entry log. Pro adds severity trends and advanced analytics.'
+  return 'Includes logging consistency charts, severity trends, and advanced analytics plus your full entry log.'
 })
 
 function isFamilySourceEntry(entry: { source?: string | null }) {
@@ -4989,7 +4824,7 @@ async function exportEntriesPdf(conditionKeys: string[]) {
       loggingCadence: loggingCadence.value,
       weeklyLogDay: weeklyLogDay.value,
       includeLoggingCharts: includeCharts,
-      includeAdvancedCharts: includeCharts && isPro.value,
+      includeAdvancedCharts: includeCharts,
       entryRevisionsByEntryId,
       reportingPeriodLabel: activeReportingPeriodLabel.value,
       reportingPeriodSlug: activeReportingPeriodSlug.value
@@ -5013,8 +4848,6 @@ async function exportEntriesPdf(conditionKeys: string[]) {
 
     if (separateFamily && veteranEntries.length && familyEntries.length) {
       exportNotice.value = 'Downloaded two PDFs. Check your downloads folder for your veteran logs and the family observations report.'
-    } else if (!isPro.value && includeCharts) {
-      exportNotice.value = 'PDF downloaded with your entries and weekly symptom counts. Pro adds severity trends and advanced charts. Check your downloads folder.'
     } else if (pdfExportContentMode.value === 'entries-only') {
       exportNotice.value = 'PDF downloaded with summary stats and your entry log. Check your downloads folder.'
     } else {
@@ -5224,8 +5057,8 @@ async function toggleDraftConditionAsync(key: string) {
     }
   }
 
-  // Free / demo: one active condition at a time (replace, don't stack).
-  if (isDemoMode || !isPro.value) {
+  // Demo: one active condition at a time (replace, don't stack).
+  if (isDemoMode) {
     draftSelectedKeys.value = [key]
     return
   }
@@ -5257,48 +5090,15 @@ async function persistDraftTrackedConditions() {
 }
 
 function resolveTrackedKeysToSave(keys: string[]) {
-  if (isDemoMode || !isPro.value) {
-    return keys.slice(0, FREE_CONDITION_LIMIT)
+  if (isDemoMode) {
+    return keys.slice(0, 1)
   }
 
   return keys
 }
 
-async function syncFreeConditionWithTrackedKeys(keys: string[]) {
-  if (isPro.value || !keys.length || !user.value) {
-    return
-  }
-
-  if (freeConditionKeys.value.length === 0 && savedEntries.value.length === 0) {
-    return
-  }
-
-  const normalizedKeys = keys
-    .map((key) => resolveCatalogConditionByStoredKey(key)?.key ?? key)
-    .filter(Boolean)
-
-  if (!normalizedKeys.length) {
-    return
-  }
-
-  const activeFreeKey = freeConditionKeys.value[0]
-  if (activeFreeKey && normalizedKeys.includes(activeFreeKey)) {
-    return
-  }
-
-  const nextKey = normalizedKeys[0]
-  if (!nextKey) {
-    return
-  }
-
-  if (savedEntries.value.length === 0) {
-    await replaceFreeCondition(nextKey, 0)
-    return
-  }
-
-  if (canReplaceFreeCondition(nextKey, savedEntries.value.length)) {
-    await replaceFreeCondition(nextKey, savedEntries.value.length)
-  }
+async function syncFreeConditionWithTrackedKeys(_keys: string[]) {
+  return
 }
 
 async function syncHomeConditionsAfterEntrySave(savedConditionKey: string) {
@@ -5307,27 +5107,11 @@ async function syncHomeConditionsAfterEntrySave(savedConditionKey: string) {
     return
   }
 
-  if (isPro.value) {
-    const trackedKeysNormalized = trackedConditionKeys.value.map(
-      (storedKey) => resolveTrackedConditionKey(storedKey) ?? storedKey
-    )
-    if (!trackedKeysNormalized.includes(key)) {
-      await updateTrackedConditions([...trackedConditionKeys.value, key])
-    }
-    return
-  }
-
-  if (!canTrackCondition(key)) {
-    return
-  }
-
   const trackedKeysNormalized = trackedConditionKeys.value.map(
     (storedKey) => resolveTrackedConditionKey(storedKey) ?? storedKey
   )
-  const keyAlreadyRepresented = trackedKeysNormalized.includes(key)
-
-  if (!keyAlreadyRepresented) {
-    await updateTrackedConditions([key])
+  if (!trackedKeysNormalized.includes(key)) {
+    await updateTrackedConditions([...trackedConditionKeys.value, key])
   }
 }
 
@@ -5362,7 +5146,7 @@ function addCustomDraftCondition(label: string) {
 
   void rememberCustomConditionLabel(key, trimmed)
 
-  if (isDemoMode || !isPro.value) {
+  if (isDemoMode) {
     draftSelectedKeys.value = [key]
     prependConditionBrowserListOrderKey(key)
     return
@@ -5708,30 +5492,6 @@ async function saveEntry() {
 
   const entryConditionKey = resolveCatalogConditionByStoredKey(conditionKey(entryTitle.value))?.key ?? conditionKey(entryTitle.value)
 
-  if (!isPro.value && !editingEntryId.value && !canTrackCondition(entryConditionKey)) {
-    if (canAddFreeCondition(entryConditionKey, savedEntries.value.length)) {
-      try {
-        await addFreeCondition(entryConditionKey)
-      } catch (error) {
-        entryError.value = getErrorMessage(error)
-        return
-      }
-    } else if (canReplaceFreeCondition(entryConditionKey, savedEntries.value.length)) {
-      try {
-        await replaceFreeCondition(entryConditionKey, savedEntries.value.length)
-      } catch (error) {
-        entryError.value = getErrorMessage(error)
-        return
-      }
-    } else {
-      openUpgradePrompt(
-        'Free plan: 1 condition',
-        `Free lets you pick ${FREE_CONDITION_LIMIT} condition with unlimited entries. Upgrade to Pro for ${PRO_ANNUAL_PRICE_LABEL} to track more conditions, family reporting, and advanced charts in PDF exports.`
-      )
-      return
-    }
-  }
-
   const payload = buildSymptomEntrySavePayload({
     entryTitle: entryTitle.value,
     severity: severityValue.value,
@@ -5913,7 +5673,7 @@ async function restoreInactiveCustom(item: InactiveCustomCondition) {
     let nextKeys = [...trackedConditionKeys.value]
 
     if (!alreadyTracked) {
-      nextKeys = isDemoMode || !isPro.value
+      nextKeys = isDemoMode
         ? [item.key]
         : [item.key, ...trackedConditionKeys.value]
     }
@@ -6053,14 +5813,6 @@ function openShareLinkForEntry(entryId: string) {
     return
   }
 
-  if (!canUseFamilyReporting.value) {
-    openUpgradePrompt(
-      'Family reporting is a Pro feature',
-      'Create private links so spouses, caregivers, or family can submit signed observations for your claim.'
-    )
-    return
-  }
-
   const entry = savedEntries.value.find((item) => item.id === entryId)
   if (!entry || entry.source === 'family') {
     return
@@ -6092,9 +5844,7 @@ type AppOverlayKey =
   | 'removed-custom-conditions'
   | 'entry-details'
   | 'share-link'
-  | 'upgrade'
   | 'home-tips'
-  | 'condition-slot'
   | 'logging-cadence'
   | 'edit-history-notice'
   | 'entry-edit-locked'
@@ -6128,22 +5878,8 @@ function closeAppOverlaysExcept(keep?: AppOverlayKey) {
     closeShareLinkModal()
   }
 
-  if (keep !== 'upgrade') {
-    isUpgradePromptOpen.value = false
-  }
-
   if (keep !== 'home-tips') {
     isHomeTipsOverlayOpen.value = false
-  }
-
-  if (keep !== 'condition-slot') {
-    isConditionSlotOpen.value = false
-    pendingEntryPanelOptions.value = null
-    pendingConditionSlotKey.value = ''
-    pendingConditionSlotLabel.value = ''
-    pendingConditionSlotMode.value = 'add'
-    pendingConditionSlotLoggedEntryCount.value = 0
-    conditionSlotError.value = ''
   }
 
   if (keep !== 'logging-cadence') {
@@ -6205,30 +5941,6 @@ function getErrorMessage(error: unknown) {
   }
 
   return 'Something went wrong. Please try again.'
-}
-
-function openUpgradePrompt(title: string, description: string) {
-  closeAppOverlaysExcept('upgrade')
-  upgradePromptTitle.value = title
-  upgradePromptDescription.value = description
-  isUpgradePromptOpen.value = true
-}
-
-function closeUpgradePrompt() {
-  isUpgradePromptOpen.value = false
-}
-
-async function handleUpgradeCheckout() {
-  isUpgradeCheckoutLoading.value = true
-
-  try {
-    closeUpgradePrompt()
-    await router.push('/upgrade?checkout=1')
-  } catch (error) {
-    exportError.value = getErrorMessage(error)
-  } finally {
-    isUpgradeCheckoutLoading.value = false
-  }
 }
 
 function toggleAuthPanel() {
@@ -7431,13 +7143,6 @@ function changeEntryCondition(condition: { title: string, category: string, desc
   const medicationKey = fieldKey('Medications for this entry')
   delete entryForm.value[medicationKey]
 
-  if (!isPro.value && !editingEntryId.value) {
-    void ensureFreeConditionAccess(
-      conditionKeyFromLabel(condition.title),
-      condition.title,
-      null
-    )
-  }
 }
 
 function applyCustomEntryCondition() {
@@ -7462,13 +7167,6 @@ function applyCustomEntryCondition() {
   const medicationKey = fieldKey('Medications for this entry')
   delete entryForm.value[medicationKey]
 
-  if (!isPro.value && !editingEntryId.value) {
-    void ensureFreeConditionAccess(
-      conditionKeyFromLabel(customName),
-      customName,
-      null
-    )
-  }
 }
 
 function toggleConditionPicker() {
@@ -8141,83 +7839,6 @@ function openEntryForEdit(entryId: string) {
   )
 }
 
-function openConditionSlotModal(options: {
-  conditionKey: string
-  conditionLabel: string
-  mode: 'add' | 'replace'
-  loggedEntryCount: number
-  entryPanelOptions?: {
-    prefillCustomCondition?: string
-    condition?: {
-      title: string
-      category: string
-      description: string
-      image: string
-    }
-  } | null
-}) {
-  closeAppOverlaysExcept('condition-slot')
-  pendingEntryPanelOptions.value = options.entryPanelOptions ?? null
-  pendingConditionSlotKey.value = options.conditionKey
-  pendingConditionSlotLabel.value = options.conditionLabel
-  pendingConditionSlotMode.value = options.mode
-  pendingConditionSlotLoggedEntryCount.value = options.loggedEntryCount
-  conditionSlotError.value = ''
-  isConditionSlotOpen.value = true
-}
-
-async function ensureFreeConditionAccess(
-  conditionKey: string,
-  conditionLabel: string,
-  entryPanelOptions: {
-    prefillCustomCondition?: string
-    condition?: {
-      title: string
-      category: string
-      description: string
-      image: string
-    }
-  } | null = null
-) {
-  if (isPro.value || canTrackCondition(conditionKey)) {
-    return true
-  }
-
-  if (!hasLoadedEntriesOnce.value) {
-    await loadEntries()
-  }
-
-  const loggedEntryCount = savedEntries.value.length
-
-  if (canAddFreeCondition(conditionKey, loggedEntryCount)) {
-    openConditionSlotModal({
-      conditionKey,
-      conditionLabel,
-      mode: 'add',
-      loggedEntryCount,
-      entryPanelOptions
-    })
-    return false
-  }
-
-  if (canReplaceFreeCondition(conditionKey, loggedEntryCount)) {
-    openConditionSlotModal({
-      conditionKey,
-      conditionLabel,
-      mode: 'replace',
-      loggedEntryCount,
-      entryPanelOptions
-    })
-    return false
-  }
-
-  openUpgradePrompt(
-    'Free plan: 1 condition',
-    `You already picked ${freeConditionLabels.value[0] || 'your free condition'}. Upgrade to Pro for ${PRO_ANNUAL_PRICE_LABEL} to track ${conditionLabel || formatConditionKeyLabel(conditionKey)} and more.`
-  )
-  return false
-}
-
 function openEntryPanel(options: {
   prefillCustomCondition?: string
   condition?: {
@@ -8253,22 +7874,7 @@ async function openEntryPanelAsync(options: {
     return
   }
 
-  if (isPro.value) {
-    requestEntryPanelOpen(options)
-    return
-  }
-
-  const pendingConditionKey = resolvePendingEntryConditionKey(options)
-  const pendingConditionLabel = options.condition?.title || options.prefillCustomCondition || ''
-
-  if (!pendingConditionKey) {
-    requestEntryPanelOpen(options)
-    return
-  }
-
-  if (await ensureFreeConditionAccess(pendingConditionKey, pendingConditionLabel || formatConditionKeyLabel(pendingConditionKey), options)) {
-    requestEntryPanelOpen(options)
-  }
+  requestEntryPanelOpen(options)
 }
 
 function requestEntryPanelOpen(options: {
@@ -8375,56 +7981,6 @@ function openEntryPanelInner(options: {
 
   prefillConditionStatementForEntry()
   isEntryOpen.value = true
-}
-
-function closeConditionSlotModal() {
-  isConditionSlotOpen.value = false
-  pendingEntryPanelOptions.value = null
-  pendingConditionSlotKey.value = ''
-  pendingConditionSlotLabel.value = ''
-  pendingConditionSlotMode.value = 'add'
-  pendingConditionSlotLoggedEntryCount.value = 0
-  conditionSlotError.value = ''
-}
-
-async function confirmConditionSlot() {
-  if (!pendingConditionSlotKey.value) {
-    return
-  }
-
-  if (!hasLoadedEntriesOnce.value) {
-    await loadEntries()
-  }
-
-  const loggedEntryCount = savedEntries.value.length
-
-  if (pendingConditionSlotMode.value === 'replace' && !canReplaceFreeCondition(pendingConditionSlotKey.value, loggedEntryCount)) {
-    conditionSlotError.value = 'You can only change your free condition before logging your first entry.'
-    pendingConditionSlotLoggedEntryCount.value = loggedEntryCount
-    return
-  }
-
-  isConfirmingConditionSlot.value = true
-  conditionSlotError.value = ''
-
-  try {
-    if (pendingConditionSlotMode.value === 'replace') {
-      await replaceFreeCondition(pendingConditionSlotKey.value, loggedEntryCount)
-    } else {
-      await addFreeCondition(pendingConditionSlotKey.value)
-    }
-
-    const options = pendingEntryPanelOptions.value
-    closeConditionSlotModal()
-
-    if (options) {
-      openEntryPanelInner(options)
-    }
-  } catch (error) {
-    conditionSlotError.value = getErrorMessage(error)
-  } finally {
-    isConfirmingConditionSlot.value = false
-  }
 }
 
 async function handleEntryDone() {

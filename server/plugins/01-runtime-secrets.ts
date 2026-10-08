@@ -70,8 +70,6 @@ function patchPublicSupabase(config: Record<string, unknown>) {
 }
 
 function patchSecrets(config: Record<string, unknown>) {
-  safeSet(config, 'stripeSecretKey', readEnv('STRIPE_SECRET_KEY', 'NUXT_STRIPE_SECRET_KEY'))
-  safeSet(config, 'stripeWebhookSecret', readEnv('STRIPE_WEBHOOK_SECRET', 'NUXT_STRIPE_WEBHOOK_SECRET'))
   const serviceKey = readEnv(
     'SUPABASE_SERVICE_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',

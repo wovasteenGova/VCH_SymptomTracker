@@ -1,9 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import {
-  FREE_CONDITION_LIMIT,
-  PRO_ANNUAL_PRICE_LABEL
-} from '../utils/subscription'
 import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
 const { privacyUrl, contactUrl } = useVchPublicUrls()
@@ -37,11 +33,6 @@ const faqItems: FaqItem[] = [
     answer: 'Pick a condition, rate severity, describe what happened and how it affected your day, then save. You can log daily or once a week (weekly is recommended for PTSD and mental health). Your entries stay on your account and appear in charts and exports.'
   },
   {
-    id: 'free-vs-pro',
-    question: 'What is the difference between Free and Pro?',
-    answer: `Free includes ${FREE_CONDITION_LIMIT} condition with unlimited entries, calendar charts, and entry PDFs with weekly symptom counts. Pro (${PRO_ANNUAL_PRICE_LABEL}) adds unlimited conditions, family reporting links, severity trends in PDFs, and personal review summaries.`
-  },
-  {
     id: 'reminders',
     question: 'How do log reminders work?',
     answer: 'Turn on reminders in Account Settings. You will get a morning nudge at your chosen time and an 8 PM follow-up if you have not logged yet. Install the app to your home screen for background alerts. Reminders use push notifications; allow them when prompted.'
@@ -49,7 +40,7 @@ const faqItems: FaqItem[] = [
   {
     id: 'family-reporting',
     question: 'What are family, friends, and other reporting links?',
-    answer: 'Pro users can create private links for someone they trust. The supporter opens the link, enters their own contact info, and submits a signed observation about how your condition affects you. You manage links from Account Settings: create, copy, disable, or delete them anytime.'
+    answer: 'Create private links for someone you trust. The supporter opens the link, enters their own contact info, and submits a signed observation about how your condition affects you. You manage links from Account Settings: create, copy, disable, or delete them anytime.'
   },
   {
     id: 'passkeys',
@@ -59,7 +50,7 @@ const faqItems: FaqItem[] = [
   {
     id: 'privacy-data',
     question: 'Who can see my data? Can I export or delete logs?',
-    answer: 'Your symptom entries are private to your account. Export PDFs from the tracker when you need a report. Deleted entries go to the recovery bin first; you can restore or permanently remove them. Delete all logs from Account Settings if you want a fresh start. Your profile and plan stay saved. See our privacy policy for more.'
+    answer: 'Your symptom entries are private to your account. Export PDFs from the tracker when you need a report. Deleted entries go to the recovery bin first; you can restore or permanently remove them. Delete all logs from Account Settings if you want a fresh start. Your profile stays saved. See our privacy policy for more.'
   },
   {
     id: 'contact',

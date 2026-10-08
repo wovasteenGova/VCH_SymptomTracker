@@ -47,7 +47,6 @@ useHead(() => ({
 const { showSubmissionToast } = useSubmissionToast()
 const supabase = useSupabaseClient()
 
-const CHECKOUT_SUCCESS_TOAST_KEY = 'symptom-tracker-checkout-success-toast'
 let visualBaselineHeight = 0
 
 function editableFocused() {
@@ -94,14 +93,7 @@ function updateAppHeight() {
 
 onMounted(async () => {
   updateAppHeight()
-  if (import.meta.client && window.sessionStorage.getItem(CHECKOUT_SUCCESS_TOAST_KEY)) {
-    window.sessionStorage.removeItem(CHECKOUT_SUCCESS_TOAST_KEY)
-    window.sessionStorage.removeItem('symptom-tracker-auth-success')
-    showSubmissionToast({
-      message: "Payment successful. You're now on Pro.",
-      durationMs: 3200
-    })
-  } else if (import.meta.client && window.sessionStorage.getItem('symptom-tracker-auth-success')) {
+  if (import.meta.client && window.sessionStorage.getItem('symptom-tracker-auth-success')) {
     window.sessionStorage.removeItem('symptom-tracker-auth-success')
 
     const { data } = await supabase.auth.getSession()

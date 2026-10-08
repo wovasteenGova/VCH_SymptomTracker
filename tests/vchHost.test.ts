@@ -18,7 +18,7 @@ import {
   VCH_TRACKER_ORIGIN_COM
 } from '../app/utils/vchHost'
 import { resolveAuthSiteOrigin, resolveOAuthCallbackUrl } from '../app/utils/authRedirects'
-import { resolveRequestBaseUrl } from '../server/utils/stripeClient'
+import { resolveRequestBaseUrl } from '../server/utils/requestOrigin'
 import { resolveTrackerPublicOrigin } from '../app/utils/reportBranding'
 import { buildClaimBuilderUrl } from '../app/utils/claimBuilderLinks'
 import { readFileSync } from 'node:fs'
@@ -85,7 +85,7 @@ describe('retired .us Tracker host redirect', () => {
     })).toBeNull()
   })
 
-  it('skips Render health and Stripe webhook POSTs on leftover .us hosts', () => {
+  it('skips Render health on leftover .us hosts', () => {
     expect(shouldRedirectRetiredUsTrackerHost({
       hostname: 'tracker.veteranscentralhub.us',
       path: '/',
@@ -97,18 +97,6 @@ describe('retired .us Tracker host redirect', () => {
       path: '/api/health',
       method: 'GET'
     })).toBe(false)
-
-    expect(shouldRedirectRetiredUsTrackerHost({
-      hostname: 'tracker.veteranscentralhub.us',
-      path: '/api/stripe/webhook',
-      method: 'POST'
-    })).toBe(false)
-
-    expect(shouldRedirectRetiredUsTrackerHost({
-      hostname: 'tracker.veteranscentralhub.us',
-      path: '/api/stripe/webhook',
-      method: 'GET'
-    })).toBe(true)
 
     expect(shouldRedirectRetiredUsTrackerHost({
       hostname: 'tracker.veteranscentralhub.com',
@@ -198,7 +186,7 @@ describe('VCH public URL TLD rewrite', () => {
   })
 })
 
-describe('auth and checkout origins stay on the opened host', () => {
+describe('auth and request origins stay on the opened host', () => {
   it('prefers the current non-local origin over a configured .us siteUrl', () => {
     expect(resolveAuthSiteOrigin(
       'https://tracker.veteranscentralhub.us',
@@ -226,7 +214,7 @@ describe('auth and checkout origins stay on the opened host', () => {
     )).toBe('https://tracker.veteranscentralhub.com')
   })
 
-  it('uses the request origin for Stripe return URLs instead of APP_URL', () => {
+  it('uses the request origin instead of a stale APP_URL', () => {
     expect(resolveRequestBaseUrl({
       configuredOrigin: 'https://tracker.veteranscentralhub.us',
       isProduction: true,

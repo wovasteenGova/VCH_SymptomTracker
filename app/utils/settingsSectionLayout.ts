@@ -28,21 +28,3 @@ export function settingsSectionClass(compact?: boolean) {
 /** Bordered help row under Account: Contact us + FAQ. */
 export const SETTINGS_ACCOUNT_HELP_CLASS =
   'mt-4 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-xl border border-default bg-default/40 px-4 py-3 text-center text-sm text-muted'
-
-/** Pro badge + status copy readable on light and dark themes. */
-export const PRO_BADGE_CLASS =
-  'bg-amber-500/15 text-amber-900 ring-amber-600/40 dark:bg-amber-500/20 dark:text-amber-100 dark:ring-amber-400/80'
-
-export const PRO_BADGE_ICON_CLASS = 'text-amber-700 dark:text-amber-300'
-
-export const PRO_STATUS_TEXT_CLASS = 'text-amber-800/90 dark:text-amber-100/80'
-
-export const PRO_LOCK_PANEL_CLASS =
-  'rounded-3xl border border-amber-600/35 bg-amber-500/10 p-4 dark:border-amber-900/50 dark:bg-amber-950/20'
-
-export const PRO_LOCK_TITLE_CLASS = 'font-semibold text-amber-900 dark:text-amber-100'
-
-export const PRO_LOCK_BODY_CLASS = 'mt-1 text-sm leading-6 text-amber-800/90 dark:text-amber-50/90'
-
-export const PRO_LOCK_LINK_CLASS =
-  'mt-3 block text-xs font-semibold text-amber-800/90 underline-offset-2 hover:underline dark:text-amber-100/80'

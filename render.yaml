@@ -25,14 +25,6 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PUBLIC_KEY
-        sync: false
-      - key: STRIPE_PRO_PRICE_ID
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
       - key: VAPID_PUBLIC_KEY
         sync: false
       - key: VAPID_PRIVATE_KEY

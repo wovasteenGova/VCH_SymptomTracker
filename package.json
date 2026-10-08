@@ -17,21 +17,19 @@
     "funnel-report": "node scripts/funnel-report.mjs"
   },
   "dependencies": {
+    "@iconify-json/lucide": "^1.2.121",
     "@nuxt/ui": "^4.8.1",
     "@nuxtjs/supabase": "^1.6.2",
-    "@stripe/stripe-js": "^7.3.1",
     "@supabase/supabase-js": "^2.107.0",
     "@vite-pwa/nuxt": "^1.1.1",
     "chart.js": "^4.5.1",
     "jspdf": "^4.2.1",
     "nuxt": "^4.5.1",
     "qrcode": "^1.5.4",
-    "stripe": "^22.6.1",
     "vue": "^3.5.34",
     "vue-chartjs": "^5.3.4",
     "vue-router": "^5.0.7",
-    "web-push": "^3.6.7",
-    "@iconify-json/lucide": "^1.2.121"
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6",

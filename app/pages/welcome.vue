@@ -170,7 +170,7 @@ const highlights = [
   },
   {
     title: 'Family observations',
-    copy: 'Share a private link so a spouse or supporter can add what they noticed (Pro).',
+    copy: 'Share a private link so a spouse or supporter can add what they noticed.',
     icon: 'i-lucide-users'
   },
   {

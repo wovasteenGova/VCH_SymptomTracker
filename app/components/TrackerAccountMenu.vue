@@ -343,7 +343,6 @@ async function onSignedIn() {
                 <p class="truncate text-sm font-semibold text-highlighted">
                   {{ accountDisplayName }}
                 </p>
-                <TrackerPlanBadge />
               </div>
               <p
                 v-if="user.email"
@@ -423,7 +422,6 @@ async function onSignedIn() {
                   >
                     Account Settings
                   </h2>
-                  <TrackerPlanBadge />
                 </div>
                 <p
                   v-if="user.email"

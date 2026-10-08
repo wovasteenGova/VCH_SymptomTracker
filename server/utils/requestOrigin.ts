@@ -1,4 +1,3 @@
-import Stripe from 'stripe'
 import { getHeader, getRequestHost, getRequestProtocol } from 'h3'
 import {
   VCH_TRACKER_ORIGIN_COM,
@@ -7,29 +6,6 @@ import {
 } from '../../app/utils/vchHost'
 
 const PREVIEW_HOST_SUFFIXES = ['.onrender.com', '.netlify.app', '.netlify.com'] as const
-
-/**
- * Use the API version bundled with the installed `stripe` SDK.
- * Do not pin a stale version such as 2023-10-16.
- */
-export const TRACKER_STRIPE_API_VERSION = (Stripe as unknown as { API_VERSION?: string }).API_VERSION || null
-
-export function getStripeClient() {
-  const config = useRuntimeConfig()
-
-  if (!config.stripeSecretKey) {
-    throw createError({
-      statusCode: 500,
-      message: 'Stripe secret key is not configured.'
-    })
-  }
-
-  // Instance client (never set a global stripe.api_key). Use the API version
-  // bundled with the installed SDK (currently 2026-08-26.dahlia on stripe@22).
-  return new Stripe(config.stripeSecretKey, {
-    apiVersion: Stripe.API_VERSION
-  })
-}
 
 export function normalizeOrigin(value: string | null | undefined) {
   const trimmed = String(value || '').trim()
@@ -49,12 +25,12 @@ export function normalizeOrigin(value: string | null | undefined) {
   }
 }
 
-export function isLocalCheckoutHost(hostname: string) {
+export function isLocalRequestHost(hostname: string) {
   const host = String(hostname || '').trim().toLowerCase().replace(/:\d+$/, '')
   return host === 'localhost' || host === '127.0.0.1' || host === '::1'
 }
 
-export function isAllowedCheckoutOrigin(origin: string | null | undefined) {
+export function isAllowedPublicOrigin(origin: string | null | undefined) {
   const normalized = normalizeOrigin(origin)
 
   if (!normalized) {
@@ -64,7 +40,7 @@ export function isAllowedCheckoutOrigin(origin: string | null | undefined) {
   try {
     const url = new URL(normalized)
     const hostname = url.hostname.toLowerCase()
-    const local = isLocalCheckoutHost(hostname)
+    const local = isLocalRequestHost(hostname)
 
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       return false
@@ -92,7 +68,7 @@ function firstAllowedOrigin(candidates: Array<string | null | undefined>) {
   for (const candidate of candidates) {
     const origin = normalizeOrigin(candidate)
 
-    if (origin && isAllowedCheckoutOrigin(origin)) {
+    if (origin && isAllowedPublicOrigin(origin)) {
       return origin.replace(/\/$/, '')
     }
   }
@@ -134,7 +110,7 @@ export function resolveRequestBaseUrl(input: {
     return allowed
   }
 
-  if (rewrittenConfigured && isAllowedCheckoutOrigin(rewrittenConfigured)) {
+  if (rewrittenConfigured && isAllowedPublicOrigin(rewrittenConfigured)) {
     return rewrittenConfigured
   }
 

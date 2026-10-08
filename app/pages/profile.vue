@@ -222,14 +222,10 @@
           </h3>
 
           <div
-            v-if="entitlementsLoaded"
+            v-if="entitlementsLoaded && signInMethodLabel"
             class="mt-3 flex flex-wrap items-center gap-2"
           >
-            <TrackerPlanBadge size="md" />
-            <p
-              v-if="signInMethodLabel"
-              class="flex items-center gap-1.5 text-xs text-muted"
-            >
+            <p class="flex items-center gap-1.5 text-xs text-muted">
               <UIcon
                 v-if="usesGoogleLogin"
                 name="i-lucide-chrome"
@@ -237,19 +233,6 @@
               />
               {{ signInMethodLabel }}
             </p>
-            <NuxtLink
-              to="/upgrade"
-              class="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition"
-              :class="isPro
-                ? 'bg-elevated text-highlighted ring-1 ring-default'
-                : 'bg-amber-400 text-slate-950 hover:bg-amber-300'"
-            >
-              <UIcon
-                :name="isPro ? 'i-lucide-receipt' : 'i-lucide-crown'"
-                class="size-3.5"
-              />
-              {{ isPro ? 'Payment center' : `Upgrade: ${PRO_ANNUAL_PRICE_LABEL}` }}
-            </NuxtLink>
           </div>
 
           <p
@@ -259,86 +242,12 @@
             {{ user.email }}
           </p>
 
-          <template v-if="entitlementsLoaded && !overlay">
-            <p
-              v-if="!isPro"
-              class="mt-2 text-xs leading-5 text-muted"
-            >
-              Free plan: 1 condition with unlimited entries, calendar logging charts, and entry PDFs with weekly symptom counts. Upgrade for {{ PRO_ANNUAL_PRICE_LABEL }} to add more conditions, family reporting, and severity trends in PDFs.
-            </p>
-            <div
-              v-if="!isPro"
-              class="mt-3 rounded-3xl border border-default bg-default/60 p-4"
-            >
-              <p class="text-xs font-bold uppercase tracking-[0.14em] text-muted">Your free conditions</p>
-              <p class="mt-1 text-xs leading-5 text-muted">
-                {{ freeConditionKeys.length }}/{{ FREE_CONDITION_LIMIT }} selected
-              </p>
-              <div
-                v-if="freeConditionKeyLabels.length"
-                class="mt-3 flex flex-wrap gap-2"
-              >
-                <span
-                  v-for="label in freeConditionKeyLabels"
-                  :key="label"
-                  class="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-primary/30"
-                >
-                  {{ label }}
-                </span>
-              </div>
-              <p
-                v-else
-                class="mt-3 text-xs leading-5 text-muted"
-              >
-                Pick conditions when you start logging from the tracker home screen.
-              </p>
-            </div>
-            <p
-              v-else-if="isClaimBuilderPro"
-              class="mt-2 text-xs leading-5"
-              :class="PRO_STATUS_TEXT_CLASS"
-            >
-              Pro included with VCH Claim Maker.
-              <span v-if="claimBuilderAccessUntil"> Access until {{ claimBuilderAccessUntil }}.</span>
-            </p>
-            <p
-              v-else-if="renewalLabel && !isComped"
-              class="mt-2 text-xs leading-5"
-              :class="PRO_STATUS_TEXT_CLASS"
-            >
-              Pro renews on {{ renewalLabel }}.
-            </p>
-            <p
-              v-else-if="isComped"
-              class="mt-2 text-xs leading-5"
-              :class="PRO_STATUS_TEXT_CLASS"
-            >
-              Pro access granted at no cost. Thank you for using the tracker.
-            </p>
-          </template>
-
-          <template v-else-if="entitlementsLoaded && overlay">
-            <p
-              v-if="!isPro"
-              class="mt-2 text-xs leading-5 text-muted"
-            >
-              Free plan: 1 condition with unlimited entries. Upgrade for {{ PRO_ANNUAL_PRICE_LABEL }} to add more.
-            </p>
-            <p
-              v-else-if="isClaimBuilderPro"
-              class="mt-2 text-xs leading-5"
-              :class="PRO_STATUS_TEXT_CLASS"
-            >
-              Pro included with VCH Claim Maker.
-            </p>
-            <p
-              v-else-if="renewalLabel && !isComped"
-              class="mt-2 text-xs leading-5"
-              :class="PRO_STATUS_TEXT_CLASS"
-            >
-              Pro renews on {{ renewalLabel }}.
-            </p>
-          </template>
+          <p
+            v-if="entitlementsLoaded"
+            class="mt-2 text-xs leading-5 text-muted"
+          >
+            Symptom Tracker is free: unlimited conditions, logging charts, PDF exports, and family reporting links.
+          </p>
 
           <div class="mt-3 flex w-full flex-col items-stretch gap-2">
             <label
@@ -770,36 +679,6 @@
             </p>
           </div>
 
-          <div
-            v-if="!canUseFamilyReporting"
-            class="mt-4"
-            :class="PRO_LOCK_PANEL_CLASS"
-          >
-            <div class="flex items-start gap-3">
-              <UIcon name="i-lucide-lock" class="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300" />
-              <div>
-                <p :class="PRO_LOCK_TITLE_CLASS">Pro feature</p>
-                <p :class="PRO_LOCK_BODY_CLASS">
-                  Family reporting links are included with Pro so family, friends, or others can submit signed observations for your claim.
-                </p>
-                <NuxtLink
-                  to="/upgrade"
-                  class="mt-3 inline-flex items-center gap-2 rounded-2xl bg-amber-400 px-4 py-3 text-sm font-bold text-slate-950"
-                >
-                  Get family reporting with Pro
-                </NuxtLink>
-                <a
-                  :href="supportEmailHref"
-                  :class="PRO_LOCK_LINK_CLASS"
-                >
-                  Can't pay? Email us for free access
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <template v-else>
-
           <div v-if="linkedEntryContext" class="mt-4 rounded-3xl border border-primary/35 bg-primary/10 p-4">
             <p class="text-xs font-bold uppercase tracking-[0.14em] text-primary">Linked entry</p>
             <p class="mt-2 font-semibold text-highlighted">{{ linkedEntryContext.summary }}</p>
@@ -872,7 +751,6 @@
               {{ createdLinkCopied ? 'Copied to clipboard' : 'Copy link' }}
             </button>
           </div>
-          </template>
 
           <div class="mt-8 border-t border-default/70 pt-5">
             <h2 class="text-xl font-bold text-highlighted">Existing reporting links</h2>
@@ -1426,19 +1304,10 @@ import { usePasskeys, type TrackerPasskey } from '../composables/usePasskeys'
 import { useUserProfiles } from '../composables/useUserProfiles'
 import { useSymptomEntries } from '../composables/useSymptomEntries'
 import { useEntitlements } from '../composables/useEntitlements'
-import {
-  formatProAccessUntilDate,
-  resolveDisplayedProAccessUntilIso
-} from '#shared/proAccessUntil'
 import { useAppWelcome } from '../composables/useAppWelcome'
 import { useTrackedConditions } from '../composables/useTrackedConditions'
 import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
-import {
-  FREE_CONDITION_LIMIT,
-  formatConditionKeyLabel,
-  PRO_ANNUAL_PRICE_LABEL,
-  buildSupportEmailHref
-} from '../utils/subscription'
+import { formatConditionKeyLabel } from '../utils/subscription'
 import { buildShareConditionPickerLabels } from '../utils/conditionCatalog'
 import { WEEKLY_LOG_DAY_OPTIONS, type LoggingCadence } from '../utils/loggingCadence'
 import {
@@ -1453,11 +1322,6 @@ import { mapEntryHistoryItem } from '../utils/entryDisplay'
 import { buildDeletableConditionGroups, type DeletableConditionGroup } from '../utils/deletableConditionGroups'
 import { copyToClipboard } from '../utils/copyToClipboard'
 import {
-  PRO_LOCK_BODY_CLASS,
-  PRO_LOCK_LINK_CLASS,
-  PRO_LOCK_PANEL_CLASS,
-  PRO_LOCK_TITLE_CLASS,
-  PRO_STATUS_TEXT_CLASS,
   SETTINGS_ACCOUNT_HELP_CLASS,
   settingsSectionsStackClass,
   settingsScrollBodyClass,
@@ -1578,27 +1442,10 @@ const {
   removeAllEntriesForConditionKeys
 } = useSymptomEntries()
 const {
-  isPro,
-  isClaimBuilderPro,
-  isComped,
-  claimBuilderFoundingPro,
-  claimBuilderCurrentPeriodEnd,
-  freeConditionKeys,
-  canUseFamilyReporting,
   canTrackCondition,
-  renewalLabel,
   entitlementsLoaded,
   loadEntitlements
 } = useEntitlements()
-
-const claimBuilderAccessUntil = computed(() => {
-  const untilIso = resolveDisplayedProAccessUntilIso({
-    currentPeriodEnd: claimBuilderCurrentPeriodEnd.value,
-    foundingProUntil: claimBuilderFoundingPro.value?.until
-  })
-  if (!untilIso) return ''
-  return formatProAccessUntilDate(untilIso)
-})
 const {
   loggingCadence,
   weeklyLogDay,
@@ -1710,11 +1557,6 @@ const layoutOptions: Array<{ value: TrackerLayoutMode, label: string, copy: stri
 const weeklyLogDayOptions = WEEKLY_LOG_DAY_OPTIONS
 
 const { contactUrl } = useVchPublicUrls()
-const supportEmailHref = buildSupportEmailHref()
-
-const freeConditionKeyLabels = computed(() => {
-  return freeConditionKeys.value.map((key) => formatConditionKeyLabel(key))
-})
 
 const shareConditionOptions = computed(() => buildShareConditionPickerLabels({
   trackedKeys: trackedConditionKeys.value,
@@ -2381,13 +2223,6 @@ async function createSupporter() {
   supporterError.value = ''
   createdLink.value = ''
 
-  if (!canUseFamilyReporting.value) {
-    const message = 'Family reporting requires Pro. Visit Payment center to upgrade.'
-    supporterError.value = message
-    showSubmissionToast({ message, tone: 'error' })
-    return
-  }
-
   if (!supporterForm.value.visible_conditions.length) {
     const message = 'Choose at least one condition to share.'
     supporterError.value = message
@@ -2529,7 +2364,7 @@ async function restoreDeletedEntry(entryId: string) {
     delete restoredEntry.deleted_at
 
     if (!canTrackCondition(restoredEntry.condition_key || 'unknown')) {
-      pageError.value = `Free plan includes ${FREE_CONDITION_LIMIT} conditions. Upgrade to Pro to restore entries for other conditions.`
+      pageError.value = 'This entry uses a condition that is not available on your account.'
       return
     }
 

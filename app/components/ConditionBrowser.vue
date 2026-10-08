@@ -317,17 +317,11 @@
 
           >
 
-            <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-
-              Pro
-
-            </span>
-
             <UIcon
 
               name="i-lucide-lock"
 
-              class="size-4 text-amber-600 dark:text-amber-300"
+              class="size-4 text-muted"
 
             />
 
@@ -443,10 +437,8 @@ const props = defineProps<{
 
   lockedKeys?: string[]
 
-  /** Non-Pro locks (e.g. one mental health condition at a time). */
+  /** Non-catalog locks (e.g. one mental health condition at a time). */
   restrictedKeys?: string[]
-
-  showProLimit?: boolean
 
   saving?: boolean
 

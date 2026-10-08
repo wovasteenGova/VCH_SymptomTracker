@@ -102,9 +102,8 @@ export function buildTrackerUsToComRedirectUrl(
 }
 
 const RENDER_HEALTH_PATH = '/api/health'
-const STRIPE_WEBHOOK_PATH = '/api/stripe/webhook'
 
-/** Skip liveness and Stripe webhook POSTs so Render and billing keep working on the leftover .us host. */
+/** Skip Render liveness on the leftover .us host so health checks keep working. */
 export function shouldRedirectRetiredUsTrackerHost(input: {
   hostname?: string | null
   path?: string | null
@@ -116,11 +115,6 @@ export function shouldRedirectRetiredUsTrackerHost(input: {
 
   const path = normalizeRedirectPath(input.path).replace(/\/+$/, '') || '/'
   if (path === RENDER_HEALTH_PATH) {
-    return false
-  }
-
-  const method = String(input.method || 'GET').toUpperCase()
-  if (method === 'POST' && path === STRIPE_WEBHOOK_PATH) {
     return false
   }
 

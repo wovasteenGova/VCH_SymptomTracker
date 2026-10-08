@@ -34,7 +34,7 @@ const supabaseAnonKey = env('SUPABASE_ANON_KEY')
   || env('NUXT_PUBLIC_SUPABASE_KEY')
   || env('NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY')
 
-// Do not read service/Stripe/VAPID secrets at config load — they get inlined
+// Do not read service/VAPID secrets at config load — they get inlined
 // into the server bundle. Runtime plugins fill them from process.env.
 
 export default defineNuxtConfig({
@@ -91,9 +91,6 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     // Private keys stay empty at build; server plugin fills from process.env.
-    stripeSecretKey: '',
-    stripeWebhookSecret: '',
-    stripeProPriceId: envFirst('STRIPE_PRO_PRICE_ID', 'NUXT_STRIPE_PRO_PRICE_ID'),
     supabaseServiceRoleKey: '',
     supabaseServiceKey: '',
     vapidPrivateKey: '',
@@ -103,11 +100,6 @@ export default defineNuxtConfig({
       supabaseAnonKey: supabaseAnonKey,
       supabaseKey: supabaseAnonKey,
       supabasePublishableKey: supabaseAnonKey,
-      stripePublishableKey: envFirst(
-        'STRIPE_PUBLIC_KEY',
-        'STRIPE_PUBLISHABLE_KEY',
-        'NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'
-      ),
       vapidPublicKey: env('VAPID_PUBLIC_KEY') || env('NUXT_PUBLIC_VAPID_PUBLIC_KEY'),
       siteUrl: env('APP_URL')
         || env('NUXT_PUBLIC_SITE_URL')
@@ -201,7 +193,7 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ['@stripe/stripe-js', 'chart.js', 'vue-chartjs']
+      include: ['chart.js', 'vue-chartjs']
     }
   },
   nitro: {
@@ -216,9 +208,7 @@ export default defineNuxtConfig({
     '/profile': { ssr: false },
     '/report/**': { ssr: false },
     '/auth/**': { ssr: false },
-    '/upgrade': { ssr: false },
-    '/upgrade/**': { ssr: false },
-    '/api/stripe/webhook': { cors: false },
-    '/api/stripe/**': { cors: false }
+    '/upgrade': { redirect: { to: '/', statusCode: 301 } },
+    '/upgrade/**': { redirect: { to: '/', statusCode: 301 } }
   }
 })
