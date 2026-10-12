@@ -9,6 +9,11 @@ import { clearLocalSymptomData } from '../utils/localSymptomPrivacy'
 import { sendPasswordResetEmail } from '../utils/passwordResetEmail'
 import { clearAuthHydratePending, hasAuthHydratePending } from '../utils/authHydrate'
 import { useAuthSessionRecovery } from '../utils/authSessionRecovery'
+import { buildSignupAttributionMetadata } from '#shared/signupAttribution'
+import {
+  markPendingSignupProduct,
+  SYMPTOM_TRACKER_SIGNUP_PRODUCT
+} from '../utils/signupAttributionClient'
 
 type AuthFailure = {
   message?: string
@@ -455,7 +460,11 @@ export function useSupabaseAuth() {
         options: {
           emailRedirectTo,
           data: {
-            full_name: fullName
+            full_name: fullName,
+            ...buildSignupAttributionMetadata({
+              product: SYMPTOM_TRACKER_SIGNUP_PRODUCT,
+              host: import.meta.client ? window.location.host : null
+            })
           }
         }
       })
@@ -572,6 +581,7 @@ export function useSupabaseAuth() {
     try {
       if (import.meta.client) {
         markOAuthFlowStarted()
+        markPendingSignupProduct(SYMPTOM_TRACKER_SIGNUP_PRODUCT)
       }
 
       const result = await supabase.auth.signInWithOAuth({

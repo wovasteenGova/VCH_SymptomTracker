@@ -65,6 +65,7 @@
 import { establishSessionFromEmailLink, isPkceVerifierMissingError } from '~/composables/useAuthEmailLink'
 import { clearPendingConfirmEmail, readPendingConfirmEmail } from '~/utils/pendingConfirmEmail'
 import { markAuthHydratePending } from '~/utils/authHydrate'
+import { ensureUserSignupAttribution } from '~/utils/signupAttributionClient'
 
 definePageMeta({
   layout: false
@@ -133,6 +134,7 @@ onMounted(async () => {
       await syncAuthSession({ attempts: 4, delayMs: 150 })
     }
 
+    await ensureUserSignupAttribution(useSupabaseClient())
     markAuthHydratePending()
     clearPendingConfirmEmail()
     status.value = 'success'

@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import { clearOAuthFlowMarker, establishSessionFromEmailLink, isPkceVerifierMissingError } from '~/composables/useAuthEmailLink'
 import { markAuthHydratePending } from '~/utils/authHydrate'
+import { ensureUserSignupAttribution } from '~/utils/signupAttributionClient'
 
 definePageMeta({
   layout: false
@@ -105,6 +106,7 @@ onMounted(async () => {
     }
 
     applySessionUser(session.user)
+    await ensureUserSignupAttribution(useSupabaseClient())
     markAuthHydratePending()
     status.value = 'success'
     window.sessionStorage.setItem('symptom-tracker-auth-success', '1')
@@ -121,6 +123,7 @@ onMounted(async () => {
     if (recoveredSession) {
       applySessionUser(recoveredSession.user)
       await syncAuthSession({ attempts: 3, delayMs: 150 })
+      await ensureUserSignupAttribution(supabase)
       markAuthHydratePending()
       status.value = 'success'
       window.sessionStorage.setItem('symptom-tracker-auth-success', '1')
