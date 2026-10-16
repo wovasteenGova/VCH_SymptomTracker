@@ -2,10 +2,13 @@
 import { PDF_EXPORT_ACKNOWLEDGMENT_LABEL } from '../../utils/pdfExportCertification'
 import { useTrackerPdfExportUi } from '../../composables/useTrackerPdfExportUi'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   variant?: 'overlay' | 'inline'
+  /** When false, parent pins actions outside the scroll area (mobile History Export tab). */
+  showActionFooter?: boolean
 }>(), {
-  variant: 'inline'
+  variant: 'inline',
+  showActionFooter: true
 })
 
 const {
@@ -50,12 +53,12 @@ const {
 <template>
   <div
     data-history-interactive
-    :class="variant === 'overlay'
+    :class="props.variant === 'overlay'
       ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
       : 'flex flex-col'"
   >
     <div
-      :class="variant === 'overlay'
+      :class="props.variant === 'overlay'
         ? 'no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4'
         : 'pb-4'"
     >
@@ -366,9 +369,10 @@ const {
     </div>
 
     <div
-      :class="variant === 'overlay'
+      v-if="props.showActionFooter"
+      :class="props.variant === 'overlay'
         ? 'border-t border-default px-5 py-4'
-        : 'sticky bottom-0 border-t border-default bg-elevated pt-4'"
+        : 'border-t border-default bg-elevated pt-4'"
     >
       <button
         v-if="!user && !isAuthLoading"
