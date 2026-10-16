@@ -1900,6 +1900,7 @@ import TrackerDesktopWorkspace from '../components/tracker/TrackerDesktopWorkspa
 import TrackerDesktopCenter from '../components/tracker/TrackerDesktopCenter.vue'
 import TrackerDesktopHistory from '../components/tracker/TrackerDesktopHistory.vue'
 import TrackerEntryFlow from '../components/tracker/TrackerEntryFlow.vue'
+import TrackerPdfExportSettings from '../components/tracker/TrackerPdfExportSettings.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
