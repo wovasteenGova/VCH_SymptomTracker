@@ -7189,7 +7189,10 @@ function handleHistoryPanelTransitionEnd(event: TransitionEvent) {
     return
   }
 
-  historyPanelAnimating.value = false
+  const panel = event.currentTarget as HTMLElement
+  if (panel.classList.contains('is-history-animating')) {
+    historyPanelAnimating.value = false
+  }
 }
 
 let conditionSwipeStartX = 0
@@ -8392,13 +8395,15 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
   inset-inline: 0;
   bottom: 0;
   z-index: 90;
-  max-height: 80%;
+  /* Allow smooth growth to 100%; expanded state sets height explicitly. */
+  max-height: 100%;
   min-height: 0;
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   transition:
     height 650ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: height;
 }
 
 .home-history-panel.is-history-collapsed {
@@ -8435,14 +8440,12 @@ useTrackerDemoScript(isDemoMode ? trackerDemoActions : null, demoControl)
 .home-history-panel.is-history-expanded {
   z-index: 100;
   height: 80%;
-  max-height: 80%;
   box-shadow: 0 -12px 40px rgb(0 0 0 / 0.12);
 }
 
+/* Grow upward from the bottom edge; do not set top (instant top caused a visible jump). */
 .home-history-panel.is-history-expanded.is-history-maximized {
-  top: 0;
   height: 100%;
-  max-height: 100%;
 }
 
 .dark .home-history-panel.is-history-expanded {
