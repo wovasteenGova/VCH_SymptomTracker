@@ -45,4 +45,5 @@ export type TrackerPdfExportUiContext = {
   signInForExport: () => void
 }
 
-export const TRACKER_PDF_EXPORT_UI_KEY: InjectionKey<TrackerPdfExportUiContext> = Symbol('trackerPdfExportUi')
+/** String key so provide/inject survives async chunks (Symbol can duplicate across bundles). */
+export const TRACKER_PDF_EXPORT_UI_KEY: InjectionKey<TrackerPdfExportUiContext> = 'tracker-pdf-export-ui'
