@@ -1039,7 +1039,7 @@
             class="history-panel-scroll min-h-0 flex-1 overscroll-contain bg-elevated pb-2 pt-3 custom-scrollbar"
             :class="[
               isMobileLayout ? 'px-3' : 'px-4',
-              historyExpanded ? 'overflow-y-auto' : 'overflow-hidden touch-pan-y'
+              historyScrollOverflowClass
             ]"
             @scroll="handleHistoryScroll"
             @wheel="handleHistoryWheel"
@@ -1209,15 +1209,21 @@
 
             <div
               v-else-if="activeHistoryTab === 'Export'"
-              class="py-1"
+              class="flex min-h-0 flex-1 flex-col overflow-hidden py-1"
             >
-              <p class="mb-3 text-sm text-muted">
-                Choose report type, conditions, and download options.
-              </p>
-              <TrackerPdfExportSettings variant="inline" />
+              <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2 custom-scrollbar">
+                <p class="mb-3 text-sm text-muted">
+                  Choose report type, conditions, and download options.
+                </p>
+                <TrackerPdfExportSettings variant="inline" :show-action-footer="false" />
+              </div>
+              <TrackerPdfExportActionFooter class="pb-1" />
             </div>
 
-            <div class="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pb-1 text-xs font-semibold text-muted">
+            <div
+              v-if="activeHistoryTab !== 'Export'"
+              class="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pb-1 text-xs font-semibold text-muted"
+            >
               <NuxtLink to="/install" data-history-interactive class="hover:text-highlighted">Install</NuxtLink>
               <a
                 href="mailto:hello@veteranscentralhub.com?subject=Accessibility%20help%20with%20VCH"
@@ -1901,6 +1907,7 @@ import TrackerDesktopCenter from '../components/tracker/TrackerDesktopCenter.vue
 import TrackerDesktopHistory from '../components/tracker/TrackerDesktopHistory.vue'
 import TrackerEntryFlow from '../components/tracker/TrackerEntryFlow.vue'
 import TrackerPdfExportSettings from '../components/tracker/TrackerPdfExportSettings.vue'
+import TrackerPdfExportActionFooter from '../components/tracker/TrackerPdfExportActionFooter.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
@@ -3003,6 +3010,18 @@ const historyPanelClass = computed(() => [
   historyMaximized.value ? 'is-history-maximized' : '',
   historyPanelAnimating.value ? 'is-history-animating' : ''
 ])
+
+const historyScrollOverflowClass = computed(() => {
+  if (!historyExpanded.value) {
+    return 'overflow-hidden touch-pan-y'
+  }
+
+  if (activeHistoryTab.value === 'Export') {
+    return 'flex min-h-0 flex-1 flex-col overflow-hidden'
+  }
+
+  return 'overflow-y-auto'
+})
 
 const isConditionSlideEntryEnabled = computed(() => {
   return !historyExpanded.value
