@@ -3194,14 +3194,31 @@ const exportableConditions = computed((): ExportableCondition[] => {
 })
 
 
+function shouldLimitExportSelectionToPeriodEntries() {
+  return pdfExportPeriodPreset.value !== 'full'
+    && exportPeriodIsValid.value
+}
+
+function exportEntryCountInPeriod(conditionKey: string) {
+  return resolveExportEntries([conditionKey]).length
+}
+
+function exportConditionKeysWithPeriodEntries() {
+  return exportableConditions.value
+    .filter((condition) => exportEntryCountInPeriod(condition.key) > 0)
+    .map((condition) => condition.key)
+}
+
 const allExportConditionsSelected = computed(() => {
-  if (!exportableConditions.value.length) {
+  const pool = shouldLimitExportSelectionToPeriodEntries()
+    ? exportableConditions.value.filter((condition) => exportEntryCountInPeriod(condition.key) > 0)
+    : exportableConditions.value
+
+  if (!pool.length) {
     return false
   }
 
-  return exportableConditions.value.every((condition) => (
-    selectedExportConditionKeys.value.includes(condition.key)
-  ))
+  return pool.every((condition) => selectedExportConditionKeys.value.includes(condition.key))
 })
 
 const pdfExportDescription = computed(() => {
@@ -3559,7 +3576,9 @@ function toggleAllExportConditions() {
     return
   }
 
-  selectedExportConditionKeys.value = exportableConditions.value.map((condition) => condition.key)
+  selectedExportConditionKeys.value = shouldLimitExportSelectionToPeriodEntries()
+    ? exportConditionKeysWithPeriodEntries()
+    : exportableConditions.value.map((condition) => condition.key)
 }
 
 function ensureExportConditionSelection() {
@@ -3569,11 +3588,19 @@ function ensureExportConditionSelection() {
   }
 
   const validKeys = new Set(exportableConditions.value.map((condition) => condition.key))
-  const retained = selectedExportConditionKeys.value.filter((key) => validKeys.has(key))
+  let retained = selectedExportConditionKeys.value.filter((key) => validKeys.has(key))
+
+  if (shouldLimitExportSelectionToPeriodEntries()) {
+    retained = retained.filter((key) => exportEntryCountInPeriod(key) > 0)
+  }
 
   selectedExportConditionKeys.value = retained.length
     ? retained
-    : exportableConditions.value.map((condition) => condition.key)
+    : (
+      shouldLimitExportSelectionToPeriodEntries()
+        ? exportConditionKeysWithPeriodEntries()
+        : exportableConditions.value.map((condition) => condition.key)
+    )
 }
 
 function buildExportConditionLabel(conditionKeys: string[]) {
@@ -3593,6 +3620,19 @@ function buildExportConditionLabel(conditionKeys: string[]) {
 watch(exportableConditions, () => {
   ensureExportConditionSelection()
 })
+
+watch(
+  [
+    pdfExportPeriodPreset,
+    pdfExportCustomStartDate,
+    pdfExportCustomEndDate,
+    pdfExportVaCutoffDate,
+    vaExportCutoffDate
+  ],
+  () => {
+    ensureExportConditionSelection()
+  }
+)
 
 const activeEntryImage = computed(() => {
   if (selectedSearchCondition.value?.image) {
