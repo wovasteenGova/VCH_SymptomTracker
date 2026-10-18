@@ -423,7 +423,8 @@
               :auth-loading="isAuthLoading"
               :is-demo-mode="isDemoMode"
               @sign-in="toggleAuthPanel"
-              @show-all="desktopHistoryShowAll = true"
+              @show-all="showAllDesktopHistoryEntries"
+              @retry="loadEntries"
               @view-charts="openDesktopChartsForConditionKey"
               @open-entry="openEntryDetailsOverlay"
               @edit-entry="requestEntryEdit"
@@ -1063,7 +1064,16 @@
                 {{ loadingEntriesMessage }}
               </div>
               <div v-else-if="entriesError" class="py-8 text-center text-sm text-red-600 dark:text-red-300">
-                {{ entriesError }}
+                <p role="alert">{{ entriesError }}</p>
+                <button
+                  type="button"
+                  data-history-interactive
+                  class="mt-3 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 font-bold text-highlighted transition hover:bg-accented"
+                  @click.stop="loadEntries"
+                >
+                  <UIcon name="i-lucide-refresh-cw" class="size-4" />
+                  Try again
+                </button>
               </div>
               <div v-else-if="!historyEntries.length" class="py-8 text-center">
                 <p class="font-bold text-highlighted">No entries yet</p>
@@ -1124,6 +1134,7 @@
                   </div>
 
                   <button
+                    v-if="entry.source !== 'Family'"
                     type="button"
                     data-history-interactive
                     class="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-accented/40 hover:text-highlighted"
@@ -1329,8 +1340,8 @@
         <div class="flex items-start justify-between gap-4 border-b border-default px-5 py-4">
           <div class="min-w-0">
             <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
-              <UIcon name="i-lucide-eye" class="size-4" />
-              Log details
+              <UIcon :name="viewedHistoryEntryIsReadOnly ? 'i-lucide-lock-keyhole' : 'i-lucide-eye'" class="size-4" />
+              {{ viewedHistoryEntryIsReadOnly ? 'Supporter observation' : 'Log details' }}
             </p>
             <h3 id="log-details-title" class="mt-2 truncate text-xl font-bold text-highlighted">
               {{ viewedHistoryEntry.title }}
@@ -1341,6 +1352,7 @@
           </div>
           <div class="flex shrink-0 items-center gap-1">
             <button
+              v-if="!viewedHistoryEntryIsReadOnly"
               type="button"
               class="grid size-10 place-items-center rounded-full text-muted transition hover:bg-accented/40 hover:text-highlighted"
               :aria-label="`Edit ${viewedHistoryEntry.title}`"
@@ -1372,6 +1384,9 @@
             <UBadge color="neutral" variant="soft" size="md">{{ viewedHistoryEntry.condition }}</UBadge>
             <UBadge :color="viewedHistoryEntry.source === 'Family' ? 'info' : 'primary'" variant="soft" size="md">
               {{ viewedHistoryEntry.source }}
+            </UBadge>
+            <UBadge v-if="viewedHistoryEntryIsReadOnly" color="neutral" variant="soft" size="md">
+              Read-only
             </UBadge>
             <UBadge color="warning" variant="soft" size="md">
               Severity {{ viewedHistoryEntry.severity }}/10
@@ -1421,7 +1436,15 @@
           >
             Close
           </button>
+          <span
+            v-if="viewedHistoryEntryIsReadOnly"
+            class="flex items-center justify-center gap-2 rounded-2xl bg-muted/40 px-4 py-3 text-sm font-bold text-muted"
+          >
+            <UIcon name="i-lucide-lock-keyhole" class="size-4 shrink-0" />
+            View only
+          </span>
           <button
+            v-else
             type="button"
             class="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
             @click="editViewedHistoryEntry"
@@ -2681,6 +2704,13 @@ const desktopHistoryEntries = computed(() => {
   return historyEntries.value.filter((entry) => matchingIds.has(entry.id))
 })
 
+async function showAllDesktopHistoryEntries() {
+  desktopHistoryShowAll.value = true
+  if (entriesError.value) {
+    await loadEntries()
+  }
+}
+
 const viewedHistoryEntry = computed(() => {
   if (!viewedHistoryEntryId.value) {
     return null
@@ -2696,6 +2726,8 @@ const viewedHistoryRawEntry = computed(() => {
 
   return savedEntries.value.find((entry) => entry.id === viewedHistoryEntryId.value) || null
 })
+
+const viewedHistoryEntryIsReadOnly = computed(() => viewedHistoryRawEntry.value?.source === 'family')
 
 const viewedHistoryEntryTimestamp = computed(() => {
   const rawEntry = viewedHistoryRawEntry.value
@@ -7607,7 +7639,7 @@ function requestEntryEdit(entryId: string) {
   }
 
   if (entry.source === 'family') {
-    entriesError.value = 'Signed family observations are read-only. The supporter can submit a new observation if something changed.'
+    openEntryDetailsOverlay(entryId)
     return
   }
 
@@ -7677,6 +7709,11 @@ function openEntryForEdit(entryId: string) {
   }
   const entry = savedEntries.value.find((item) => item.id === entryId)
   if (!entry) {
+    return
+  }
+
+  if (entry.source === 'family') {
+    openEntryDetailsOverlay(entryId)
     return
   }
 

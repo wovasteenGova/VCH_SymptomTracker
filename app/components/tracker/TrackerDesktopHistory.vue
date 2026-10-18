@@ -38,6 +38,7 @@ const emit = defineEmits<{
   'update:activeTab': [tab: HistoryTab]
   signIn: []
   showAll: []
+  retry: []
   viewCharts: [conditionKey: string]
   openEntry: [id: string]
   editEntry: [id: string]
@@ -151,6 +152,18 @@ defineExpose({
       class="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-2"
     >
       <template v-if="activeTab === 'Entries'">
+        <div v-if="error && signedIn" class="py-4 text-center text-sm text-error">
+          <p role="alert">{{ error }}</p>
+          <button
+            type="button"
+            :class="['mt-3 inline-flex items-center gap-2', td.secondaryBtn]"
+            @click="$emit('retry')"
+          >
+            <UIcon name="i-lucide-refresh-cw" class="size-4" />
+            Try again
+          </button>
+        </div>
+
         <div v-if="!signedIn && !authLoading && !isDemoMode" class="py-10 text-center">
           <p class="font-bold text-highlighted">Sign in to save entries</p>
           <p :class="['mt-1 text-sm', td.meta]">
@@ -169,11 +182,7 @@ defineExpose({
           {{ loadingMessage }}
         </div>
 
-        <div v-else-if="error" class="py-10 text-center text-sm text-error">
-          {{ error }}
-        </div>
-
-        <div v-else-if="!entries.length" class="py-10 text-center">
+        <div v-else-if="!entries.length && !error" class="py-10 text-center">
           <p class="font-bold text-highlighted">
             {{ entriesFiltered ? `No entries for ${conditionFilterLabel} yet` : 'No entries yet' }}
           </p>
@@ -224,6 +233,9 @@ defineExpose({
                 <UBadge v-else color="neutral" variant="soft" size="md">{{ entry.condition }}</UBadge>
                 <UBadge :color="entry.source === 'Family' ? 'secondary' : 'primary'" variant="soft" size="md">
                   {{ entry.source }}
+                </UBadge>
+                <UBadge v-if="entry.source === 'Family'" color="neutral" variant="soft" size="md">
+                  Read-only
                 </UBadge>
                 <UBadge v-if="entry.wasEdited" color="warning" variant="soft" size="md">
                   Edited

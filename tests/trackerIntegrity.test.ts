@@ -27,7 +27,7 @@ describe('tracker data integrity regressions', () => {
   })
 
   it('makes family reports immutable and veteran revisions atomic', () => {
-    expect(index).toContain('Signed family observations are read-only.')
+    expect(index).toContain('Signed family observations cannot be rewritten.')
     expect(migration).toContain("if old.source = 'family' and v_content_changed")
     expect(migration).toContain('insert into tracker.symptom_entry_revisions')
     expect(migration).toContain("perform set_config('tracker.revision_update', '1', true)")
