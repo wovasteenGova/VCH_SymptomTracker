@@ -225,12 +225,18 @@ defineExpose({
                 <UBadge :color="entry.source === 'Family' ? 'secondary' : 'primary'" variant="soft" size="md">
                   {{ entry.source }}
                 </UBadge>
+                <UBadge v-if="entry.wasEdited" color="warning" variant="soft" size="md">
+                  Edited
+                </UBadge>
               </div>
               <h3 class="mt-1.5 truncate text-base font-bold text-highlighted">
                 {{ entry.title }}
               </h3>
               <p :class="['mt-0.5 truncate', td.meta]">
                 {{ entry.time }} · Severity {{ entry.severity }}/10 · {{ entry.summary }}
+              </p>
+              <p v-if="entry.editedLabel" :class="['mt-1 text-xs', td.meta]">
+                {{ entry.editedLabel }}
               </p>
             </div>
 
