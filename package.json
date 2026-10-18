@@ -23,6 +23,7 @@
     "@supabase/supabase-js": "^2.107.0",
     "@vite-pwa/nuxt": "^1.1.1",
     "chart.js": "^4.5.1",
+    "diff": "8.0.4",
     "jspdf": "^4.2.1",
     "nuxt": "^4.5.1",
     "qrcode": "^1.5.4",

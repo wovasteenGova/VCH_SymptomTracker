@@ -1,7 +1,10 @@
 import type { jsPDF } from 'jspdf'
 import {
   buildFieldEditHistory,
+  buildFieldEditPresentation,
   buildSymptomEntrySavePayloadFromReportEntry,
+  type EntryEditParagraph,
+  type EntryEditTextRun,
   type EntryFieldRef,
   type EntryRevisionRecord
 } from './entryEditHistory'
@@ -87,9 +90,10 @@ const detailLabelMap: Record<string, string> = {
 
 type EntryBlock = {
   label: string
-  value: string
-  lines: string[]
-  priorLines: string[][]
+  paragraphs: Array<{
+    lines: EntryEditTextRun[][]
+    addedLabelLines: string[]
+  }>
   kind: 'primary' | 'detail'
 }
 
@@ -264,6 +268,67 @@ function buildEntryRevisionContext(
   }
 }
 
+function wrapEditParagraph(doc: jsPDF, paragraph: EntryEditParagraph, maxWidth: number, fontSize: number) {
+  const lines: EntryEditTextRun[][] = [[]]
+  const plainAddition = paragraph.addedAt && !paragraph.runs.some(run => run.kind === 'removed')
+  let lineWidth = 0
+  let previousRun: EntryEditTextRun | undefined
+
+  const newLine = () => {
+    lines.push([])
+    lineWidth = 0
+  }
+  const append = (run: EntryEditTextRun) => {
+    const line = lines[lines.length - 1]!
+    const previous = line[line.length - 1]
+    if (previous?.kind === run.kind) {
+      previous.text += run.text
+    } else {
+      line.push({ ...run })
+    }
+    lineWidth += doc.getTextWidth(run.text)
+  }
+
+  for (const sourceRun of paragraph.runs) {
+    const run = plainAddition ? { ...sourceRun, kind: 'unchanged' as const } : sourceRun
+    // Keep replacement words visually separate without changing the saved text.
+    if (previousRun && /\S$/.test(previousRun.text) && /^\S/.test(run.text)
+      && (previousRun.kind === 'removed' || run.kind === 'removed')) {
+      doc.setFont('helvetica', 'normal')
+      append({ text: ' ', kind: 'unchanged' })
+    }
+    previousRun = run
+    doc.setFont('helvetica', run.kind === 'added' ? 'bold' : 'normal')
+    doc.setFontSize(fontSize)
+
+    for (const token of run.text.match(/\n|[^\S\n]+|[^\s]+/g) ?? []) {
+      if (token === '\n') {
+        newLine()
+        continue
+      }
+      if (!token.trim()) {
+        if (lineWidth) append({ ...run, text: token })
+        continue
+      }
+      if (lineWidth && lineWidth + doc.getTextWidth(token) > maxWidth) newLine()
+
+      const parts = doc.getTextWidth(token) > maxWidth
+        ? doc.splitTextToSize(token, maxWidth) as string[]
+        : [token]
+      parts.forEach((part, index) => {
+        if (index) newLine()
+        append({ ...run, text: part })
+      })
+    }
+  }
+
+  doc.setFont('helvetica', 'normal')
+  const addedLabelLines = paragraph.addedAt
+    ? wrapLines(doc, `Added text · ${formatReportEntryTimestamp(paragraph.addedAt)}`, maxWidth, 7.5)
+    : []
+  return { lines, addedLabelLines }
+}
+
 function buildEntryBlocks(
   doc: jsPDF,
   entry: ReportEntryRecord,
@@ -280,21 +345,23 @@ function buildEntryBlocks(
   ) => {
     const maxWidth = kind === 'detail' ? (innerWidth - 16) / 2 : innerWidth
     const fontSize = kind === 'primary' ? 11 : 10
-    const history = revisionContext
-      ? buildFieldEditHistory(revisionContext.revisions, revisionContext.currentSnapshot, field)
-      : { priorValues: [], currentValue: fallbackValue }
-    const value = history.currentValue || fallbackValue
+    const paragraphs = buildFieldEditPresentation(
+      revisionContext?.revisions ?? [],
+      revisionContext?.currentSnapshot ?? buildSymptomEntrySavePayloadFromReportEntry(entry),
+      field
+    )
 
-    if (!value && !history.priorValues.length) {
+    if (!paragraphs.length && fallbackValue) {
+      paragraphs.push({ runs: [{ text: fallbackValue, kind: 'unchanged' }] })
+    }
+    if (!paragraphs.length) {
       return
     }
 
     blocks.push({
       label,
-      value,
       kind,
-      priorLines: history.priorValues.map((priorValue) => wrapLines(doc, priorValue, maxWidth, fontSize)),
-      lines: value ? wrapLines(doc, value, maxWidth, fontSize) : []
+      paragraphs: paragraphs.map(paragraph => wrapEditParagraph(doc, paragraph, maxWidth, fontSize))
     })
   }
 
@@ -333,15 +400,10 @@ function buildEntryBlocks(
 }
 
 function measureBlockHeight(block: EntryBlock, lineHeight: number, labelHeight: number, gapAfter: number) {
-  let height = labelHeight
-
-  block.priorLines.forEach((priorLines) => {
-    height += priorLines.length * lineHeight
-  })
-
-  height += block.lines.length * lineHeight + gapAfter
-
-  return height
+  return labelHeight + gapAfter + block.paragraphs.reduce((height, paragraph, index) => (
+    height + (index ? 8 : 0) + paragraph.lines.length * lineHeight
+      + (paragraph.addedLabelLines.length ? paragraph.addedLabelLines.length * 10 + 3 : 0)
+  ), 0)
 }
 
 function measureHeaderRevisionHeight(priorValueCount: number) {
@@ -720,13 +782,35 @@ function drawBlockContent(
   fontSize: number,
   lineHeight: number
 ) {
-  block.priorLines.forEach((priorLines) => {
-    drawStruckLines(ctx, priorLines, x, fontSize, lineHeight)
-  })
+  block.paragraphs.forEach((paragraph, index) => {
+    if (index) ctx.y += 8
+    if (paragraph.addedLabelLines.length) {
+      drawBlockLines(ctx, paragraph.addedLabelLines, x, 7.5, 10, slate500)
+      ctx.y += 3
+    }
 
-  if (block.lines.length) {
-    drawBlockLines(ctx, block.lines, x, fontSize, lineHeight)
-  }
+    paragraph.lines.forEach((line) => {
+      let runX = x
+      for (const run of line) {
+        ctx.doc.setFont('helvetica', run.kind === 'added' ? 'bold' : 'normal')
+        ctx.doc.setFontSize(fontSize)
+        setText(ctx.doc, run.kind === 'removed' ? slate500 : slate700)
+        ctx.doc.text(run.text, runX, ctx.y)
+        const width = ctx.doc.getTextWidth(run.text)
+        if (run.kind === 'removed' && run.text.trim()) {
+          const leadingSpace = run.text.slice(0, run.text.length - run.text.trimStart().length)
+          const strikeX = runX + ctx.doc.getTextWidth(leadingSpace)
+          const strikeY = ctx.y - fontSize * 0.35
+          setStroke(ctx.doc, slate500)
+          ctx.doc.setLineWidth(0.6)
+          ctx.doc.line(strikeX, strikeY, strikeX + ctx.doc.getTextWidth(run.text.trim()), strikeY)
+          ctx.doc.setLineWidth(0.5)
+        }
+        runX += width
+      }
+      ctx.y += lineHeight
+    })
+  })
 }
 
 function drawEntryCard(

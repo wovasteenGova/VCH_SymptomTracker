@@ -1,3 +1,4 @@
+import { diffWordsWithSpace } from 'diff'
 import type { SymptomEntrySavePayload } from './symptomEntrySavePayload'
 import { formatReportEntryTimestamp } from './reportBackfillNote'
 
@@ -92,6 +93,114 @@ export function buildFieldEditHistory(
     priorValues,
     currentValue
   }
+}
+
+export type EntryEditTextRun = {
+  text: string
+  kind: 'unchanged' | 'added' | 'removed'
+  addedAt?: string
+  removedAt?: string
+}
+
+export type EntryEditParagraph = {
+  runs: EntryEditTextRun[]
+  addedAt?: string
+}
+
+function appendEditRun(runs: EntryEditTextRun[], run: EntryEditTextRun) {
+  if (!run.text) return
+
+  const previous = runs[runs.length - 1]
+  if (previous && run.kind !== 'removed' && previous.kind === run.kind
+    && previous.addedAt === run.addedAt && previous.removedAt === run.removedAt) {
+    previous.text += run.text
+  } else {
+    runs.push({ ...run })
+  }
+}
+
+function applyTextRevision(runs: EntryEditTextRun[], after: string, revisedAt: string) {
+  const before = runs.filter(run => run.kind !== 'removed').map(run => run.text).join('')
+  const changes = diffWordsWithSpace(before, after, { timeout: 100 }) ?? [
+    { value: before, removed: true, added: false },
+    { value: after, removed: false, added: true }
+  ]
+  const next: EntryEditTextRun[] = []
+  let runIndex = 0
+  let offset = 0
+
+  // Compare only live text, carrying earlier deletions along at their original positions.
+  const carryDeletions = () => {
+    while (runs[runIndex]?.kind === 'removed') {
+      appendEditRun(next, runs[runIndex]!)
+      runIndex += 1
+    }
+  }
+  const consume = (length: number, removed: boolean) => {
+    while (length > 0 && runIndex < runs.length) {
+      carryDeletions()
+      const run = runs[runIndex]
+      if (!run) break
+
+      const count = Math.min(length, run.text.length - offset)
+      appendEditRun(next, {
+        ...run,
+        text: run.text.slice(offset, offset + count),
+        ...(removed ? { kind: 'removed', removedAt: revisedAt } : {})
+      })
+      length -= count
+      offset += count
+      if (offset === run.text.length) {
+        runIndex += 1
+        offset = 0
+      }
+    }
+  }
+
+  for (const change of changes) {
+    if (change.added) {
+      carryDeletions()
+      appendEditRun(next, { text: change.value, kind: 'added', addedAt: revisedAt })
+    } else {
+      consume(change.value.length, Boolean(change.removed))
+    }
+  }
+  carryDeletions()
+  return next
+}
+
+export function buildFieldEditPresentation(
+  revisions: EntryRevisionRecord[],
+  current: EntryRevisionSnapshot,
+  field: EntryFieldRef
+): EntryEditParagraph[] {
+  const sorted = [...revisions].sort((left, right) => left.revision_number - right.revision_number)
+  const text = (snapshot: EntryRevisionSnapshot) => getSnapshotFieldValue(snapshot, field).replace(/\r\n?/g, '\n')
+  let runs: EntryEditTextRun[] = [{ text: text(sorted[0]?.snapshot ?? current), kind: 'unchanged' }]
+
+  sorted.forEach((revision, index) => {
+    runs = applyTextRevision(runs, text(sorted[index + 1]?.snapshot ?? current), revision.revised_at)
+  })
+
+  const paragraphs: EntryEditParagraph[] = [{ runs: [] }]
+  for (const run of runs) {
+    for (const part of run.text.split(/(\n[\t ]*\n+)/)) {
+      if (/^\n[\t ]*\n+$/.test(part)) {
+        paragraphs.push({ runs: [] })
+      } else {
+        appendEditRun(paragraphs[paragraphs.length - 1]!.runs, { ...run, text: part })
+      }
+    }
+  }
+
+  return paragraphs.filter(paragraph => paragraph.runs.some(run => run.text.trim())).map((paragraph) => {
+    const content = paragraph.runs.filter(run => run.text.trim())
+    // A wholly new paragraph gets one label; inline additions remain part of their sentence.
+    const addedAt = content.every(run => run.addedAt)
+      ? content.map(run => run.addedAt!).sort()[0]
+      : undefined
+    return { ...paragraph, ...(addedAt ? { addedAt } : {}) }
+  })
 }
 
 export function buildSymptomEntrySavePayloadFromReportEntry(entry: {

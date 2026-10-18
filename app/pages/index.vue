@@ -1561,7 +1561,7 @@
           Full history mode is on
         </h3>
         <p class="mt-3 text-sm leading-6 text-toned">
-          Signed PDF exports show crossed-out previous text plus your latest version so reviewers can see corrections clearly.
+          Signed PDF exports label added paragraphs and cross out removed or replaced words so reviewers can see corrections clearly.
         </p>
         <p class="mt-3 text-sm leading-6 text-toned">
           Each log can be edited up to
