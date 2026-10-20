@@ -157,6 +157,7 @@ function isGroupExpanded(id: string | number) {
         data-slot="viewport"
         :class="ui.viewport()"
         :style="{
+          zIndex: 240,
           '--scale-factor': '0.05',
           '--translate-factor': props.position?.startsWith('top') ? '1px' : '-1px',
           '--gap': props.position?.startsWith('top') ? '16px' : '-16px',
