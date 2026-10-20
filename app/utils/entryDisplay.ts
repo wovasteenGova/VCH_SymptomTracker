@@ -1,6 +1,23 @@
 import { normalizeConditionLabel, resolveCatalogConditionByStoredKey } from './conditionCatalog'
 import { conditionKeyFromLabel } from './subscription'
 
+/** Max words shown for entry narrative in History entry lists (not detail views). */
+export const HISTORY_ENTRY_LIST_MAX_WORDS = 65
+
+export function truncateToWordCount(text: string, maxWords = HISTORY_ENTRY_LIST_MAX_WORDS) {
+  const normalized = text.trim()
+  if (!normalized) {
+    return text
+  }
+
+  const words = normalized.split(/\s+/).filter(Boolean)
+  if (words.length <= maxWords) {
+    return normalized
+  }
+
+  return `${words.slice(0, maxWords).join(' ')}…`
+}
+
 export function resolveEntryConditionKey(entry: Record<string, any>) {
   const stored = entry.condition_key || entry.condition_label || ''
   const resolved = resolveCatalogConditionByStoredKey(stored)
@@ -14,6 +31,8 @@ export function mapEntryHistoryItem(entry: Record<string, any>, options: { delet
   const deletedAt = entry.deleted_at ? new Date(entry.deleted_at) : null
   const wasEdited = !options.deleted && updatedAt.getTime() - createdAt.getTime() > 60_000
   const conditionLabel = normalizeConditionLabel(entry.condition_label)
+  const title = entry.summary || conditionLabel
+  const summary = entry.impact || 'No impact note added'
 
   return {
     id: entry.id,
@@ -22,8 +41,10 @@ export function mapEntryHistoryItem(entry: Record<string, any>, options: { delet
     condition: conditionLabel,
     conditionKey: resolveEntryConditionKey(entry),
     source: entry.source === 'family' ? 'Family' : 'Veteran',
-    title: entry.summary || conditionLabel,
-    summary: entry.impact || 'No impact note added',
+    title,
+    summary,
+    listTitle: truncateToWordCount(title),
+    listSummary: truncateToWordCount(summary),
     severity: entry.severity ?? 0,
     time: entryDate.toLocaleString('en-US', {
       hour: 'numeric',

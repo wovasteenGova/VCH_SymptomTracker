@@ -13,6 +13,8 @@ type HistoryEntry = {
   time: string
   severity: number
   summary: string
+  listTitle: string
+  listSummary: string
   wasEdited?: boolean
   editedLabel?: string
 }
@@ -242,10 +244,10 @@ defineExpose({
                 </UBadge>
               </div>
               <h3 class="mt-1.5 text-base font-bold leading-snug text-highlighted">
-                {{ entry.title }}
+                {{ entry.listTitle }}
               </h3>
               <p :class="['mt-0.5 leading-snug', td.meta]">
-                {{ entry.time }} · Severity {{ entry.severity }}/10 · {{ entry.summary }}
+                {{ entry.time }} · Severity {{ entry.severity }}/10 · {{ entry.listSummary }}
               </p>
               <p v-if="entry.editedLabel" :class="['mt-1 text-xs', td.meta]">
                 {{ entry.editedLabel }}

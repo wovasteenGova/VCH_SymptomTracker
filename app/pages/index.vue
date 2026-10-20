@@ -468,15 +468,15 @@
                         @click="openEntryDetailsOverlay(entry.id)"
                       >
                         <div class="flex items-center justify-between gap-3">
-                          <p class="min-w-0 truncate font-bold text-highlighted">
-                            {{ entry.title }}
+                          <p class="min-w-0 font-bold text-highlighted">
+                            {{ entry.listTitle }}
                           </p>
                           <span class="shrink-0 text-xs font-semibold text-muted">
                             {{ entry.time }} · {{ entry.severity }}/10
                           </span>
                         </div>
-                        <p class="mt-1 truncate text-xs text-muted">
-                          {{ entry.condition }} · {{ entry.summary }}
+                        <p class="mt-1 text-xs text-muted">
+                          {{ entry.condition }} · {{ entry.listSummary }}
                         </p>
                       </button>
                     </div>
@@ -1125,7 +1125,7 @@
                       </UBadge>
                     </div>
 
-                    <h3 class="mt-2 text-base font-bold leading-snug text-highlighted">{{ entry.title }}</h3>
+                    <h3 class="mt-2 text-base font-bold leading-snug text-highlighted">{{ entry.listTitle }}</h3>
                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-snug text-muted">
                       <span class="inline-flex items-center gap-1">
                         <UIcon name="i-lucide-clock-3" class="size-3.5" />
@@ -1134,7 +1134,7 @@
                       <span class="text-dimmed">•</span>
                       <span>Severity {{ entry.severity }}/10</span>
                       <span class="text-dimmed">•</span>
-                      <span>{{ entry.summary }}</span>
+                      <span>{{ entry.listSummary }}</span>
                     </div>
                     <p v-if="entry.editedLabel" class="mt-1 text-xs text-muted">
                       {{ entry.editedLabel }}
@@ -1223,15 +1223,15 @@
                       @click="openEntryDetailsOverlay(entry.id)"
                     >
                       <div class="flex items-center justify-between gap-3">
-                        <p class="min-w-0 truncate font-bold text-highlighted">
-                          {{ entry.title }}
+                        <p class="min-w-0 font-bold text-highlighted">
+                          {{ entry.listTitle }}
                         </p>
                         <span class="shrink-0 text-xs font-semibold text-muted">
                           {{ entry.time }} · {{ entry.severity }}/10
                         </span>
                       </div>
-                      <p class="mt-1 truncate text-xs text-muted">
-                        {{ entry.condition }} · {{ entry.summary }}
+                      <p class="mt-1 text-xs text-muted">
+                        {{ entry.condition }} · {{ entry.listSummary }}
                       </p>
                     </button>
                   </div>
