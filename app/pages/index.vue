@@ -1806,6 +1806,12 @@
     @discard-then-open="discardCurrentAndOpenPendingDraft"
   />
 
+  <TrackerClaimBuilderConfirmOverlay
+    :open="isClaimBuilderConfirmOpen"
+    @close="cancelClaimBuilderConfirm"
+    @confirm="confirmClaimBuilder"
+  />
+
   <TrackerLayReportingSettingsOverlay
     :open="layReportingSettingsOpen"
     @close="closeHeaderSettingsOverlays"
@@ -1953,6 +1959,7 @@ import TrackerPdfExportSettings from '../components/tracker/TrackerPdfExportSett
 import TrackerPdfExportActionFooter from '../components/tracker/TrackerPdfExportActionFooter.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
 import TrackerDeleteEntryDraftOverlay from '../components/settings/TrackerDeleteEntryDraftOverlay.vue'
+import TrackerClaimBuilderConfirmOverlay from '../components/settings/TrackerClaimBuilderConfirmOverlay.vue'
 import TrackerLayReportingSettingsOverlay from '../components/settings/TrackerLayReportingSettingsOverlay.vue'
 import TrackerLogNotificationsSettingsOverlay from '../components/settings/TrackerLogNotificationsSettingsOverlay.vue'
 import TrackerResumeDraftConflictOverlay from '../components/settings/TrackerResumeDraftConflictOverlay.vue'
@@ -2397,12 +2404,14 @@ const weeklyLogCaution = ref<WeeklyLogCaution | null>(null)
 const pendingCadenceEntryOptions = ref<OpenEntryPanelOptions | null>(null)
 const isConditionBrowserOpen = ref(false)
 const isGuestLoginIntroOpen = ref(false)
+const isClaimBuilderConfirmOpen = ref(false)
 
 /** Hide History chrome whenever a blocking overlay owns the screen. */
 const shouldHideHistoryChrome = computed(() => (
   needsAppWelcome.value
   || isAuthPanelOpen.value
   || isGuestLoginIntroOpen.value
+  || isClaimBuilderConfirmOpen.value
   || isHomeTipsOverlayOpen.value
   || isLoggingCadencePromptOpen.value
   || Boolean(pendingDeleteDraftId.value)
@@ -5863,6 +5872,7 @@ type AppOverlayKey =
   | 'edit-history-notice'
   | 'entry-edit-locked'
   | 'guest-login-intro'
+  | 'claimbuilder-confirm'
 
 function closeAppOverlaysExcept(keep?: AppOverlayKey) {
   if (keep !== 'auth') {
@@ -5871,6 +5881,10 @@ function closeAppOverlaysExcept(keep?: AppOverlayKey) {
 
   if (keep !== 'guest-login-intro') {
     isGuestLoginIntroOpen.value = false
+  }
+
+  if (keep !== 'claimbuilder-confirm') {
+    isClaimBuilderConfirmOpen.value = false
   }
 
   if (keep !== 'delete-draft') {
@@ -7748,7 +7762,7 @@ function openDesktopHistoryExport() {
   openPdfExportOverlay()
 }
 
-function openClaimBuilder() {
+function launchClaimBuilder() {
   if (!import.meta.client) return
   const config = useRuntimeConfig()
   window.open(
@@ -7759,6 +7773,27 @@ function openClaimBuilder() {
     '_blank',
     'noopener,noreferrer'
   )
+}
+
+function openClaimBuilder() {
+  if (!import.meta.client) return
+
+  if (isMobileLayout.value) {
+    closeAppOverlaysExcept('claimbuilder-confirm')
+    isClaimBuilderConfirmOpen.value = true
+    return
+  }
+
+  launchClaimBuilder()
+}
+
+function cancelClaimBuilderConfirm() {
+  isClaimBuilderConfirmOpen.value = false
+}
+
+function confirmClaimBuilder() {
+  isClaimBuilderConfirmOpen.value = false
+  launchClaimBuilder()
 }
 
 function openLayReportingSettings() {
