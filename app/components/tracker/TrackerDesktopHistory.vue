@@ -243,10 +243,10 @@ defineExpose({
                   Edited
                 </UBadge>
               </div>
-              <h3 class="mt-1.5 text-base font-bold leading-snug text-highlighted">
+              <h3 class="mt-1.5 line-clamp-2 text-base font-bold leading-snug text-highlighted">
                 {{ entry.listTitle }}
               </h3>
-              <p :class="['mt-0.5 leading-snug', td.meta]">
+              <p :class="['mt-0.5 line-clamp-2 leading-snug', td.meta]">
                 {{ entry.time }} · Severity {{ entry.severity }}/10 · {{ entry.listSummary }}
               </p>
               <p v-if="entry.editedLabel" :class="['mt-1 text-xs', td.meta]">

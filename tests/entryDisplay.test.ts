@@ -1,18 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { HISTORY_ENTRY_LIST_MAX_WORDS, mapEntryHistoryItem, truncateToWordCount } from '../app/utils/entryDisplay'
+import {
+  HISTORY_ENTRY_LIST_TITLE_MAX_WORDS,
+  mapEntryHistoryItem,
+  truncateToWordCount
+} from '../app/utils/entryDisplay'
 
 describe('truncateToWordCount', () => {
   it('leaves short text unchanged', () => {
-    expect(truncateToWordCount('one two three')).toBe('one two three')
+    expect(truncateToWordCount('one two three', 20)).toBe('one two three')
   })
 
   it('truncates at the word limit with an ellipsis', () => {
-    const words = Array.from({ length: HISTORY_ENTRY_LIST_MAX_WORDS + 5 }, (_, index) => `w${index}`)
+    const words = Array.from({ length: HISTORY_ENTRY_LIST_TITLE_MAX_WORDS + 5 }, (_, index) => `w${index}`)
     const text = words.join(' ')
-    const result = truncateToWordCount(text)
+    const result = truncateToWordCount(text, HISTORY_ENTRY_LIST_TITLE_MAX_WORDS)
 
     expect(result.endsWith('…')).toBe(true)
-    expect(result.replace(/…$/, '').split(/\s+/)).toHaveLength(HISTORY_ENTRY_LIST_MAX_WORDS)
+    expect(result.replace(/…$/, '').split(/\s+/)).toHaveLength(HISTORY_ENTRY_LIST_TITLE_MAX_WORDS)
   })
 })
 
@@ -31,7 +35,7 @@ describe('mapEntryHistoryItem', () => {
     })
 
     expect(mapped.title).toBe(longSummary)
-    expect(mapped.listTitle).toBe(truncateToWordCount(longSummary))
+    expect(mapped.listTitle).toBe(truncateToWordCount(longSummary, HISTORY_ENTRY_LIST_TITLE_MAX_WORDS))
     expect(mapped.listSummary).toBe('Could not leave home')
   })
 })

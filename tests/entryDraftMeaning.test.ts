@@ -112,23 +112,23 @@ describe('entry draft meaning', () => {
     expect(isEntryDraftLimitReached(drafts.slice(0, 2), null)).toBe(false)
   })
 
-  it('prompts only after the user opens step 2 of a new log', () => {
+  it('prompts only when a fourth draft would overflow the 3-draft limit', () => {
     expect(shouldPromptBeforeResumeEntryDraft({
-      editingSavedEntry: false,
-      visitedStepTwo: false,
-      alreadyEditingStoredDraft: false
+      alreadyEditingStoredDraft: false,
+      hasMeaningfulCurrentEntry: true,
+      draftLimitReached: false
     })).toBe(false)
 
     expect(shouldPromptBeforeResumeEntryDraft({
-      editingSavedEntry: false,
-      visitedStepTwo: true,
-      alreadyEditingStoredDraft: false
+      alreadyEditingStoredDraft: false,
+      hasMeaningfulCurrentEntry: true,
+      draftLimitReached: true
     })).toBe(true)
 
     expect(shouldPromptBeforeResumeEntryDraft({
-      editingSavedEntry: false,
-      visitedStepTwo: true,
-      alreadyEditingStoredDraft: true
+      alreadyEditingStoredDraft: true,
+      hasMeaningfulCurrentEntry: true,
+      draftLimitReached: true
     })).toBe(false)
   })
 })

@@ -1,10 +1,11 @@
 import { normalizeConditionLabel, resolveCatalogConditionByStoredKey } from './conditionCatalog'
 import { conditionKeyFromLabel } from './subscription'
 
-/** Max words shown for entry narrative in History entry lists (not detail views). */
-export const HISTORY_ENTRY_LIST_MAX_WORDS = 65
+/** Max words for entry narrative in History lists (detail views keep full text). */
+export const HISTORY_ENTRY_LIST_TITLE_MAX_WORDS = 20
+export const HISTORY_ENTRY_LIST_SUMMARY_MAX_WORDS = 12
 
-export function truncateToWordCount(text: string, maxWords = HISTORY_ENTRY_LIST_MAX_WORDS) {
+export function truncateToWordCount(text: string, maxWords: number) {
   const normalized = text.trim()
   if (!normalized) {
     return text
@@ -43,8 +44,8 @@ export function mapEntryHistoryItem(entry: Record<string, any>, options: { delet
     source: entry.source === 'family' ? 'Family' : 'Veteran',
     title,
     summary,
-    listTitle: truncateToWordCount(title),
-    listSummary: truncateToWordCount(summary),
+    listTitle: truncateToWordCount(title, HISTORY_ENTRY_LIST_TITLE_MAX_WORDS),
+    listSummary: truncateToWordCount(summary, HISTORY_ENTRY_LIST_SUMMARY_MAX_WORDS),
     severity: entry.severity ?? 0,
     time: entryDate.toLocaleString('en-US', {
       hour: 'numeric',

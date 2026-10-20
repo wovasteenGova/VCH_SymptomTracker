@@ -1125,7 +1125,7 @@
                       </UBadge>
                     </div>
 
-                    <h3 class="mt-2 text-base font-bold leading-snug text-highlighted">{{ entry.listTitle }}</h3>
+                    <h3 class="mt-2 line-clamp-2 text-base font-bold leading-snug text-highlighted">{{ entry.listTitle }}</h3>
                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-snug text-muted">
                       <span class="inline-flex items-center gap-1">
                         <UIcon name="i-lucide-clock-3" class="size-3.5" />
@@ -1134,7 +1134,7 @@
                       <span class="text-dimmed">•</span>
                       <span>Severity {{ entry.severity }}/10</span>
                       <span class="text-dimmed">•</span>
-                      <span>{{ entry.listSummary }}</span>
+                      <span class="line-clamp-2 min-w-0">{{ entry.listSummary }}</span>
                     </div>
                     <p v-if="entry.editedLabel" class="mt-1 text-xs text-muted">
                       {{ entry.editedLabel }}
@@ -1942,6 +1942,7 @@ import {
   removeEntryDraft,
   shouldPromptBeforeResumeEntryDraft,
   upsertEntryDraft,
+  type EntryDraftCondition,
   type EntryDraftSnapshot
 } from '../composables/useEntryDraft'
 import { resolveHomeGreetingLine } from '../utils/homeGreeting'
@@ -2694,7 +2695,10 @@ function refreshHomeVisitTip() {
 
 function goAppHome() {
   if (isEntryOpen.value) {
-    closeEntryPanel(true)
+    handleCancelEntry()
+    if (isEntryOpen.value) {
+      return
+    }
   }
 
   isConditionBrowserOpen.value = false
@@ -3929,18 +3933,7 @@ function readInboxEntryDrafts() {
     migrateGuestEntryDraftToUser(ownerId)
   }
 
-  return readEntryDrafts(ownerId).filter((draft) => {
-    if (
-      isEntryOpen.value
-      && !editingEntryId.value
-      && activeEntryDraftId.value
-      && activeEntryDraftId.value === draft.id
-    ) {
-      return false
-    }
-
-    return true
-  })
+  return readEntryDrafts(ownerId)
 }
 
 function refreshEntryDraftPreview() {
@@ -3956,18 +3949,108 @@ function openEntryDraftLimitNotice() {
   isEntryDraftLimitOpen.value = true
 }
 
+function resolveConditionRecordByTitleOrKey(rawTitleOrKey: string): EntryDraftCondition | null {
+  const trimmed = rawTitleOrKey.trim()
+  if (!trimmed || trimmed === 'Symptom log' || trimmed === 'Custom condition') {
+    return null
+  }
+
+  const targetKey = conditionKey(trimmed)
+  const trackedMatch = homeConditions.value.find(
+    item => item.key === targetKey || item.title.toLowerCase() === trimmed.toLowerCase()
+  )
+  if (trackedMatch) {
+    return {
+      title: trackedMatch.title,
+      category: trackedMatch.category,
+      description: trackedMatch.description,
+      image: trackedMatch.image
+    }
+  }
+
+  const catalogMatch = resolveCatalogConditionByStoredKey(targetKey)
+    ?? conditionCatalog.find(item => item.title.toLowerCase() === trimmed.toLowerCase())
+  if (catalogMatch) {
+    return {
+      title: catalogMatch.title,
+      category: catalogMatch.category,
+      description: catalogMatch.description,
+      image: catalogMatch.image
+    }
+  }
+
+  return null
+}
+
+function resolveCurrentEntryDraftCondition(): EntryDraftCondition | null {
+  if (selectedSearchCondition.value?.title) {
+    return { ...selectedSearchCondition.value }
+  }
+
+  if (entryForm.value.condition_name?.trim() || customConditionInput.value.trim()) {
+    return null
+  }
+
+  return resolveConditionRecordByTitleOrKey(entryTitle.value)
+}
+
+function resolveDraftSnapshotCondition(snapshot: EntryDraftSnapshot): EntryDraftCondition | null {
+  if (snapshot.selectedSearchCondition?.title) {
+    return { ...snapshot.selectedSearchCondition }
+  }
+
+  if (snapshot.entryForm?.condition_name?.trim() || snapshot.customConditionInput?.trim()) {
+    return null
+  }
+
+  return resolveConditionRecordByTitleOrKey(snapshot.conditionTitle)
+}
+
+function syncActiveSlideToDraftCondition(conditionTitle: string) {
+  const trimmed = conditionTitle.trim()
+  if (!trimmed) {
+    return
+  }
+
+  const targetKey = resolveCatalogConditionByStoredKey(conditionKey(trimmed))?.key ?? conditionKey(trimmed)
+  const slideIndex = homeConditions.value.findIndex(
+    item => item.key === targetKey || item.title.toLowerCase() === trimmed.toLowerCase()
+  )
+
+  if (slideIndex >= 0) {
+    activeIndex.value = slideIndex + 1
+  }
+}
+
 function persistEntryDraftNow(
   expectedOwnerId = user.value?.id ?? null,
-  options: { whileEntryOpen?: boolean } = {}
+  _options: { whileEntryOpen?: boolean } = {}
 ) {
   if (isRestoringEntryDraft.value || editingEntryId.value) {
     return 'skipped' as const
   }
   if ((user.value?.id ?? null) !== expectedOwnerId) return 'skipped' as const
 
-  const allowWhileEntryOpen = options.whileEntryOpen === true
+  const resolvedCondition = resolveCurrentEntryDraftCondition()
+  const resolvedTitle = resolvedCondition?.title
+    || entryForm.value.condition_name?.trim()
+    || customConditionInput.value.trim()
+    || entryTitle.value
 
-  if (!allowWhileEntryOpen && isEntryOpen.value) {
+  const snapshot = buildEntryDraftSnapshot({
+    id: activeEntryDraftId.value,
+    entryStep: entryStep.value,
+    severityValue: severityValue.value,
+    entryForm: entryForm.value,
+    selectedSearchCondition: resolvedCondition,
+    customConditionInput: customConditionInput.value,
+    conditionTitle: resolvedTitle
+  })
+
+  if (!snapshot) {
+    // Keep every saved draft when the live form is empty (e.g. after switching
+    // conditions). A new log gets its own draft id instead of replacing another.
+    refreshEntryDraftPreview()
     return 'skipped' as const
   }
 
@@ -3976,23 +4059,6 @@ function persistEntryDraftNow(
   if (isEntryDraftLimitReached(savedDrafts, activeEntryDraftId.value)) {
     openEntryDraftLimitNotice()
     return 'blocked' as const
-  }
-
-  const snapshot = buildEntryDraftSnapshot({
-    id: activeEntryDraftId.value,
-    entryStep: entryStep.value,
-    severityValue: severityValue.value,
-    entryForm: entryForm.value,
-    selectedSearchCondition: selectedSearchCondition.value,
-    customConditionInput: customConditionInput.value,
-    conditionTitle: entryTitle.value
-  })
-
-  if (!snapshot) {
-    // Keep every saved draft when the live form is empty (e.g. after switching
-    // conditions). A new log gets its own draft id instead of replacing another.
-    refreshEntryDraftPreview()
-    return 'skipped' as const
   }
 
   activeEntryDraftId.value = snapshot.id
@@ -4018,22 +4084,35 @@ function clearPersistedEntryDraft() {
 function restoreEntryDraftSnapshot(snapshot: EntryDraftSnapshot) {
   isRestoringEntryDraft.value = true
   historyExpanded.value = false
-  transitionDirection.value = 'expand'
+  if (!isDesktopLayout.value) {
+    transitionDirection.value = 'expand'
+  }
   editingEntryId.value = null
   editingEntryConditionKey.value = null
   editingEntryConditionLabel.value = null
   entryError.value = ''
   severityValue.value = snapshot.severityValue
   entryForm.value = { ...snapshot.entryForm }
-  selectedSearchCondition.value = snapshot.selectedSearchCondition
-    ? { ...snapshot.selectedSearchCondition }
-    : null
-  entryStep.value = Math.max(0, Math.min(snapshot.entryStep, entrySteps.value.length - 1))
-  customConditionInput.value = snapshot.customConditionInput
-  debouncedCustomConditionPreview.value = snapshot.customConditionInput
+
+  const resolvedCondition = resolveDraftSnapshotCondition(snapshot)
+  selectedSearchCondition.value = resolvedCondition
+
+  const customName = !resolvedCondition
+    ? (snapshot.customConditionInput.trim() || snapshot.entryForm.condition_name?.trim() || snapshot.conditionTitle.trim())
+    : snapshot.customConditionInput
+
+  if (!resolvedCondition && customName && customName !== 'Symptom log') {
+    entryForm.value.condition_name = customName
+  }
+
+  customConditionInput.value = customName
+  debouncedCustomConditionPreview.value = customName
   isConditionPickerOpen.value = false
   hasActiveDraft.value = true
   activeEntryDraftId.value = snapshot.id
+  syncActiveSlideToDraftCondition(resolvedCondition?.title || snapshot.conditionTitle)
+  entryStep.value = Math.max(0, Math.min(snapshot.entryStep, entrySteps.value.length - 1))
+  hasVisitedEntryStepTwo.value = entryStep.value >= 1
   syncEntryInputsFromForm()
   isRestoringEntryDraft.value = false
 }
@@ -4043,12 +4122,25 @@ function resetEntryStepTwoVisit() {
 }
 
 function shouldPromptBeforeResumeDraft(stored: EntryDraftSnapshot) {
+  const currentHasMeaningfulWork = Boolean(
+    isEntryOpen.value
+    && !editingEntryId.value
+    && isMeaningfulEntryDraft({
+      entryStep: entryStep.value,
+      severityValue: severityValue.value,
+      entryForm: entryForm.value,
+      selectedSearchCondition: resolveCurrentEntryDraftCondition(),
+      customConditionInput: customConditionInput.value
+    })
+  )
+  const savedDrafts = readEntryDrafts(user.value?.id)
+
   return shouldPromptBeforeResumeEntryDraft({
-    editingSavedEntry: Boolean(editingEntryId.value),
-    visitedStepTwo: hasVisitedEntryStepTwo.value,
     alreadyEditingStoredDraft: Boolean(
       isEntryOpen.value && activeEntryDraftId.value === stored.id
-    )
+    ),
+    hasMeaningfulCurrentEntry: currentHasMeaningfulWork,
+    draftLimitReached: isEntryDraftLimitReached(savedDrafts, activeEntryDraftId.value)
   })
 }
 
@@ -4076,14 +4168,6 @@ function openPendingResumeDraftSnapshot() {
 
 async function saveCurrentEntryThenOpenPendingDraft() {
   if (!pendingResumeDraftSnapshot.value) {
-    return
-  }
-
-  if (!editingEntryId.value && !isLastEntryStep.value) {
-    showSubmissionToast({
-      message: 'Finish the log or use “Save current as draft” instead.',
-      tone: 'error'
-    })
     return
   }
 
@@ -4119,15 +4203,23 @@ function draftCurrentThenOpenPendingDraft() {
 }
 
 function discardCurrentAndOpenPendingDraft() {
-  if (!pendingResumeDraftSnapshot.value) {
+  const hasPendingResume = Boolean(pendingResumeDraftSnapshot.value)
+
+  cancelEntryDraftSave()
+  closeEntryPanel(true, true)
+
+  if (hasPendingResume) {
+    openPendingResumeDraftSnapshot()
+    showSubmissionToast({
+      message: 'Current entry discarded. Draft restored.',
+      tone: 'success'
+    })
     return
   }
 
-  cancelEntryDraftSave()
-  closeEntryPanel(true)
-  openPendingResumeDraftSnapshot()
+  closeEntryDraftPrompt()
   showSubmissionToast({
-    message: 'Current entry discarded. Draft restored.',
+    message: 'Current entry discarded.',
     tone: 'success'
   })
 }
@@ -4162,12 +4254,29 @@ function resumeEntryDraft(draftId: string) {
     return
   }
 
+  if (
+    isEntryOpen.value
+    && !editingEntryId.value
+    && isMeaningfulEntryDraft({
+      entryStep: entryStep.value,
+      severityValue: severityValue.value,
+      entryForm: entryForm.value,
+      selectedSearchCondition: resolveCurrentEntryDraftCondition(),
+      customConditionInput: customConditionInput.value
+    })
+  ) {
+    if (persistEntryDraftNow(user.value?.id ?? null, { whileEntryOpen: true }) === 'blocked') {
+      return
+    }
+  }
+
   openEntryFromDraftSnapshot(snapshot)
 }
 
 function openEntryFromDraftSnapshot(snapshot: EntryDraftSnapshot) {
   restoreEntryDraftSnapshot(snapshot)
   isEntryOpen.value = true
+  refreshEntryDraftPreview()
 }
 
 async function resumePendingEntryDraftAfterSignIn() {
@@ -6369,25 +6478,30 @@ function openDesktopChartsForConditionKey(conditionKey: string) {
     return
   }
 
+  if (isEntryOpen.value) {
+    handleCancelEntry()
+    if (isEntryOpen.value) {
+      return
+    }
+  }
+
   selectDesktopConditionByKey(conditionKey)
   desktopHistoryShowAll.value = false
   desktopChartsShowAllConditions.value = false
-
-  if (isEntryOpen.value) {
-    closeEntryPanel(true)
-  }
-
   desktopCenterTab.value = 'charts'
 }
 
 function handleDesktopConditionSelect(condition: HomeCondition) {
+  if (isEntryOpen.value) {
+    handleCancelEntry()
+    if (isEntryOpen.value) {
+      return
+    }
+  }
+
   selectDesktopConditionByKey(condition.key)
   desktopHistoryShowAll.value = false
   desktopChartsShowAllConditions.value = false
-
-  if (isEntryOpen.value) {
-    closeEntryPanel(true)
-  }
 }
 
 function startDesktopLogEntry() {
@@ -6397,7 +6511,7 @@ function startDesktopLogEntry() {
 }
 
 function cancelDesktopEntry() {
-  closeEntryPanel(true)
+  handleCancelEntry()
 }
 
 function resolveCarouselTransitionDirection(nextIndex: number, currentIndex: number): HomeTransitionDirection {
@@ -7081,6 +7195,13 @@ function showConditionSlide(index: number, options: { clearSelectedSearchConditi
     return
   }
 
+  if (isEntryOpen.value) {
+    handleCancelEntry()
+    if (isEntryOpen.value) {
+      return
+    }
+  }
+
   const currentIndex = activeIndex.value
   const sharedKey = resolveSharedHomeTransitionKey(index, currentIndex)
 
@@ -7093,7 +7214,6 @@ function showConditionSlide(index: number, options: { clearSelectedSearchConditi
     selectedSearchCondition.value = null
   }
 
-  closeEntryPanel()
   transitionDirection.value = resolveCarouselTransitionDirection(index, currentIndex)
   void animateHomeSlideChange(index, resolveSharedHomeTransitionKey(index, currentIndex))
 }
@@ -7155,11 +7275,11 @@ function handleCancelEntry() {
       customConditionInput: customConditionInput.value
     })
   ) {
-    closeEntryPanel()
+    closeEntryPanel(false)
     return
   }
 
-  closeEntryPanel(true)
+  closeEntryPanel(true, true)
 }
 
 function startEntryFromCurrentSlide() {
@@ -7202,6 +7322,11 @@ function changeEntryCondition(condition: { title: string, category: string, desc
     return
   }
 
+  if (!editingEntryId.value) {
+    openEntryPanelInner({ condition })
+    return
+  }
+
   selectedSearchCondition.value = condition
   editingEntryConditionLabel.value = null
   editingEntryConditionKey.value = null
@@ -7230,6 +7355,11 @@ function applyCustomEntryCondition() {
 
   if (customName === entryTitle.value && !selectedSearchCondition.value) {
     isConditionPickerOpen.value = false
+    return
+  }
+
+  if (!editingEntryId.value) {
+    openEntryPanelInner({ prefillCustomCondition: customName })
     return
   }
 
@@ -7916,6 +8046,13 @@ function openEntryForEdit(entryId: string) {
     return
   }
 
+  if (isEntryOpen.value && !editingEntryId.value) {
+    handleCancelEntry()
+    if (isEntryOpen.value) {
+      return
+    }
+  }
+
   const resolved = resolveEntryConditionLabel(entry)
   editingEntryId.value = entryId
   editingEntryConditionKey.value = entry.condition_key?.trim() || null
@@ -8057,7 +8194,8 @@ function openEntryPanelInner(options: OpenEntryPanelOptions = {}) {
   }
 
   if (
-    !editingEntryId.value
+    isEntryOpen.value
+    && !editingEntryId.value
     && isMeaningfulEntryDraft({
       entryStep: entryStep.value,
       severityValue: severityValue.value,
@@ -8082,7 +8220,16 @@ function openEntryPanelInner(options: OpenEntryPanelOptions = {}) {
   editingEntryId.value = null
   editingEntryConditionKey.value = null
   editingEntryConditionLabel.value = null
-  selectedSearchCondition.value = options.condition ?? null
+  selectedSearchCondition.value = options.condition ?? (
+    !options.prefillCustomCondition && activeCondition.value
+      ? {
+          title: activeCondition.value.title,
+          category: activeCondition.value.category,
+          description: activeCondition.value.description,
+          image: activeCondition.value.image
+        }
+      : null
+  )
   hasActiveDraft.value = true
   isConditionPickerOpen.value = false
   customConditionInput.value = ''
@@ -8143,7 +8290,7 @@ async function handleEntryDone() {
     return
   }
 
-  closeEntryPanel(true)
+  closeEntryPanel(true, true)
 }
 
 function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
@@ -8159,53 +8306,24 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
     transitionDirection.value = 'collapse'
   }
 
-  if (clearDraft) {
-    hasActiveDraft.value = false
-
-    if (!preservePersistedDraft) {
-      clearPersistedEntryDraft()
-    }
-
-    editingEntryId.value = null
-    editingEntryConditionKey.value = null
-    editingEntryConditionLabel.value = null
-    editingEntrySaveSnapshot.value = null
-    selectedSearchCondition.value = null
-    isConditionPickerOpen.value = false
-    customConditionInput.value = ''
-    debouncedCustomConditionPreview.value = ''
-    resetEntryForm()
-  } else if (!editingEntryId.value && wasEntryOpen) {
-    hasActiveDraft.value = isMeaningfulEntryDraft({
-      entryStep: entryStep.value,
-      severityValue: severityValue.value,
-      entryForm: entryForm.value,
-      selectedSearchCondition: selectedSearchCondition.value,
-      customConditionInput: customConditionInput.value
-    })
-
-    if (!hasActiveDraft.value) {
-      selectedSearchCondition.value = null
-      customConditionInput.value = ''
-      debouncedCustomConditionPreview.value = ''
-      isConditionPickerOpen.value = false
-    }
-
-    refreshEntryDraftPreview()
-  } else if (!editingEntryId.value) {
-    refreshEntryDraftPreview()
-  } else {
-    editingEntryId.value = null
-    editingEntryConditionKey.value = null
-    editingEntryConditionLabel.value = null
-    editingEntrySaveSnapshot.value = null
-    selectedSearchCondition.value = null
-    isConditionPickerOpen.value = false
-    customConditionInput.value = ''
-    debouncedCustomConditionPreview.value = ''
+  if (clearDraft && !preservePersistedDraft) {
+    clearPersistedEntryDraft()
   }
 
+  hasActiveDraft.value = false
+  activeEntryDraftId.value = null
+  editingEntryId.value = null
+  editingEntryConditionKey.value = null
+  editingEntryConditionLabel.value = null
+  editingEntrySaveSnapshot.value = null
+  selectedSearchCondition.value = null
+  isConditionPickerOpen.value = false
+  customConditionInput.value = ''
+  debouncedCustomConditionPreview.value = ''
+  resetEntryStepTwoVisit()
+  resetEntryForm()
   isEntryOpen.value = false
+  refreshEntryDraftPreview()
 
   if (wasEntryOpen) {
     blockConditionSlideEntry(400)

@@ -128,7 +128,7 @@ export function upsertEntryDraftList(drafts: EntryDraftSnapshot[], snapshot: Ent
   const index = drafts.findIndex(draft => draft.id === snapshot.id)
 
   if (index === -1) {
-    return [snapshot, ...drafts]
+    return [snapshot, ...drafts].slice(0, MAX_ENTRY_DRAFTS)
   }
 
   const next = drafts.slice()
@@ -305,20 +305,21 @@ export function entryDraftSnapshotsEqual(a: EntryDraftSnapshot, b: EntryDraftSna
 }
 
 export function shouldPromptBeforeResumeEntryDraft(options: {
-  editingSavedEntry: boolean
-  visitedStepTwo: boolean
+  editingSavedEntry?: boolean
+  visitedStepTwo?: boolean
   alreadyEditingStoredDraft: boolean
+  hasMeaningfulCurrentEntry?: boolean
+  draftLimitReached?: boolean
 }) {
   if (options.alreadyEditingStoredDraft) {
     return false
   }
 
-  if (options.editingSavedEntry) {
-    return true
+  if (typeof options.draftLimitReached === 'boolean') {
+    return Boolean(options.hasMeaningfulCurrentEntry && options.draftLimitReached)
   }
 
-  // Step 1 is only the date. A new log starts when the user opens step 2.
-  return options.visitedStepTwo
+  return false
 }
 
 export function formatEntryDraftTimeLabel(savedAt: string) {
