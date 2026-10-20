@@ -35,7 +35,7 @@ const OVERLAY_Z_CLASS: Record<string, string> = {
 
 function overlayZClass(zIndex: number | string) {
   const key = String(zIndex)
-  return OVERLAY_Z_CLASS[key] ?? 'z-[90]'
+  return OVERLAY_Z_CLASS[key] ?? `z-[${key}]`
 }
 
 export function mobileOverlayShellClass(
@@ -43,12 +43,14 @@ export function mobileOverlayShellClass(
   options?: {
     backdropClass?: string
     mobileBackground?: string
+    position?: 'fixed' | 'absolute'
   }
 ) {
   const backdropClass = options?.backdropClass ?? 'lg:bg-black/55'
   const mobileBackground = options?.mobileBackground ?? 'bg-default'
+  const position = options?.position ?? 'fixed'
   return [
-    'fixed inset-0',
+    `${position} inset-0`,
     overlayZClass(zIndex),
     `flex flex-col ${mobileBackground} max-lg:h-dvh`,
     `lg:items-center lg:justify-center ${backdropClass} lg:p-6`

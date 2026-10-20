@@ -296,6 +296,7 @@ button:disabled,
 }
 
 .app-overlay-panel {
+  pointer-events: auto;
   --app-overlay-panel-max-height: min(
     80dvh,
     calc(
@@ -347,6 +348,51 @@ button:disabled,
       - 2rem
     )
   );
+}
+
+@media (max-width: 1023px) {
+  .app-overlay-shell[data-mobile-fullscreen] {
+    overflow: hidden;
+    padding-inline: 0;
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .app-overlay-shell[data-mobile-fullscreen] .app-overlay-mobile-close {
+    padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  }
+
+  .app-overlay-shell[data-mobile-fullscreen] .app-overlay-inner {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 0;
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .app-overlay-shell[data-mobile-fullscreen] .app-overlay-mobile-close {
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .app-overlay-shell[data-mobile-fullscreen] .app-overlay-panel {
+    --app-overlay-panel-max-height: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  .app-overlay-shell[data-mobile-fullscreen] .app-overlay-panel--compact {
+    flex: 1 1 auto;
+    height: auto;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
 }
 
 .app-shell-embed {

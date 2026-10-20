@@ -10,8 +10,7 @@ import { TRACKER_EMBED_KEY } from '../composables/useTrackerLayout'
  *     <div class="app-overlay-panel ...">...</div>
  *   </AppOverlayShell>
  *
- * Stack layouts: add `app-overlay-panel--stack` on the panel for scrollable body + fixed footer.
- * History inset is synced on the app page via `useAppOverlayHistoryInset`.
+ * Workspace settings and draft prompts use TrackerWorkspaceSettingsShell instead.
  */
 withDefaults(defineProps<{
   backdropClass?: string
@@ -42,9 +41,9 @@ const positionClass = computed(() => (isEmbeddedPreview ? 'absolute' : 'fixed'))
       :class="[positionClass, backdropClass]"
       :style="{ zIndex }"
       :data-settings-support-overlay="settingsSupportOverlay ? '' : undefined"
-      @click.self="dismissible && emit('dismiss')"
+      @click="dismissible && emit('dismiss')"
     >
-      <div class="app-overlay-inner">
+      <div class="app-overlay-inner pointer-events-none">
         <slot />
       </div>
     </div>

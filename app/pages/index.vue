@@ -1318,122 +1318,6 @@
     leave-to-class="opacity-0"
   >
     <AppOverlayShell
-      v-if="pendingDeleteDraft"
-      backdrop-class="bg-black/55"
-      @dismiss="cancelDeleteEntryDraft"
-    >
-      <div class="app-overlay-panel app-overlay-panel--compact rounded-[1.75rem] bg-elevated p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="delete-draft-title">
-        <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
-          Draft
-        </p>
-        <h3 id="delete-draft-title" class="mt-2 text-xl font-bold text-highlighted">
-          Delete this draft?
-        </h3>
-        <p class="mt-3 text-sm leading-6 text-toned">
-          <span class="font-semibold text-highlighted">{{ entryDraftPreview?.title || 'Symptom log' }}</span>
-          will be permanently removed. This cannot be undone.
-        </p>
-
-        <div class="mt-5 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            class="rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted transition hover:bg-accented"
-            @click="cancelDeleteEntryDraft"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700"
-            @click="confirmDeleteEntryDraft"
-          >
-            Delete draft
-          </button>
-        </div>
-      </div>
-    </AppOverlayShell>
-  </Transition>
-
-  <Transition
-    enter-active-class="transition duration-200 ease-out"
-    enter-from-class="opacity-0"
-    enter-to-class="opacity-100"
-    leave-active-class="transition duration-150 ease-in"
-    leave-from-class="opacity-100"
-    leave-to-class="opacity-0"
-  >
-    <AppOverlayShell
-      v-if="isResumeDraftConflictOpen"
-      :z-index="130"
-      backdrop-class="bg-black/55"
-      @dismiss="cancelResumeDraftConflict"
-    >
-      <div
-        class="app-overlay-panel app-overlay-panel--compact w-full max-w-md rounded-[1.75rem] bg-elevated p-5 shadow-2xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="resume-draft-conflict-title"
-      >
-        <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
-          Saved draft
-        </p>
-        <h3 id="resume-draft-conflict-title" class="mt-2 text-xl font-bold text-highlighted">
-          Finish your current entry first?
-        </h3>
-        <p class="mt-3 text-sm leading-6 text-toned">
-          You are already working on
-          <span class="font-semibold text-highlighted">{{ entryTitle || 'a symptom log' }}</span>.
-          Choose what to do with it before opening
-          <span class="font-semibold text-highlighted">{{ pendingResumeDraftSnapshot?.conditionTitle || 'your saved draft' }}</span>.
-        </p>
-
-        <div class="mt-5 space-y-2">
-          <button
-            type="button"
-            class="w-full rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted transition hover:bg-accented"
-            @click="cancelResumeDraftConflict"
-          >
-            Keep current entry
-          </button>
-          <button
-            type="button"
-            class="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"
-            :disabled="isSavingEntry"
-            @click="saveCurrentEntryThenOpenPendingDraft"
-          >
-            {{ isSavingEntry ? 'Saving…' : 'Save current log, then open draft' }}
-          </button>
-          <button
-            type="button"
-            class="w-full rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted ring-1 ring-default transition hover:bg-accented"
-            @click="draftCurrentThenOpenPendingDraft"
-          >
-            Save current as draft, then open draft
-          </button>
-        </div>
-
-        <div class="mt-5 border-t border-default pt-4">
-          <button
-            type="button"
-            class="w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700"
-            @click="discardCurrentAndOpenPendingDraft"
-          >
-            Discard current entry and open draft
-          </button>
-        </div>
-      </div>
-    </AppOverlayShell>
-  </Transition>
-
-  <Transition
-    enter-active-class="transition duration-200 ease-out"
-    enter-from-class="opacity-0"
-    enter-to-class="opacity-100"
-    leave-active-class="transition duration-150 ease-in"
-    leave-from-class="opacity-100"
-    leave-to-class="opacity-0"
-  >
-    <AppOverlayShell
       v-if="viewedHistoryEntry && viewedHistoryRawEntry"
       :z-index="120"
       @dismiss="closeEntryDetailsOverlay"
@@ -1902,6 +1786,24 @@
     </AppOverlayShell>
   </Transition>
 
+  <TrackerDeleteEntryDraftOverlay
+    :open="pendingDeleteDraft"
+    :draft-title="entryDraftPreview?.title || 'Symptom log'"
+    @close="cancelDeleteEntryDraft"
+    @confirm="confirmDeleteEntryDraft"
+  />
+
+  <TrackerResumeDraftConflictOverlay
+    :open="isResumeDraftConflictOpen"
+    :current-entry-title="entryTitle"
+    :pending-draft-title="pendingResumeDraftSnapshot?.conditionTitle || ''"
+    :is-saving-entry="isSavingEntry"
+    @close="cancelResumeDraftConflict"
+    @save-then-open="saveCurrentEntryThenOpenPendingDraft"
+    @draft-then-open="draftCurrentThenOpenPendingDraft"
+    @discard-then-open="discardCurrentAndOpenPendingDraft"
+  />
+
   <TrackerLayReportingSettingsOverlay
     :open="layReportingSettingsOpen"
     @close="closeHeaderSettingsOverlays"
@@ -2030,6 +1932,7 @@ import {
   markPendingEntrySaveAfterSignIn,
   migrateGuestEntryDraftToUser,
   readEntryDraft,
+  shouldPromptBeforeResumeEntryDraft,
   writeEntryDraft,
   type EntryDraftSnapshot
 } from '../composables/useEntryDraft'
@@ -2047,8 +1950,10 @@ import HistoryBackdateEntryCta from '../components/tracker/HistoryBackdateEntryC
 import TrackerPdfExportSettings from '../components/tracker/TrackerPdfExportSettings.vue'
 import TrackerPdfExportActionFooter from '../components/tracker/TrackerPdfExportActionFooter.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
+import TrackerDeleteEntryDraftOverlay from '../components/settings/TrackerDeleteEntryDraftOverlay.vue'
 import TrackerLayReportingSettingsOverlay from '../components/settings/TrackerLayReportingSettingsOverlay.vue'
 import TrackerLogNotificationsSettingsOverlay from '../components/settings/TrackerLogNotificationsSettingsOverlay.vue'
+import TrackerResumeDraftConflictOverlay from '../components/settings/TrackerResumeDraftConflictOverlay.vue'
 import { useTrackerHeaderSettingsOverlays } from '../composables/useTrackerHeaderSettingsOverlays'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
@@ -2951,23 +2856,7 @@ const highlightedSubmissionNotice = computed(() => {
   }) ?? null
 })
 
-const hasEntryDraft = computed(() => {
-  if (entryDraftPreview.value) {
-    return true
-  }
-
-  if (!hasActiveDraft.value || isEntryOpen.value || editingEntryId.value) {
-    return false
-  }
-
-  return isMeaningfulEntryDraft({
-    entryStep: entryStep.value,
-    severityValue: severityValue.value,
-    entryForm: entryForm.value,
-    selectedSearchCondition: selectedSearchCondition.value,
-    customConditionInput: customConditionInput.value
-  })
-})
+const hasEntryDraft = computed(() => Boolean(entryDraftPreview.value))
 
 const loggedEntryPeakSeverityByDate = computed(() => {
   const severityByDate = new Map<string, number>()
@@ -4014,9 +3903,7 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined
 let customConditionTimer: ReturnType<typeof setTimeout> | undefined
 let conditionScrollTimer: ReturnType<typeof setTimeout> | undefined
 let submissionHighlightTimer: ReturnType<typeof setTimeout> | undefined
-let entryDraftSaveTimer: ReturnType<typeof setTimeout> | undefined
-
-function refreshEntryDraftPreview() {
+function readInboxEntryDraftSnapshot() {
   const ownerId = user.value?.id ?? null
 
   if (ownerId) {
@@ -4025,10 +3912,28 @@ function refreshEntryDraftPreview() {
 
   const snapshot = readEntryDraft(ownerId)
 
-  if (snapshot && isMeaningfulEntryDraft(snapshot)) {
+  if (!snapshot || !isMeaningfulEntryDraft(snapshot)) {
+    return null
+  }
+
+  if (isEntryOpen.value && !editingEntryId.value) {
+    const currentSnapshot = buildCurrentEntryDraftSnapshot()
+
+    if (currentSnapshot && entryDraftSnapshotsEqual(snapshot, currentSnapshot)) {
+      return null
+    }
+  }
+
+  return snapshot
+}
+
+function refreshEntryDraftPreview() {
+  const inboxSnapshot = readInboxEntryDraftSnapshot()
+
+  if (inboxSnapshot) {
     entryDraftPreview.value = {
-      title: snapshot.conditionTitle || 'Symptom log',
-      timeLabel: formatEntryDraftTimeLabel(snapshot.savedAt)
+      title: inboxSnapshot.conditionTitle || 'Symptom log',
+      timeLabel: formatEntryDraftTimeLabel(inboxSnapshot.savedAt)
     }
     return
   }
@@ -4055,11 +3960,20 @@ function refreshEntryDraftPreview() {
   entryDraftPreview.value = null
 }
 
-function persistEntryDraftNow(expectedOwnerId = user.value?.id ?? null) {
+function persistEntryDraftNow(
+  expectedOwnerId = user.value?.id ?? null,
+  options: { whileEntryOpen?: boolean } = {}
+) {
   if (isRestoringEntryDraft.value || editingEntryId.value) {
     return
   }
   if ((user.value?.id ?? null) !== expectedOwnerId) return
+
+  const allowWhileEntryOpen = options.whileEntryOpen === true
+
+  if (!allowWhileEntryOpen && isEntryOpen.value) {
+    return
+  }
 
   const snapshot = buildEntryDraftSnapshot({
     entryStep: entryStep.value,
@@ -4071,7 +3985,8 @@ function persistEntryDraftNow(expectedOwnerId = user.value?.id ?? null) {
   })
 
   if (!snapshot) {
-    clearEntryDraft(expectedOwnerId)
+    // Keep the saved draft when the live form is empty (e.g. after switching
+    // conditions). Explicit discard/save paths still call clearEntryDraft.
     refreshEntryDraftPreview()
     return
   }
@@ -4080,32 +3995,11 @@ function persistEntryDraftNow(expectedOwnerId = user.value?.id ?? null) {
   refreshEntryDraftPreview()
 }
 
-function scheduleEntryDraftSave() {
-  if (isRestoringEntryDraft.value || editingEntryId.value) {
-    return
-  }
-
-  if (entryDraftSaveTimer) {
-    clearTimeout(entryDraftSaveTimer)
-  }
-
-  const expectedOwnerId = user.value?.id ?? null
-  entryDraftSaveTimer = setTimeout(() => {
-    persistEntryDraftNow(expectedOwnerId)
-  }, 800)
-}
-
 function cancelEntryDraftSave() {
-  if (!entryDraftSaveTimer) {
-    return
-  }
-
-  clearTimeout(entryDraftSaveTimer)
-  entryDraftSaveTimer = undefined
+  // Inbox drafts persist when the entry panel closes, not on a debounced timer.
 }
 
 function clearPersistedEntryDraft() {
-  cancelEntryDraftSave()
   clearEntryDraft(user.value?.id)
   clearPendingEntrySaveAfterSignIn()
   entryDraftPreview.value = null
@@ -4149,31 +4043,12 @@ function buildCurrentEntryDraftSnapshot() {
 }
 
 function shouldPromptBeforeResumeDraft(stored: EntryDraftSnapshot) {
-  if (editingEntryId.value) {
-    return true
-  }
-
-  const currentSnapshot = buildCurrentEntryDraftSnapshot()
-
-  if (isEntryOpen.value) {
-    if (currentSnapshot && entryDraftSnapshotsEqual(stored, currentSnapshot)) {
-      return false
-    }
-
-    return true
-  }
-
-  const current = currentEntryDraftInput()
-
-  if (!isMeaningfulEntryDraft(current) && entryStep.value === 0 && !selectedSearchCondition.value) {
-    return false
-  }
-
-  if (!currentSnapshot) {
-    return hasActiveDraft.value
-  }
-
-  return !entryDraftSnapshotsEqual(stored, currentSnapshot)
+  return shouldPromptBeforeResumeEntryDraft({
+    editingEntryId: editingEntryId.value,
+    stored,
+    current: currentEntryDraftInput(),
+    currentMeaningfulSnapshot: buildCurrentEntryDraftSnapshot()
+  })
 }
 
 function cancelResumeDraftConflict() {
@@ -4189,7 +4064,6 @@ function openPendingResumeDraftSnapshot() {
   }
 
   openEntryFromDraftSnapshot(snapshot)
-  persistEntryDraftNow()
   refreshEntryDraftPreview()
   cancelResumeDraftConflict()
 }
@@ -4226,7 +4100,7 @@ function draftCurrentThenOpenPendingDraft() {
   }
 
   cancelEntryDraftSave()
-  persistEntryDraftNow()
+  persistEntryDraftNow(user.value?.id ?? null, { whileEntryOpen: true })
   openPendingResumeDraftSnapshot()
   showSubmissionToast({
     message: 'Current work saved to drafts. Restored the draft you selected.',
@@ -4283,9 +4157,7 @@ function resumeEntryDraft() {
   if (shouldPromptBeforeResumeDraft(snapshot)) {
     pendingResumeDraftSnapshot.value = snapshot
     closeAppOverlaysExcept('resume-draft-conflict')
-    void nextTick(() => {
-      isResumeDraftConflictOpen.value = true
-    })
+    isResumeDraftConflictOpen.value = true
     return
   }
 
@@ -4576,14 +4448,6 @@ watch(isAuthPanelOpen, (open) => {
   }
 })
 
-watch(isEntryOpen, (open) => {
-  if (!open || editingEntryId.value) {
-    return
-  }
-
-  scheduleEntryDraftSave()
-})
-
 watch(shouldHideHistoryChrome, (hide) => {
   if (hide) {
     historyExpanded.value = false
@@ -4682,7 +4546,6 @@ watch(
       severityValue: severityValue.value,
       entryForm: entryForm.value
     })
-    scheduleEntryDraftSave()
   },
   { deep: true }
 )
@@ -8140,6 +8003,19 @@ function openEntryPanelInner(options: OpenEntryPanelOptions = {}) {
     return
   }
 
+  if (
+    !editingEntryId.value
+    && isMeaningfulEntryDraft({
+      entryStep: entryStep.value,
+      severityValue: severityValue.value,
+      entryForm: entryForm.value,
+      selectedSearchCondition: selectedSearchCondition.value,
+      customConditionInput: customConditionInput.value
+    })
+  ) {
+    persistEntryDraftNow(user.value?.id ?? null, { whileEntryOpen: true })
+  }
+
   historyExpanded.value = false
   if (!isDesktopLayout.value) {
     transitionDirection.value = 'expand'
@@ -8167,6 +8043,7 @@ function openEntryPanelInner(options: OpenEntryPanelOptions = {}) {
 
   prefillConditionStatementForEntry()
   isEntryOpen.value = true
+  refreshEntryDraftPreview()
 }
 
 function startBackdatedEntryFromHistoryDay() {

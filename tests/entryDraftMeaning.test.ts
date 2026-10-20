@@ -3,6 +3,7 @@ import {
   buildEntryDraftSnapshot,
   entryDraftSnapshotsEqual,
   isMeaningfulEntryDraft,
+  shouldPromptBeforeResumeEntryDraft,
   type EntryDraftSnapshot
 } from '../app/composables/useEntryDraft'
 
@@ -60,5 +61,63 @@ describe('entry draft meaning', () => {
     expect(entryDraftSnapshotsEqual(base, { ...base, savedAt: '2026-09-14T12:00:00.000Z' })).toBe(true)
     expect(entryDraftSnapshotsEqual(base, { ...base, severityValue: 7 })).toBe(false)
     expect(entryDraftSnapshotsEqual(base, { ...base, conditionTitle: 'Back pain' })).toBe(false)
+  })
+
+  it('only prompts before resume when meaningful work would be replaced', () => {
+    const stored: EntryDraftSnapshot = {
+      version: 1,
+      savedAt: '2026-09-13T12:00:00.000Z',
+      entryStep: 2,
+      severityValue: 6,
+      entryForm: { daily_impact: 'Skipped chores' },
+      selectedSearchCondition: condition,
+      customConditionInput: '',
+      conditionTitle: condition.title
+    }
+
+    const emptyNewEntry = {
+      entryStep: 3,
+      severityValue: 5,
+      entryForm: { pdf_condition_statement: 'Prefilled' },
+      selectedSearchCondition: condition,
+      customConditionInput: ''
+    }
+
+    expect(shouldPromptBeforeResumeEntryDraft({
+      editingEntryId: null,
+      stored,
+      current: emptyNewEntry,
+      currentMeaningfulSnapshot: buildEntryDraftSnapshot({
+        ...emptyNewEntry,
+        conditionTitle: 'Other condition'
+      })
+    })).toBe(false)
+
+    expect(shouldPromptBeforeResumeEntryDraft({
+      editingEntryId: null,
+      stored,
+      current: {
+        entryStep: 2,
+        severityValue: 5,
+        entryForm: { daily_impact: 'New note' },
+        selectedSearchCondition: condition,
+        customConditionInput: ''
+      },
+      currentMeaningfulSnapshot: buildEntryDraftSnapshot({
+        entryStep: 2,
+        severityValue: 5,
+        entryForm: { daily_impact: 'New note' },
+        selectedSearchCondition: condition,
+        customConditionInput: '',
+        conditionTitle: condition.title
+      })
+    })).toBe(true)
+
+    expect(shouldPromptBeforeResumeEntryDraft({
+      editingEntryId: 'entry-1',
+      stored,
+      current: emptyNewEntry,
+      currentMeaningfulSnapshot: null
+    })).toBe(true)
   })
 })

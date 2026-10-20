@@ -192,6 +192,35 @@ export function entryDraftSnapshotsEqual(a: EntryDraftSnapshot, b: EntryDraftSna
   return true
 }
 
+export function shouldPromptBeforeResumeEntryDraft(options: {
+  editingEntryId: string | null | undefined
+  stored: EntryDraftSnapshot
+  current: {
+    entryStep?: number
+    severityValue?: number
+    entryForm?: Record<string, string>
+    selectedSearchCondition?: EntryDraftCondition | null
+    customConditionInput?: string
+  }
+  currentMeaningfulSnapshot: EntryDraftSnapshot | null
+}) {
+  if (options.editingEntryId) {
+    return true
+  }
+
+  const { stored, current, currentMeaningfulSnapshot } = options
+
+  if (currentMeaningfulSnapshot && entryDraftSnapshotsEqual(stored, currentMeaningfulSnapshot)) {
+    return false
+  }
+
+  if (!isMeaningfulEntryDraft(current)) {
+    return false
+  }
+
+  return true
+}
+
 export function formatEntryDraftTimeLabel(savedAt: string) {
   const savedDate = new Date(savedAt)
 
