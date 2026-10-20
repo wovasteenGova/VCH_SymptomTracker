@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   buildEntryDraftSnapshot,
   entryDraftSnapshotsEqual,
+  isEntryDraftLimitReached,
   isMeaningfulEntryDraft,
+  parseEntryDraftStore,
   shouldPromptBeforeResumeEntryDraft,
+  upsertEntryDraftList,
   type EntryDraftSnapshot
 } from '../app/composables/useEntryDraft'
 
@@ -49,6 +52,7 @@ describe('entry draft meaning', () => {
   it('compares stored drafts for resume conflicts', () => {
     const base: EntryDraftSnapshot = {
       version: 1,
+      id: 'draft-knee',
       savedAt: '2026-09-13T12:00:00.000Z',
       entryStep: 2,
       severityValue: 6,
@@ -61,63 +65,70 @@ describe('entry draft meaning', () => {
     expect(entryDraftSnapshotsEqual(base, { ...base, savedAt: '2026-09-14T12:00:00.000Z' })).toBe(true)
     expect(entryDraftSnapshotsEqual(base, { ...base, severityValue: 7 })).toBe(false)
     expect(entryDraftSnapshotsEqual(base, { ...base, conditionTitle: 'Back pain' })).toBe(false)
+    expect(entryDraftSnapshotsEqual(base, { ...base, id: 'draft-other' })).toBe(true)
   })
 
-  it('only prompts before resume when meaningful work would be replaced', () => {
-    const stored: EntryDraftSnapshot = {
-      version: 1,
-      savedAt: '2026-09-13T12:00:00.000Z',
+  it('keeps a saved draft when another log is saved', () => {
+    const stored = {
+      version: 2,
+      drafts: [{
+        version: 1,
+        id: 'draft-knee',
+        savedAt: '2026-10-20T12:00:00.000Z',
+        entryStep: 2,
+        severityValue: 6,
+        entryForm: { daily_impact: 'Skipped chores' },
+        selectedSearchCondition: condition,
+        customConditionInput: '',
+        conditionTitle: 'Knee pain'
+      }]
+    }
+
+    const existing = parseEntryDraftStore(stored)
+    const nextLog = buildEntryDraftSnapshot({
+      id: 'draft-back',
       entryStep: 2,
-      severityValue: 6,
-      entryForm: { daily_impact: 'Skipped chores' },
-      selectedSearchCondition: condition,
-      customConditionInput: '',
-      conditionTitle: condition.title
-    }
-
-    const emptyNewEntry = {
-      entryStep: 3,
       severityValue: 5,
-      entryForm: { pdf_condition_statement: 'Prefilled' },
-      selectedSearchCondition: condition,
-      customConditionInput: ''
-    }
+      entryForm: { what_happened: 'Stiff in the morning' },
+      selectedSearchCondition: { ...condition, title: 'Back pain' },
+      customConditionInput: '',
+      conditionTitle: 'Back pain'
+    })
 
+    expect(nextLog).not.toBeNull()
+    const saved = upsertEntryDraftList(existing, nextLog!)
+    expect(saved.map(draft => draft.id)).toEqual(['draft-back', 'draft-knee'])
+  })
+
+  it('blocks a fourth draft and still allows updates to an existing one', () => {
+    const drafts = [
+      { id: 'a' },
+      { id: 'b' },
+      { id: 'c' }
+    ]
+
+    expect(isEntryDraftLimitReached(drafts, null)).toBe(true)
+    expect(isEntryDraftLimitReached(drafts, 'b')).toBe(false)
+    expect(isEntryDraftLimitReached(drafts.slice(0, 2), null)).toBe(false)
+  })
+
+  it('prompts only after the user opens step 2 of a new log', () => {
     expect(shouldPromptBeforeResumeEntryDraft({
-      editingEntryId: null,
-      stored,
-      current: emptyNewEntry,
-      currentMeaningfulSnapshot: buildEntryDraftSnapshot({
-        ...emptyNewEntry,
-        conditionTitle: 'Other condition'
-      })
+      editingSavedEntry: false,
+      visitedStepTwo: false,
+      alreadyEditingStoredDraft: false
     })).toBe(false)
 
     expect(shouldPromptBeforeResumeEntryDraft({
-      editingEntryId: null,
-      stored,
-      current: {
-        entryStep: 2,
-        severityValue: 5,
-        entryForm: { daily_impact: 'New note' },
-        selectedSearchCondition: condition,
-        customConditionInput: ''
-      },
-      currentMeaningfulSnapshot: buildEntryDraftSnapshot({
-        entryStep: 2,
-        severityValue: 5,
-        entryForm: { daily_impact: 'New note' },
-        selectedSearchCondition: condition,
-        customConditionInput: '',
-        conditionTitle: condition.title
-      })
+      editingSavedEntry: false,
+      visitedStepTwo: true,
+      alreadyEditingStoredDraft: false
     })).toBe(true)
 
     expect(shouldPromptBeforeResumeEntryDraft({
-      editingEntryId: 'entry-1',
-      stored,
-      current: emptyNewEntry,
-      currentMeaningfulSnapshot: null
-    })).toBe(true)
+      editingSavedEntry: false,
+      visitedStepTwo: true,
+      alreadyEditingStoredDraft: true
+    })).toBe(false)
   })
 })

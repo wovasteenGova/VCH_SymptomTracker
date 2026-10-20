@@ -128,10 +128,10 @@
                 >
                 <UIcon name="i-lucide-inbox" class="size-5" />
                 <span
-                  v-if="hasEntryDraft"
+                  v-if="entryDraftCount"
                   class="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[0.62rem] font-black leading-5 text-white ring-2 ring-elevated"
                 >
-                  !!
+                  {{ entryDraftCount }}
                 </span>
                 <span
                   v-else-if="unreadSubmissionCount"
@@ -184,13 +184,14 @@
 
                   <div class="max-h-80 overflow-y-auto no-scrollbar p-2">
                     <div
-                      v-if="hasEntryDraft"
+                      v-for="draft in entryDraftPreviews"
+                      :key="draft.id"
                       class="relative mb-2"
                     >
                       <button
                         type="button"
                         class="flex w-full items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-3 pr-12 text-left transition hover:bg-red-100/80 dark:border-red-900/50 dark:bg-red-950/30 dark:hover:bg-red-950/50"
-                        @click="resumeEntryDraft"
+                        @click="resumeEntryDraft(draft.id)"
                       >
                         <span class="relative mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-white text-red-600 ring-1 ring-red-200 dark:bg-elevated dark:text-red-300 dark:ring-red-900/60">
                           <UIcon name="i-lucide-files" class="size-4" />
@@ -201,18 +202,18 @@
                         <span class="min-w-0 flex-1">
                           <span class="block text-[0.875rem] font-bold text-highlighted">Draft</span>
                           <span class="mt-1 block truncate text-xs font-semibold text-toned">
-                            {{ entryDraftPreview?.title || 'Symptom log' }}
+                            {{ draft.title || 'Symptom log' }}
                           </span>
                           <span class="mt-1 block text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-red-600 dark:text-red-300">
-                            Saved {{ entryDraftPreview?.timeLabel || 'recently' }}
+                            Saved {{ draft.timeLabel || 'recently' }}
                           </span>
                         </span>
                       </button>
                       <button
                         type="button"
                         class="absolute right-2 top-2 grid size-8 place-items-center rounded-full text-muted transition hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-950/60 dark:hover:text-red-300"
-                        aria-label="Delete draft"
-                        @click.stop="requestDeleteEntryDraft"
+                        :aria-label="`Delete ${draft.title || 'draft'}`"
+                        @click.stop="requestDeleteEntryDraft(draft.id)"
                       >
                         <UIcon name="i-lucide-x" class="size-4" />
                       </button>
@@ -1787,18 +1788,19 @@
   </Transition>
 
   <TrackerDeleteEntryDraftOverlay
-    :open="pendingDeleteDraft"
-    :draft-title="entryDraftPreview?.title || 'Symptom log'"
+    :open="Boolean(pendingDeleteDraftId)"
+    :draft-title="pendingDeleteDraftTitle"
     @close="cancelDeleteEntryDraft"
     @confirm="confirmDeleteEntryDraft"
   />
 
   <TrackerResumeDraftConflictOverlay
-    :open="isResumeDraftConflictOpen"
+    :open="isResumeDraftConflictOpen || isEntryDraftLimitOpen"
+    :variant="isEntryDraftLimitOpen ? 'limit' : 'resume'"
     :current-entry-title="entryTitle"
     :pending-draft-title="pendingResumeDraftSnapshot?.conditionTitle || ''"
     :is-saving-entry="isSavingEntry"
-    @close="cancelResumeDraftConflict"
+    @close="closeEntryDraftPrompt"
     @save-then-open="saveCurrentEntryThenOpenPendingDraft"
     @draft-then-open="draftCurrentThenOpenPendingDraft"
     @discard-then-open="discardCurrentAndOpenPendingDraft"
@@ -1923,17 +1925,17 @@ import { CalendarDate } from '@internationalized/date'
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import {
   buildEntryDraftSnapshot,
-  entryDraftSnapshotsEqual,
-  clearEntryDraft,
   clearPendingEntrySaveAfterSignIn,
   consumePendingEntrySaveAfterSignIn,
   formatEntryDraftTimeLabel,
+  isEntryDraftLimitReached,
   isMeaningfulEntryDraft,
   markPendingEntrySaveAfterSignIn,
   migrateGuestEntryDraftToUser,
-  readEntryDraft,
+  readEntryDrafts,
+  removeEntryDraft,
   shouldPromptBeforeResumeEntryDraft,
-  writeEntryDraft,
+  upsertEntryDraft,
   type EntryDraftSnapshot
 } from '../composables/useEntryDraft'
 import { resolveHomeGreetingLine } from '../utils/homeGreeting'
@@ -2135,9 +2137,11 @@ let authPanelNoticeTimer: ReturnType<typeof setTimeout> | undefined
 const needsEmailConfirmation = ref(false)
 const isAuthSubmitting = ref(false)
 const hasActiveDraft = ref(false)
-const entryDraftPreview = ref<{ title: string, timeLabel: string } | null>(null)
+const entryDraftPreviews = ref<Array<{ id: string, title: string, timeLabel: string }>>([])
+const activeEntryDraftId = ref<string | null>(null)
 const isRestoringEntryDraft = ref(false)
 const entryStep = ref(0)
+const hasVisitedEntryStepTwo = ref(false)
 const editingEntryId = ref<string | null>(null)
 const editingEntryConditionKey = ref<string | null>(null)
 const editingEntryConditionLabel = ref<string | null>(null)
@@ -2364,8 +2368,9 @@ const entryDateTimePreview = computed(() => {
 const historyTabs = ['Entries', 'Calendar', 'Export']
 const submissionHighlightDurationMs = 5_000
 
-const pendingDeleteDraft = ref(false)
+const pendingDeleteDraftId = ref<string | null>(null)
 const isResumeDraftConflictOpen = ref(false)
+const isEntryDraftLimitOpen = ref(false)
 const pendingResumeDraftSnapshot = ref<EntryDraftSnapshot | null>(null)
 const pendingDelete = ref<null | {
   id: string
@@ -2400,8 +2405,9 @@ const shouldHideHistoryChrome = computed(() => (
   || isGuestLoginIntroOpen.value
   || isHomeTipsOverlayOpen.value
   || isLoggingCadencePromptOpen.value
-  || pendingDeleteDraft.value
+  || Boolean(pendingDeleteDraftId.value)
   || isResumeDraftConflictOpen.value
+  || isEntryDraftLimitOpen.value
   || Boolean(pendingDelete.value)
   || Boolean(pendingDeleteInactiveCustom.value)
   || isRemovedCustomConditionsOpen.value
@@ -2856,7 +2862,11 @@ const highlightedSubmissionNotice = computed(() => {
   }) ?? null
 })
 
-const hasEntryDraft = computed(() => Boolean(entryDraftPreview.value))
+const entryDraftCount = computed(() => entryDraftPreviews.value.length)
+const hasEntryDraft = computed(() => entryDraftCount.value > 0)
+const pendingDeleteDraftTitle = computed(() => {
+  return entryDraftPreviews.value.find(draft => draft.id === pendingDeleteDraftId.value)?.title || 'Symptom log'
+})
 
 const loggedEntryPeakSeverityByDate = computed(() => {
   const severityByDate = new Map<string, number>()
@@ -3903,61 +3913,38 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined
 let customConditionTimer: ReturnType<typeof setTimeout> | undefined
 let conditionScrollTimer: ReturnType<typeof setTimeout> | undefined
 let submissionHighlightTimer: ReturnType<typeof setTimeout> | undefined
-function readInboxEntryDraftSnapshot() {
+function readInboxEntryDrafts() {
   const ownerId = user.value?.id ?? null
 
   if (ownerId) {
     migrateGuestEntryDraftToUser(ownerId)
   }
 
-  const snapshot = readEntryDraft(ownerId)
-
-  if (!snapshot || !isMeaningfulEntryDraft(snapshot)) {
-    return null
-  }
-
-  if (isEntryOpen.value && !editingEntryId.value) {
-    const currentSnapshot = buildCurrentEntryDraftSnapshot()
-
-    if (currentSnapshot && entryDraftSnapshotsEqual(snapshot, currentSnapshot)) {
-      return null
+  return readEntryDrafts(ownerId).filter((draft) => {
+    if (
+      isEntryOpen.value
+      && !editingEntryId.value
+      && activeEntryDraftId.value
+      && activeEntryDraftId.value === draft.id
+    ) {
+      return false
     }
-  }
 
-  return snapshot
+    return true
+  })
 }
 
 function refreshEntryDraftPreview() {
-  const inboxSnapshot = readInboxEntryDraftSnapshot()
+  entryDraftPreviews.value = readInboxEntryDrafts().map(draft => ({
+    id: draft.id,
+    title: draft.conditionTitle || 'Symptom log',
+    timeLabel: formatEntryDraftTimeLabel(draft.savedAt)
+  }))
+}
 
-  if (inboxSnapshot) {
-    entryDraftPreview.value = {
-      title: inboxSnapshot.conditionTitle || 'Symptom log',
-      timeLabel: formatEntryDraftTimeLabel(inboxSnapshot.savedAt)
-    }
-    return
-  }
-
-  if (
-    hasActiveDraft.value
-    && !isEntryOpen.value
-    && !editingEntryId.value
-    && isMeaningfulEntryDraft({
-      entryStep: entryStep.value,
-      severityValue: severityValue.value,
-      entryForm: entryForm.value,
-      selectedSearchCondition: selectedSearchCondition.value,
-      customConditionInput: customConditionInput.value
-    })
-  ) {
-    entryDraftPreview.value = {
-      title: entryTitle.value,
-      timeLabel: 'This session'
-    }
-    return
-  }
-
-  entryDraftPreview.value = null
+function openEntryDraftLimitNotice() {
+  closeAppOverlaysExcept('draft-limit')
+  isEntryDraftLimitOpen.value = true
 }
 
 function persistEntryDraftNow(
@@ -3965,17 +3952,25 @@ function persistEntryDraftNow(
   options: { whileEntryOpen?: boolean } = {}
 ) {
   if (isRestoringEntryDraft.value || editingEntryId.value) {
-    return
+    return 'skipped' as const
   }
-  if ((user.value?.id ?? null) !== expectedOwnerId) return
+  if ((user.value?.id ?? null) !== expectedOwnerId) return 'skipped' as const
 
   const allowWhileEntryOpen = options.whileEntryOpen === true
 
   if (!allowWhileEntryOpen && isEntryOpen.value) {
-    return
+    return 'skipped' as const
+  }
+
+  const savedDrafts = readEntryDrafts(expectedOwnerId)
+
+  if (isEntryDraftLimitReached(savedDrafts, activeEntryDraftId.value)) {
+    openEntryDraftLimitNotice()
+    return 'blocked' as const
   }
 
   const snapshot = buildEntryDraftSnapshot({
+    id: activeEntryDraftId.value,
     entryStep: entryStep.value,
     severityValue: severityValue.value,
     entryForm: entryForm.value,
@@ -3985,14 +3980,16 @@ function persistEntryDraftNow(
   })
 
   if (!snapshot) {
-    // Keep the saved draft when the live form is empty (e.g. after switching
-    // conditions). Explicit discard/save paths still call clearEntryDraft.
+    // Keep every saved draft when the live form is empty (e.g. after switching
+    // conditions). A new log gets its own draft id instead of replacing another.
     refreshEntryDraftPreview()
-    return
+    return 'skipped' as const
   }
 
-  writeEntryDraft(expectedOwnerId, snapshot)
+  activeEntryDraftId.value = snapshot.id
+  upsertEntryDraft(expectedOwnerId, snapshot)
   refreshEntryDraftPreview()
+  return 'saved' as const
 }
 
 function cancelEntryDraftSave() {
@@ -4000,9 +3997,13 @@ function cancelEntryDraftSave() {
 }
 
 function clearPersistedEntryDraft() {
-  clearEntryDraft(user.value?.id)
+  if (activeEntryDraftId.value) {
+    removeEntryDraft(user.value?.id, activeEntryDraftId.value)
+    activeEntryDraftId.value = null
+  }
+
   clearPendingEntrySaveAfterSignIn()
-  entryDraftPreview.value = null
+  refreshEntryDraftPreview()
 }
 
 function restoreEntryDraftSnapshot(snapshot: EntryDraftSnapshot) {
@@ -4023,37 +4024,33 @@ function restoreEntryDraftSnapshot(snapshot: EntryDraftSnapshot) {
   debouncedCustomConditionPreview.value = snapshot.customConditionInput
   isConditionPickerOpen.value = false
   hasActiveDraft.value = true
+  activeEntryDraftId.value = snapshot.id
   syncEntryInputsFromForm()
   isRestoringEntryDraft.value = false
 }
 
-function currentEntryDraftInput() {
-  return {
-    entryStep: entryStep.value,
-    severityValue: severityValue.value,
-    entryForm: entryForm.value,
-    selectedSearchCondition: selectedSearchCondition.value,
-    customConditionInput: customConditionInput.value,
-    conditionTitle: entryTitle.value
-  }
-}
-
-function buildCurrentEntryDraftSnapshot() {
-  return buildEntryDraftSnapshot(currentEntryDraftInput())
+function resetEntryStepTwoVisit() {
+  hasVisitedEntryStepTwo.value = false
 }
 
 function shouldPromptBeforeResumeDraft(stored: EntryDraftSnapshot) {
   return shouldPromptBeforeResumeEntryDraft({
-    editingEntryId: editingEntryId.value,
-    stored,
-    current: currentEntryDraftInput(),
-    currentMeaningfulSnapshot: buildCurrentEntryDraftSnapshot()
+    editingSavedEntry: Boolean(editingEntryId.value),
+    visitedStepTwo: hasVisitedEntryStepTwo.value,
+    alreadyEditingStoredDraft: Boolean(
+      isEntryOpen.value && activeEntryDraftId.value === stored.id
+    )
   })
 }
 
 function cancelResumeDraftConflict() {
   isResumeDraftConflictOpen.value = false
   pendingResumeDraftSnapshot.value = null
+}
+
+function closeEntryDraftPrompt() {
+  isEntryDraftLimitOpen.value = false
+  cancelResumeDraftConflict()
 }
 
 function openPendingResumeDraftSnapshot() {
@@ -4100,7 +4097,11 @@ function draftCurrentThenOpenPendingDraft() {
   }
 
   cancelEntryDraftSave()
-  persistEntryDraftNow(user.value?.id ?? null, { whileEntryOpen: true })
+
+  if (persistEntryDraftNow(user.value?.id ?? null, { whileEntryOpen: true }) === 'blocked') {
+    return
+  }
+
   openPendingResumeDraftSnapshot()
   showSubmissionToast({
     message: 'Current work saved to drafts. Restored the draft you selected.',
@@ -4122,35 +4123,26 @@ function discardCurrentAndOpenPendingDraft() {
   })
 }
 
-function resumeEntryDraft() {
+function resumeEntryDraft(draftId: string) {
   if (needsAppWelcome.value) {
     return
   }
 
   closeSubmissionDropdown()
 
-  const snapshot = readEntryDraft(user.value?.id)
+  const snapshot = readEntryDrafts(user.value?.id).find(draft => draft.id === draftId)
 
   if (!snapshot || !isMeaningfulEntryDraft(snapshot)) {
-    if (snapshot) clearEntryDraft(user.value?.id)
+    if (snapshot) removeEntryDraft(user.value?.id, snapshot.id)
     refreshEntryDraftPreview()
     return
   }
 
-  const currentSnapshot = buildCurrentEntryDraftSnapshot()
-
-  if (currentSnapshot && entryDraftSnapshotsEqual(snapshot, currentSnapshot)) {
-    if (isEntryOpen.value) {
-      showSubmissionToast({
-        message: 'You are already editing this draft.',
-        tone: 'success'
-      })
-      return
-    }
-
-    historyExpanded.value = false
-    transitionDirection.value = 'expand'
-    openEntryFromDraftSnapshot(snapshot)
+  if (isEntryOpen.value && activeEntryDraftId.value === snapshot.id) {
+    showSubmissionToast({
+      message: 'You are already editing this draft.',
+      tone: 'success'
+    })
     return
   }
 
@@ -4187,7 +4179,9 @@ async function resumePendingEntryDraftAfterSignIn() {
   await loadEntitlements()
   await refreshTrackedConditions()
 
-  const snapshot = readEntryDraft(userId)
+  const snapshot = readEntryDrafts(userId)
+    .slice()
+    .sort((left, right) => right.savedAt.localeCompare(left.savedAt))[0]
 
   if (!snapshot || !isMeaningfulEntryDraft(snapshot)) {
     refreshEntryDraftPreview()
@@ -4208,25 +4202,36 @@ async function resumePendingEntryDraftAfterSignIn() {
   })
 }
 
-function requestDeleteEntryDraft() {
+function requestDeleteEntryDraft(draftId: string) {
+  pendingDeleteDraftId.value = draftId
   closeAppOverlaysExcept('delete-draft')
-  pendingDeleteDraft.value = true
 }
 
 function cancelDeleteEntryDraft() {
-  pendingDeleteDraft.value = false
+  pendingDeleteDraftId.value = null
 }
 
 function confirmDeleteEntryDraft() {
-  clearPersistedEntryDraft()
-  hasActiveDraft.value = false
-  pendingDeleteDraft.value = false
-  closeSubmissionDropdown()
+  const draftId = pendingDeleteDraftId.value
 
-  if (isEntryOpen.value && !editingEntryId.value) {
-    closeEntryPanel(true)
+  if (!draftId) {
+    return
   }
 
+  removeEntryDraft(user.value?.id, draftId)
+  pendingDeleteDraftId.value = null
+  closeSubmissionDropdown()
+
+  if (activeEntryDraftId.value === draftId) {
+    activeEntryDraftId.value = null
+    hasActiveDraft.value = false
+
+    if (isEntryOpen.value && !editingEntryId.value) {
+      closeEntryPanel(true, true)
+    }
+  }
+
+  refreshEntryDraftPreview()
   showSubmissionToast('Draft deleted.')
 }
 
@@ -5476,9 +5481,12 @@ async function saveEntry() {
 
   if (!user.value) {
     cancelEntryDraftSave()
-    persistEntryDraftNow(null)
 
-    if (!readEntryDraft(null)) {
+    if (persistEntryDraftNow(null) === 'blocked') {
+      return
+    }
+
+    if (!readEntryDrafts(null).length) {
       entryError.value = 'Add symptom details before signing in to save this log.'
       return
     }
@@ -5844,6 +5852,7 @@ type AppOverlayKey =
   | 'auth'
   | 'delete-draft'
   | 'resume-draft-conflict'
+  | 'draft-limit'
   | 'delete-entry'
   | 'delete-inactive-custom'
   | 'removed-custom-conditions'
@@ -5865,11 +5874,15 @@ function closeAppOverlaysExcept(keep?: AppOverlayKey) {
   }
 
   if (keep !== 'delete-draft') {
-    pendingDeleteDraft.value = false
+    pendingDeleteDraftId.value = null
   }
 
   if (keep !== 'resume-draft-conflict') {
     cancelResumeDraftConflict()
+  }
+
+  if (keep !== 'draft-limit') {
+    isEntryDraftLimitOpen.value = false
   }
 
   if (keep !== 'delete-entry') {
@@ -7178,6 +7191,7 @@ function changeEntryCondition(condition: { title: string, category: string, desc
   selectedSearchCondition.value = condition
   editingEntryConditionLabel.value = null
   editingEntryConditionKey.value = null
+  activeEntryDraftId.value = null
 
   if (entryForm.value.condition_name) {
     delete entryForm.value.condition_name
@@ -7185,6 +7199,7 @@ function changeEntryCondition(condition: { title: string, category: string, desc
 
   customConditionInput.value = ''
   entryStep.value = 0
+  resetEntryStepTwoVisit()
   isConditionPickerOpen.value = false
   prefillConditionStatementForEntry(condition.title)
 
@@ -7207,8 +7222,10 @@ function applyCustomEntryCondition() {
   selectedSearchCondition.value = null
   editingEntryConditionLabel.value = null
   editingEntryConditionKey.value = null
+  activeEntryDraftId.value = null
   entryForm.value.condition_name = customName
   entryStep.value = 0
+  resetEntryStepTwoVisit()
   isConditionPickerOpen.value = false
   prefillConditionStatementForEntry(customName)
 
@@ -7877,6 +7894,7 @@ function openEntryForEdit(entryId: string) {
     transitionDirection.value = 'expand'
   }
   entryStep.value = 0
+  resetEntryStepTwoVisit()
   entryError.value = ''
   hasActiveDraft.value = true
   isEntryOpen.value = true
@@ -8013,14 +8031,18 @@ function openEntryPanelInner(options: OpenEntryPanelOptions = {}) {
       customConditionInput: customConditionInput.value
     })
   ) {
-    persistEntryDraftNow(user.value?.id ?? null, { whileEntryOpen: true })
+    if (persistEntryDraftNow(user.value?.id ?? null, { whileEntryOpen: true }) === 'blocked') {
+      return
+    }
   }
 
+  activeEntryDraftId.value = null
   historyExpanded.value = false
   if (!isDesktopLayout.value) {
     transitionDirection.value = 'expand'
   }
   entryStep.value = 0
+  resetEntryStepTwoVisit()
   resetEntryForm()
   editingEntryId.value = null
   editingEntryConditionKey.value = null
@@ -8093,7 +8115,9 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
   const wasEntryOpen = isEntryOpen.value
 
   if (isEntryOpen.value && !clearDraft && !editingEntryId.value) {
-    persistEntryDraftNow()
+    if (persistEntryDraftNow() === 'blocked') {
+      return
+    }
   }
 
   if (isEntryOpen.value && !isDesktopLayout.value) {
@@ -8130,13 +8154,6 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
       customConditionInput.value = ''
       debouncedCustomConditionPreview.value = ''
       isConditionPickerOpen.value = false
-
-      const ownerId = user.value?.id ?? null
-      const storedDraft = readEntryDraft(ownerId)
-
-      if (!storedDraft || !isMeaningfulEntryDraft(storedDraft)) {
-        clearPersistedEntryDraft()
-      }
     }
 
     refreshEntryDraftPreview()
@@ -8169,6 +8186,16 @@ function showPreviousEntryStep() {
 function showNextEntryStep() {
   if (!isLastEntryStep.value) {
     entryStep.value += 1
+  }
+
+  if (entryStep.value >= 1) {
+    hasVisitedEntryStepTwo.value = true
+  }
+
+  if (entryStep.value === 1 && !editingEntryId.value && !activeEntryDraftId.value) {
+    if (isEntryDraftLimitReached(readEntryDrafts(user.value?.id ?? null), null)) {
+      openEntryDraftLimitNotice()
+    }
   }
 }
 

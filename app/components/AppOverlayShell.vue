@@ -41,7 +41,7 @@ const positionClass = computed(() => (isEmbeddedPreview ? 'absolute' : 'fixed'))
       :class="[positionClass, backdropClass]"
       :style="{ zIndex }"
       :data-settings-support-overlay="settingsSupportOverlay ? '' : undefined"
-      @click="dismissible && emit('dismiss')"
+      @click.self="dismissible && emit('dismiss')"
     >
       <div class="app-overlay-inner pointer-events-none">
         <slot />

@@ -7,6 +7,7 @@ export type EntryDraftCondition = {
 
 export type EntryDraftSnapshot = {
   version: 1
+  id: string
   savedAt: string
   entryStep: number
   severityValue: number
@@ -54,48 +55,157 @@ export function clearPendingEntrySaveAfterSignIn() {
   window.sessionStorage.removeItem(PENDING_ENTRY_SAVE_AFTER_SIGN_IN_KEY)
 }
 
-export function migrateGuestEntryDraftToUser(userId: string) {
-  const guestSnapshot = readEntryDraft(null)
+export function createEntryDraftId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
 
-  if (!guestSnapshot) {
+  return `draft-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function normalizeEntryDraft(raw: unknown): EntryDraftSnapshot | null {
+  if (!raw || typeof raw !== 'object') {
+    return null
+  }
+
+  const parsed = raw as Partial<EntryDraftSnapshot>
+
+  if (parsed.version !== 1) {
+    return null
+  }
+
+  return {
+    version: 1,
+    id: parsed.id || createEntryDraftId(),
+    savedAt: parsed.savedAt || new Date().toISOString(),
+    entryStep: parsed.entryStep || 0,
+    severityValue: parsed.severityValue ?? 5,
+    entryForm: { ...(parsed.entryForm || {}) },
+    selectedSearchCondition: parsed.selectedSearchCondition
+      ? { ...parsed.selectedSearchCondition }
+      : null,
+    customConditionInput: parsed.customConditionInput || '',
+    conditionTitle: parsed.conditionTitle || 'Symptom log'
+  }
+}
+
+export function parseEntryDraftStore(raw: unknown): EntryDraftSnapshot[] {
+  if (!raw || typeof raw !== 'object') {
+    return []
+  }
+
+  const record = raw as { version?: number, drafts?: unknown[] }
+
+  if (record.version === 2 && Array.isArray(record.drafts)) {
+    return record.drafts
+      .map(normalizeEntryDraft)
+      .filter((draft): draft is EntryDraftSnapshot => Boolean(draft && isMeaningfulEntryDraft(draft)))
+  }
+
+  const single = normalizeEntryDraft(record)
+
+  if (!single || !isMeaningfulEntryDraft(single)) {
+    return []
+  }
+
+  return [single]
+}
+
+export const MAX_ENTRY_DRAFTS = 3
+
+export function isEntryDraftLimitReached(
+  drafts: Array<{ id: string }>,
+  activeDraftId: string | null | undefined
+) {
+  if (activeDraftId && drafts.some(draft => draft.id === activeDraftId)) {
     return false
   }
 
-  writeEntryDraft(userId, guestSnapshot)
-  clearEntryDraft(null)
-  return true
+  return drafts.length >= MAX_ENTRY_DRAFTS
 }
 
-export function readEntryDraft(userId: string | null | undefined): EntryDraftSnapshot | null {
+export function upsertEntryDraftList(drafts: EntryDraftSnapshot[], snapshot: EntryDraftSnapshot) {
+  const index = drafts.findIndex(draft => draft.id === snapshot.id)
+
+  if (index === -1) {
+    return [snapshot, ...drafts]
+  }
+
+  const next = drafts.slice()
+  next[index] = snapshot
+  return next
+}
+
+function writeEntryDraftList(userId: string | null | undefined, drafts: EntryDraftSnapshot[]) {
   if (!import.meta.client) {
-    return null
+    return
+  }
+
+  const key = getEntryDraftStorageKey(userId)
+
+  if (!drafts.length) {
+    window.localStorage.removeItem(key)
+    return
+  }
+
+  window.localStorage.setItem(key, JSON.stringify({
+    version: 2,
+    drafts
+  }))
+}
+
+export function readEntryDrafts(userId: string | null | undefined): EntryDraftSnapshot[] {
+  if (!import.meta.client) {
+    return []
   }
 
   try {
     const raw = window.localStorage.getItem(getEntryDraftStorageKey(userId))
 
     if (!raw) {
-      return null
+      return []
     }
 
-    const parsed = JSON.parse(raw) as EntryDraftSnapshot
+    const parsed = JSON.parse(raw) as { version?: number }
+    const drafts = parseEntryDraftStore(parsed)
 
-    if (parsed?.version !== 1) {
-      return null
+    if (parsed?.version !== 2) {
+      writeEntryDraftList(userId, drafts)
     }
 
-    return parsed
+    return drafts
   } catch {
-    return null
+    return []
   }
 }
 
-export function writeEntryDraft(userId: string | null | undefined, snapshot: EntryDraftSnapshot) {
-  if (!import.meta.client) {
-    return
+export function upsertEntryDraft(userId: string | null | undefined, snapshot: EntryDraftSnapshot) {
+  writeEntryDraftList(userId, upsertEntryDraftList(readEntryDrafts(userId), snapshot))
+}
+
+export function removeEntryDraft(userId: string | null | undefined, draftId: string) {
+  writeEntryDraftList(
+    userId,
+    readEntryDrafts(userId).filter(draft => draft.id !== draftId)
+  )
+}
+
+export function migrateGuestEntryDraftToUser(userId: string) {
+  const guestDrafts = readEntryDrafts(null)
+
+  if (!guestDrafts.length) {
+    return false
   }
 
-  window.localStorage.setItem(getEntryDraftStorageKey(userId), JSON.stringify(snapshot))
+  let userDrafts = readEntryDrafts(userId)
+
+  for (const draft of guestDrafts) {
+    userDrafts = upsertEntryDraftList(userDrafts, draft)
+  }
+
+  writeEntryDraftList(userId, userDrafts)
+  clearEntryDraft(null)
+  return true
 }
 
 export function clearEntryDraft(userId: string | null | undefined) {
@@ -135,6 +245,7 @@ export function isMeaningfulEntryDraft(snapshot: {
 }
 
 export function buildEntryDraftSnapshot(input: {
+  id?: string | null
   entryStep: number
   severityValue: number
   entryForm: Record<string, string>
@@ -144,6 +255,7 @@ export function buildEntryDraftSnapshot(input: {
 }): EntryDraftSnapshot | null {
   const snapshot: EntryDraftSnapshot = {
     version: 1,
+    id: input.id || createEntryDraftId(),
     savedAt: new Date().toISOString(),
     entryStep: input.entryStep,
     severityValue: input.severityValue,
@@ -193,32 +305,20 @@ export function entryDraftSnapshotsEqual(a: EntryDraftSnapshot, b: EntryDraftSna
 }
 
 export function shouldPromptBeforeResumeEntryDraft(options: {
-  editingEntryId: string | null | undefined
-  stored: EntryDraftSnapshot
-  current: {
-    entryStep?: number
-    severityValue?: number
-    entryForm?: Record<string, string>
-    selectedSearchCondition?: EntryDraftCondition | null
-    customConditionInput?: string
-  }
-  currentMeaningfulSnapshot: EntryDraftSnapshot | null
+  editingSavedEntry: boolean
+  visitedStepTwo: boolean
+  alreadyEditingStoredDraft: boolean
 }) {
-  if (options.editingEntryId) {
+  if (options.alreadyEditingStoredDraft) {
+    return false
+  }
+
+  if (options.editingSavedEntry) {
     return true
   }
 
-  const { stored, current, currentMeaningfulSnapshot } = options
-
-  if (currentMeaningfulSnapshot && entryDraftSnapshotsEqual(stored, currentMeaningfulSnapshot)) {
-    return false
-  }
-
-  if (!isMeaningfulEntryDraft(current)) {
-    return false
-  }
-
-  return true
+  // Step 1 is only the date. A new log starts when the user opens step 2.
+  return options.visitedStepTwo
 }
 
 export function formatEntryDraftTimeLabel(savedAt: string) {
