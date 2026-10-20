@@ -12,6 +12,10 @@ export function getTodayCalendarDate() {
   return today(getLocalTimeZone())
 }
 
+export function isCalendarDateBeforeToday(calendarDate: CalendarDate) {
+  return calendarDate.compare(getTodayCalendarDate()) < 0
+}
+
 export function getMinEntryCalendarDate() {
   return getTodayCalendarDate().subtract({ years: 50 })
 }

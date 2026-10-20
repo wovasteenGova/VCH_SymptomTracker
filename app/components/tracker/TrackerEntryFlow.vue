@@ -29,6 +29,7 @@ const props = withDefaults(defineProps<{
   title: string
   image: string
   isEditing: boolean
+  isBackdatedEntry?: boolean
   entryStep: number
   entryStepsLength: number
   entryProgressWidth: string
@@ -67,7 +68,8 @@ const props = withDefaults(defineProps<{
   showCustomConditionEmptyState: false,
   debouncedCustomConditionPreview: '',
   filteredPickerConditionResults: () => [],
-  enableSwipe: true
+  enableSwipe: true,
+  isBackdatedEntry: false
 })
 
 const emit = defineEmits<{
@@ -94,6 +96,18 @@ const emit = defineEmits<{
 
 const isDesktop = computed(() => props.variant === 'desktop')
 const severityGuidance = computed(() => getSeverityGuidance(props.severity))
+
+const entryKindLabel = computed(() => {
+  if (props.isEditing) {
+    return isDesktop.value ? 'Edit entry' : 'Edit Entry'
+  }
+
+  if (props.isBackdatedEntry) {
+    return 'Backdated entry'
+  }
+
+  return isDesktop.value ? 'New entry' : 'New Entry'
+})
 
 const stepsRemaining = computed(() => Math.max(0, props.entryStepsLength - props.entryStep - 1))
 const stepsRemainingLabel = computed(() => {
@@ -217,11 +231,16 @@ function isStepSwipeBlockedTarget(target: EventTarget | null) {
 
         <div class="min-w-0 flex-1">
           <p
-            :class="isDesktop
-              ? td.captionWide
-              : 'text-xs font-semibold uppercase tracking-[0.2em] text-muted'"
+            :class="[
+              isDesktop
+                ? td.captionWide
+                : 'text-xs font-semibold uppercase tracking-[0.2em]',
+              isBackdatedEntry && !isEditing
+                ? 'text-amber-700 dark:text-amber-300'
+                : 'text-muted'
+            ]"
           >
-            {{ isEditing ? (isDesktop ? 'Edit entry' : 'Edit Entry') : (isDesktop ? 'New entry' : 'New Entry') }}
+            {{ entryKindLabel }}
           </p>
           <div class="mt-1.5 flex items-center gap-2">
             <h2

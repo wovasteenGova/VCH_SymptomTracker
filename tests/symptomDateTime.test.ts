@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { CalendarDate } from '@internationalized/date'
 import {
   coerceCalendarDate,
-  getTodayCalendarDate
+  getTodayCalendarDate,
+  isCalendarDateBeforeToday
 } from '../app/utils/symptomDateTime'
 
 describe('coerceCalendarDate', () => {
@@ -29,5 +30,17 @@ describe('coerceCalendarDate', () => {
     expect(fallback.year).toBeGreaterThan(2000)
     expect(fallback.month).toBeGreaterThanOrEqual(1)
     expect(fallback.day).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('isCalendarDateBeforeToday', () => {
+  it('returns true only for dates before today in the local calendar', () => {
+    const today = getTodayCalendarDate()
+    const yesterday = today.subtract({ days: 1 })
+    const tomorrow = today.add({ days: 1 })
+
+    expect(isCalendarDateBeforeToday(yesterday)).toBe(true)
+    expect(isCalendarDateBeforeToday(today)).toBe(false)
+    expect(isCalendarDateBeforeToday(tomorrow)).toBe(false)
   })
 })

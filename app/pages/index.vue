@@ -322,6 +322,7 @@
                   :title="entryTitle"
                   :image="activeEntryImage"
                   :is-editing="isEditingEntry"
+                  :is-backdated-entry="entryIsBackdated"
                   :entry-step="entryStep"
                   :entry-steps-length="entrySteps.length"
                   :entry-progress-width="entryProgressWidth"
@@ -432,6 +433,10 @@
               @open-export="openDesktopHistoryExport"
             >
               <template #calendar>
+                <HistoryBackdateEntryCta
+                  :visible="selectedHistoryDayIsPast"
+                  @click="startBackdatedEntryFromHistoryDay"
+                />
                 <SymptomCalendar
                   v-model="historyCalendarDate"
                   v-model:placeholder="historyCalendarPlaceholder"
@@ -512,6 +517,7 @@
               :title="entryTitle"
               :image="activeEntryImage"
               :is-editing="isEditingEntry"
+              :is-backdated-entry="entryIsBackdated"
               :entry-step="entryStep"
               :entry-steps-length="entrySteps.length"
               :entry-progress-width="entryProgressWidth"
@@ -1161,6 +1167,10 @@
               v-else-if="activeHistoryTab === 'Calendar'"
               class="py-1"
             >
+              <HistoryBackdateEntryCta
+                :visible="selectedHistoryDayIsPast"
+                @click="startBackdatedEntryFromHistoryDay"
+              />
               <SymptomCalendar
                 v-model="historyCalendarDate"
                 v-model:placeholder="historyCalendarPlaceholder"
@@ -1868,6 +1878,7 @@ import {
   getMaxEntryDateTimeLocal,
   getMaxEntryTimeLocal,
   getTodayCalendarDate,
+  isCalendarDateBeforeToday,
   isFutureEntryDateTime,
   parseTime24ToParts,
   splitEntryDateTimeLocal,
@@ -1929,6 +1940,7 @@ import TrackerDesktopWorkspace from '../components/tracker/TrackerDesktopWorkspa
 import TrackerDesktopCenter from '../components/tracker/TrackerDesktopCenter.vue'
 import TrackerDesktopHistory from '../components/tracker/TrackerDesktopHistory.vue'
 import TrackerEntryFlow from '../components/tracker/TrackerEntryFlow.vue'
+import HistoryBackdateEntryCta from '../components/tracker/HistoryBackdateEntryCta.vue'
 import TrackerPdfExportSettings from '../components/tracker/TrackerPdfExportSettings.vue'
 import TrackerPdfExportActionFooter from '../components/tracker/TrackerPdfExportActionFooter.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
@@ -2305,6 +2317,20 @@ const PDF_CONDITION_STATEMENT_KEY = 'pdf_condition_statement'
 const historyCalendarDate = shallowRef(getTodayCalendarDate())
 const historyCalendarPlaceholder = shallowRef(getTodayCalendarDate())
 
+const entryIsBackdated = computed(() => {
+  if (isEditingEntry.value) {
+    return false
+  }
+
+  const date = coerceCalendarDate(entryCalendarDate.value)
+  return Boolean(date && isCalendarDateBeforeToday(date))
+})
+
+const selectedHistoryDayIsPast = computed(() => {
+  const date = coerceCalendarDate(historyCalendarDate.value)
+  return Boolean(date && isCalendarDateBeforeToday(date))
+})
+
 const maxEntryTimeInput = computed(() => {
   if (!entryCalendarDate.value) {
     return '23:59'
@@ -2343,15 +2369,7 @@ const isEntryEditLockedOpen = ref(false)
 const pendingEditAfterNoticeEntryId = ref<string | null>(null)
 const isLoggingCadencePromptOpen = ref(false)
 const weeklyLogCaution = ref<WeeklyLogCaution | null>(null)
-const pendingCadenceEntryOptions = ref<{
-  prefillCustomCondition?: string
-  condition?: {
-    title: string
-    category: string
-    description: string
-    image: string
-  }
-} | null>(null)
+const pendingCadenceEntryOptions = ref<OpenEntryPanelOptions | null>(null)
 const isConditionBrowserOpen = ref(false)
 const isGuestLoginIntroOpen = ref(false)
 
@@ -2976,6 +2994,14 @@ function onHistoryCalendarDateUpdate(date: unknown) {
   if (parsed) {
     historyCalendarDate.value = parsed
     historyCalendarPlaceholder.value = parsed
+
+    if (
+      isEntryOpen.value
+      && !isEditingEntry.value
+      && isCalendarDateBeforeToday(parsed)
+    ) {
+      applyEntryOccurredCalendarDate(parsed)
+    }
   }
 }
 
@@ -2986,23 +3012,34 @@ function onEntryCalendarPlaceholderUpdate(date: unknown) {
   }
 }
 
+function applyEntryOccurredCalendarDate(calendarDate: CalendarDate) {
+  const today = getTodayCalendarDate()
+  const normalized = calendarDate.compare(today) > 0 ? today : calendarDate
+  const isPast = isCalendarDateBeforeToday(normalized)
+
+  isApplyingEntryCalendarSelection = true
+  entryCalendarDate.value = normalized
+  entryCalendarPlaceholder.value = normalized
+
+  if (isPast && !entryTimeWasManuallySelected) {
+    entryTimeInput.value = defaultBackdatedEntryTime
+    syncEntryTimePartsFromInput()
+  }
+
+  entryForm.value.date_and_time = `${calendarDateToDateString(normalized)}T${entryTimeInput.value}`
+
+  window.setTimeout(() => {
+    isApplyingEntryCalendarSelection = false
+  }, 300)
+}
+
 function onEntryCalendarDateUpdate(date: unknown) {
   const parsed = coerceCalendarDate(date)
   if (!parsed) {
     return
   }
 
-  const today = getTodayCalendarDate()
-  const calendarDate = parsed.compare(today) > 0 ? today : parsed
-
-  isApplyingEntryCalendarSelection = true
-  entryCalendarDate.value = calendarDate
-  entryCalendarPlaceholder.value = calendarDate
-  entryForm.value.date_and_time = `${calendarDateToDateString(calendarDate)}T${entryTimeInput.value}`
-
-  window.setTimeout(() => {
-    isApplyingEntryCalendarSelection = false
-  }, 300)
+  applyEntryOccurredCalendarDate(parsed)
 }
 
 const loggingActivityMetrics = computed(() => {
@@ -7763,7 +7800,7 @@ function openEntryForEdit(entryId: string) {
   )
 }
 
-function openEntryPanel(options: {
+type OpenEntryPanelOptions = {
   prefillCustomCondition?: string
   condition?: {
     title: string
@@ -7771,19 +7808,14 @@ function openEntryPanel(options: {
     description: string
     image: string
   }
-} = {}) {
+  occurredCalendarDate?: CalendarDate
+}
+
+function openEntryPanel(options: OpenEntryPanelOptions = {}) {
   void openEntryPanelAsync(options)
 }
 
-async function openEntryPanelAsync(options: {
-  prefillCustomCondition?: string
-  condition?: {
-    title: string
-    category: string
-    description: string
-    image: string
-  }
-} = {}) {
+async function openEntryPanelAsync(options: OpenEntryPanelOptions = {}) {
   if (isDemoMode) {
     openEntryPanelInner(options)
     return
@@ -7801,15 +7833,7 @@ async function openEntryPanelAsync(options: {
   requestEntryPanelOpen(options)
 }
 
-function requestEntryPanelOpen(options: {
-  prefillCustomCondition?: string
-  condition?: {
-    title: string
-    category: string
-    description: string
-    image: string
-  }
-} = {}) {
+function requestEntryPanelOpen(options: OpenEntryPanelOptions = {}) {
   const caution = getWeeklyLogCaution(weeklyLogDay.value, loggingCadence.value)
 
   if (caution) {
@@ -7869,15 +7893,7 @@ async function handleWelcomeComplete(payload: {
   }
 }
 
-function openEntryPanelInner(options: {
-  prefillCustomCondition?: string
-  condition?: {
-    title: string
-    category: string
-    description: string
-    image: string
-  }
-} = {}) {
+function openEntryPanelInner(options: OpenEntryPanelOptions = {}) {
   if (needsAppWelcome.value) {
     return
   }
@@ -7903,8 +7919,35 @@ function openEntryPanelInner(options: {
     debouncedCustomConditionPreview.value = options.prefillCustomCondition
   }
 
+  if (options.occurredCalendarDate) {
+    applyEntryOccurredCalendarDate(options.occurredCalendarDate)
+  }
+
   prefillConditionStatementForEntry()
   isEntryOpen.value = true
+}
+
+function startBackdatedEntryFromHistoryDay() {
+  const selected = coerceCalendarDate(historyCalendarDate.value)
+  if (!selected || !isCalendarDateBeforeToday(selected)) {
+    return
+  }
+
+  const options: OpenEntryPanelOptions = {
+    occurredCalendarDate: selected
+  }
+
+  const condition = activeCondition.value
+  if (condition) {
+    options.condition = {
+      title: condition.title,
+      category: condition.category,
+      description: condition.description,
+      image: condition.image
+    }
+  }
+
+  openEntryPanel(options)
 }
 
 async function handleEntryDone() {
