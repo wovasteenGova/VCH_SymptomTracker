@@ -374,6 +374,7 @@
                   :image="activeCondition.image"
                   :has-conditions="homeConditions.length > 0"
                   :conditions-loading="homeConditionsView === 'loading'"
+                  :logging="isEntryOpen"
                   :tip="homeVisitTip"
                   :chart-metrics="desktopChartMetrics"
                   @log="startDesktopLogEntry"
@@ -1101,7 +1102,7 @@
                 @keydown.enter.prevent="openEntryDetailsOverlay(entry.id)"
                 @keydown.space.prevent="openEntryDetailsOverlay(entry.id)"
               >
-                <div class="flex items-center gap-3">
+                <div class="flex items-start gap-3">
                   <div
                     class="grid size-16 shrink-0 place-items-center rounded-2xl text-center text-muted transition hover:bg-accented/40"
                     aria-hidden="true"
@@ -1123,8 +1124,8 @@
                       </UBadge>
                     </div>
 
-                    <h3 class="mt-2 truncate text-base font-bold text-highlighted">{{ entry.title }}</h3>
-                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+                    <h3 class="mt-2 text-base font-bold leading-snug text-highlighted">{{ entry.title }}</h3>
+                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-snug text-muted">
                       <span class="inline-flex items-center gap-1">
                         <UIcon name="i-lucide-clock-3" class="size-3.5" />
                         {{ entry.time }}
@@ -1137,28 +1138,48 @@
                     <p v-if="entry.editedLabel" class="mt-1 text-xs text-muted">
                       {{ entry.editedLabel }}
                     </p>
+
+                    <div
+                      v-if="entry.source !== 'Family'"
+                      class="mt-3 flex items-center gap-2"
+                    >
+                      <button
+                        type="button"
+                        data-history-interactive
+                        class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-2 text-xs font-bold text-toned ring-1 ring-default transition hover:bg-accented hover:text-highlighted"
+                        :aria-label="`Edit ${entry.title}`"
+                        @click.stop="requestEntryEdit(entry.id)"
+                      >
+                        <UIcon name="i-lucide-pencil" class="size-3.5" />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        data-history-interactive
+                        class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-2 text-xs font-bold text-toned ring-1 ring-default transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-300"
+                        :aria-label="`Delete ${entry.title}`"
+                        @click.stop="requestDeleteEntry(entry.id)"
+                      >
+                        <UIcon name="i-lucide-trash-2" class="size-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                    <div
+                      v-else
+                      class="mt-3"
+                    >
+                      <button
+                        type="button"
+                        data-history-interactive
+                        class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-2 text-xs font-bold text-toned ring-1 ring-default transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-300"
+                        :aria-label="`Delete ${entry.title}`"
+                        @click.stop="requestDeleteEntry(entry.id)"
+                      >
+                        <UIcon name="i-lucide-trash-2" class="size-3.5" />
+                        Delete
+                      </button>
+                    </div>
                   </div>
-
-                  <button
-                    v-if="entry.source !== 'Family'"
-                    type="button"
-                    data-history-interactive
-                    class="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-accented/40 hover:text-highlighted"
-                    :aria-label="`Edit ${entry.title}`"
-                    @click.stop="requestEntryEdit(entry.id)"
-                  >
-                    <UIcon name="i-lucide-pencil" class="size-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    data-history-interactive
-                    class="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-300"
-                    :aria-label="`Delete ${entry.title}`"
-                    @click.stop="requestDeleteEntry(entry.id)"
-                  >
-                    <UIcon name="i-lucide-trash-2" class="size-4" />
-                  </button>
                 </div>
               </article>
             </div>
@@ -1327,6 +1348,77 @@
             @click="confirmDeleteEntryDraft"
           >
             Delete draft
+          </button>
+        </div>
+      </div>
+    </AppOverlayShell>
+  </Transition>
+
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <AppOverlayShell
+      v-if="isResumeDraftConflictOpen"
+      :z-index="130"
+      backdrop-class="bg-black/55"
+      @dismiss="cancelResumeDraftConflict"
+    >
+      <div
+        class="app-overlay-panel app-overlay-panel--compact w-full max-w-md rounded-[1.75rem] bg-elevated p-5 shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="resume-draft-conflict-title"
+      >
+        <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">
+          Saved draft
+        </p>
+        <h3 id="resume-draft-conflict-title" class="mt-2 text-xl font-bold text-highlighted">
+          Finish your current entry first?
+        </h3>
+        <p class="mt-3 text-sm leading-6 text-toned">
+          You are already working on
+          <span class="font-semibold text-highlighted">{{ entryTitle || 'a symptom log' }}</span>.
+          Choose what to do with it before opening
+          <span class="font-semibold text-highlighted">{{ pendingResumeDraftSnapshot?.conditionTitle || 'your saved draft' }}</span>.
+        </p>
+
+        <div class="mt-5 space-y-2">
+          <button
+            type="button"
+            class="w-full rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted transition hover:bg-accented"
+            @click="cancelResumeDraftConflict"
+          >
+            Keep current entry
+          </button>
+          <button
+            type="button"
+            class="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+            :disabled="isSavingEntry"
+            @click="saveCurrentEntryThenOpenPendingDraft"
+          >
+            {{ isSavingEntry ? 'Saving…' : 'Save current log, then open draft' }}
+          </button>
+          <button
+            type="button"
+            class="w-full rounded-2xl bg-muted px-4 py-3 text-sm font-bold text-highlighted ring-1 ring-default transition hover:bg-accented"
+            @click="draftCurrentThenOpenPendingDraft"
+          >
+            Save current as draft, then open draft
+          </button>
+        </div>
+
+        <div class="mt-5 border-t border-default pt-4">
+          <button
+            type="button"
+            class="w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700"
+            @click="discardCurrentAndOpenPendingDraft"
+          >
+            Discard current entry and open draft
           </button>
         </div>
       </div>
@@ -1810,6 +1902,16 @@
     </AppOverlayShell>
   </Transition>
 
+  <TrackerLayReportingSettingsOverlay
+    :open="layReportingSettingsOpen"
+    @close="closeHeaderSettingsOverlays"
+  />
+
+  <TrackerLogNotificationsSettingsOverlay
+    :open="logNotificationsSettingsOpen"
+    @close="closeHeaderSettingsOverlays"
+  />
+
 </template>
 
 <script setup lang="ts">
@@ -1919,6 +2021,7 @@ import { CalendarDate } from '@internationalized/date'
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import {
   buildEntryDraftSnapshot,
+  entryDraftSnapshotsEqual,
   clearEntryDraft,
   clearPendingEntrySaveAfterSignIn,
   consumePendingEntrySaveAfterSignIn,
@@ -1944,6 +2047,9 @@ import HistoryBackdateEntryCta from '../components/tracker/HistoryBackdateEntryC
 import TrackerPdfExportSettings from '../components/tracker/TrackerPdfExportSettings.vue'
 import TrackerPdfExportActionFooter from '../components/tracker/TrackerPdfExportActionFooter.vue'
 import TrackerAccountMenu from '../components/TrackerAccountMenu.vue'
+import TrackerLayReportingSettingsOverlay from '../components/settings/TrackerLayReportingSettingsOverlay.vue'
+import TrackerLogNotificationsSettingsOverlay from '../components/settings/TrackerLogNotificationsSettingsOverlay.vue'
+import { useTrackerHeaderSettingsOverlays } from '../composables/useTrackerHeaderSettingsOverlays'
 import { useTrackerAuthPrompt } from '../composables/useTrackerAuthPrompt'
 import { useTrackerSettingsPanelOpen } from '../composables/useTrackerSettingsPanelOpen'
 import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
@@ -2190,7 +2296,14 @@ const {
   enableRemindersWithPermission
 } = useLogReminders()
 const { isDesktopLayout, isMobileLayout, isMobileCarouselLayout, prefersDesktopCarouselChrome, isEmbeddedPreview } = useTrackerLayout()
-const { openSettingsPanel } = useTrackerSettingsPanelOpen()
+const { closeSettingsPanel } = useTrackerSettingsPanelOpen()
+const {
+  layReportingOpen: layReportingSettingsOpen,
+  logNotificationsOpen: logNotificationsSettingsOpen,
+  closeHeaderSettingsOverlays,
+  openLayReportingSettingsOverlay,
+  openLogNotificationsSettingsOverlay
+} = useTrackerHeaderSettingsOverlays()
 const homeBootstrapComplete = ref(isEmbeddedPreview.value)
 // spaLoadingTemplate already played the tank on first paint. Do not remount it
 // here (including theme/cookie hydrate), or the SVG animation restarts.
@@ -2224,18 +2337,18 @@ const notificationNeedsAttention = computed(() => {
 
 const notificationAttentionLabel = computed(() => {
   if (logReminderPermissionState.value === 'denied') {
-    return 'Notifications are blocked. Open profile to enable them.'
+    return 'Notifications are blocked. Open log notification settings to enable them.'
   }
 
   if (pushBackendConfigured.value === false) {
-    return 'Notification server setup is missing. Open profile.'
+    return 'Notification server setup is missing. Open log notification settings.'
   }
 
   if (hasRegisteredPushSubscription.value === false) {
-    return 'Notifications need setup on this device. Open profile.'
+    return 'Notifications need setup on this device. Open log notification settings.'
   }
 
-  return 'Notifications are off. Open profile to enable reminders.'
+  return 'Notifications are off. Open log notification settings to enable reminders.'
 })
 
 const profileButtonRingClass = computed(() => {
@@ -2347,6 +2460,8 @@ const historyTabs = ['Entries', 'Calendar', 'Export']
 const submissionHighlightDurationMs = 5_000
 
 const pendingDeleteDraft = ref(false)
+const isResumeDraftConflictOpen = ref(false)
+const pendingResumeDraftSnapshot = ref<EntryDraftSnapshot | null>(null)
 const pendingDelete = ref<null | {
   id: string
   mode: 'archive'
@@ -2381,6 +2496,7 @@ const shouldHideHistoryChrome = computed(() => (
   || isHomeTipsOverlayOpen.value
   || isLoggingCadencePromptOpen.value
   || pendingDeleteDraft.value
+  || isResumeDraftConflictOpen.value
   || Boolean(pendingDelete.value)
   || Boolean(pendingDeleteInactiveCustom.value)
   || isRemovedCustomConditionsOpen.value
@@ -3901,7 +4017,13 @@ let submissionHighlightTimer: ReturnType<typeof setTimeout> | undefined
 let entryDraftSaveTimer: ReturnType<typeof setTimeout> | undefined
 
 function refreshEntryDraftPreview() {
-  const snapshot = readEntryDraft(user.value?.id)
+  const ownerId = user.value?.id ?? null
+
+  if (ownerId) {
+    migrateGuestEntryDraftToUser(ownerId)
+  }
+
+  const snapshot = readEntryDraft(ownerId)
 
   if (snapshot && isMeaningfulEntryDraft(snapshot)) {
     entryDraftPreview.value = {
@@ -4011,6 +4133,121 @@ function restoreEntryDraftSnapshot(snapshot: EntryDraftSnapshot) {
   isRestoringEntryDraft.value = false
 }
 
+function currentEntryDraftInput() {
+  return {
+    entryStep: entryStep.value,
+    severityValue: severityValue.value,
+    entryForm: entryForm.value,
+    selectedSearchCondition: selectedSearchCondition.value,
+    customConditionInput: customConditionInput.value,
+    conditionTitle: entryTitle.value
+  }
+}
+
+function buildCurrentEntryDraftSnapshot() {
+  return buildEntryDraftSnapshot(currentEntryDraftInput())
+}
+
+function shouldPromptBeforeResumeDraft(stored: EntryDraftSnapshot) {
+  if (editingEntryId.value) {
+    return true
+  }
+
+  const currentSnapshot = buildCurrentEntryDraftSnapshot()
+
+  if (isEntryOpen.value) {
+    if (currentSnapshot && entryDraftSnapshotsEqual(stored, currentSnapshot)) {
+      return false
+    }
+
+    return true
+  }
+
+  const current = currentEntryDraftInput()
+
+  if (!isMeaningfulEntryDraft(current) && entryStep.value === 0 && !selectedSearchCondition.value) {
+    return false
+  }
+
+  if (!currentSnapshot) {
+    return hasActiveDraft.value
+  }
+
+  return !entryDraftSnapshotsEqual(stored, currentSnapshot)
+}
+
+function cancelResumeDraftConflict() {
+  isResumeDraftConflictOpen.value = false
+  pendingResumeDraftSnapshot.value = null
+}
+
+function openPendingResumeDraftSnapshot() {
+  const snapshot = pendingResumeDraftSnapshot.value
+
+  if (!snapshot) {
+    return
+  }
+
+  openEntryFromDraftSnapshot(snapshot)
+  persistEntryDraftNow()
+  refreshEntryDraftPreview()
+  cancelResumeDraftConflict()
+}
+
+async function saveCurrentEntryThenOpenPendingDraft() {
+  if (!pendingResumeDraftSnapshot.value) {
+    return
+  }
+
+  if (!editingEntryId.value && !isLastEntryStep.value) {
+    showSubmissionToast({
+      message: 'Finish the log or use “Save current as draft” instead.',
+      tone: 'error'
+    })
+    return
+  }
+
+  await saveEntry()
+
+  if (entryError.value || isSavingEntry.value) {
+    return
+  }
+
+  openPendingResumeDraftSnapshot()
+  showSubmissionToast({
+    message: 'Log saved. Restored the draft you selected.',
+    tone: 'success'
+  })
+}
+
+function draftCurrentThenOpenPendingDraft() {
+  if (!pendingResumeDraftSnapshot.value) {
+    return
+  }
+
+  cancelEntryDraftSave()
+  persistEntryDraftNow()
+  openPendingResumeDraftSnapshot()
+  showSubmissionToast({
+    message: 'Current work saved to drafts. Restored the draft you selected.',
+    tone: 'success'
+  })
+}
+
+function discardCurrentAndOpenPendingDraft() {
+  if (!pendingResumeDraftSnapshot.value) {
+    return
+  }
+
+  cancelEntryDraftSave()
+  closeEntryPanel(true)
+  openPendingResumeDraftSnapshot()
+  showSubmissionToast({
+    message: 'Current entry discarded. Draft restored.',
+    tone: 'success'
+  })
+}
+
 function resumeEntryDraft() {
   if (needsAppWelcome.value) {
     return
@@ -4018,27 +4255,37 @@ function resumeEntryDraft() {
 
   closeSubmissionDropdown()
 
-  if (
-    hasActiveDraft.value
-    && isMeaningfulEntryDraft({
-      entryStep: entryStep.value,
-      severityValue: severityValue.value,
-      entryForm: entryForm.value,
-      selectedSearchCondition: selectedSearchCondition.value,
-      customConditionInput: customConditionInput.value
-    })
-  ) {
-    historyExpanded.value = false
-    transitionDirection.value = 'expand'
-    isEntryOpen.value = true
-    return
-  }
-
   const snapshot = readEntryDraft(user.value?.id)
 
   if (!snapshot || !isMeaningfulEntryDraft(snapshot)) {
     if (snapshot) clearEntryDraft(user.value?.id)
     refreshEntryDraftPreview()
+    return
+  }
+
+  const currentSnapshot = buildCurrentEntryDraftSnapshot()
+
+  if (currentSnapshot && entryDraftSnapshotsEqual(snapshot, currentSnapshot)) {
+    if (isEntryOpen.value) {
+      showSubmissionToast({
+        message: 'You are already editing this draft.',
+        tone: 'success'
+      })
+      return
+    }
+
+    historyExpanded.value = false
+    transitionDirection.value = 'expand'
+    openEntryFromDraftSnapshot(snapshot)
+    return
+  }
+
+  if (shouldPromptBeforeResumeDraft(snapshot)) {
+    pendingResumeDraftSnapshot.value = snapshot
+    closeAppOverlaysExcept('resume-draft-conflict')
+    void nextTick(() => {
+      isResumeDraftConflictOpen.value = true
+    })
     return
   }
 
@@ -5733,6 +5980,7 @@ function closeShareLinkModal() {
 type AppOverlayKey =
   | 'auth'
   | 'delete-draft'
+  | 'resume-draft-conflict'
   | 'delete-entry'
   | 'delete-inactive-custom'
   | 'removed-custom-conditions'
@@ -5755,6 +6003,10 @@ function closeAppOverlaysExcept(keep?: AppOverlayKey) {
 
   if (keep !== 'delete-draft') {
     pendingDeleteDraft.value = false
+  }
+
+  if (keep !== 'resume-draft-conflict') {
+    cancelResumeDraftConflict()
   }
 
   if (keep !== 'delete-entry') {
@@ -5795,6 +6047,8 @@ function closeAppOverlaysExcept(keep?: AppOverlayKey) {
   if (keep !== 'entry-edit-locked') {
     isEntryEditLockedOpen.value = false
   }
+
+  closeHeaderSettingsOverlays()
 }
 
 async function createShareLinkForEntry() {
@@ -7633,15 +7887,9 @@ function openLayReportingSettings() {
     return
   }
 
-  if (isEmbeddedPreview) {
-    openEmbedProfile()
-    return
-  }
-
-  openSettingsPanel({
-    expanded: !isDesktopLayout.value,
-    section: 'settings-supporters'
-  })
+  closeAppOverlaysExcept()
+  closeSettingsPanel()
+  openLayReportingSettingsOverlay()
 }
 
 function handleNotificationStatusClick() {
@@ -7650,15 +7898,9 @@ function handleNotificationStatusClick() {
     return
   }
 
-  if (isEmbeddedPreview) {
-    openEmbedProfile()
-    return
-  }
-
-  openSettingsPanel({
-    expanded: isMobileLayout.value,
-    section: 'settings-reminders'
-  })
+  closeAppOverlaysExcept()
+  closeSettingsPanel()
+  openLogNotificationsSettingsOverlay()
 }
 
 function requestEntryEdit(entryId: string) {
@@ -7997,7 +8239,7 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
     customConditionInput.value = ''
     debouncedCustomConditionPreview.value = ''
     resetEntryForm()
-  } else if (!editingEntryId.value) {
+  } else if (!editingEntryId.value && wasEntryOpen) {
     hasActiveDraft.value = isMeaningfulEntryDraft({
       entryStep: entryStep.value,
       severityValue: severityValue.value,
@@ -8011,9 +8253,17 @@ function closeEntryPanel(clearDraft = false, preservePersistedDraft = false) {
       customConditionInput.value = ''
       debouncedCustomConditionPreview.value = ''
       isConditionPickerOpen.value = false
-      clearPersistedEntryDraft()
+
+      const ownerId = user.value?.id ?? null
+      const storedDraft = readEntryDraft(ownerId)
+
+      if (!storedDraft || !isMeaningfulEntryDraft(storedDraft)) {
+        clearPersistedEntryDraft()
+      }
     }
 
+    refreshEntryDraftPreview()
+  } else if (!editingEntryId.value) {
     refreshEntryDraftPreview()
   } else {
     editingEntryId.value = null

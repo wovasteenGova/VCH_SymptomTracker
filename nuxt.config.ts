@@ -144,6 +144,7 @@ export default defineNuxtConfig({
     // Keep skipWaiting so push reminders can activate, but do not inject the
     // default autoUpdate helper — it calls location.reload() on controllerchange.
     registerType: 'prompt',
+    registerWebManifestInRouteRules: true,
     client: {
       register: false
     },
@@ -195,6 +196,9 @@ export default defineNuxtConfig({
     }
   },
   vite: {
+    resolve: {
+      dedupe: ['reka-ui', 'vue']
+    },
     optimizeDeps: {
       include: ['chart.js', 'vue-chartjs']
     }

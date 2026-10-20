@@ -15,7 +15,7 @@ function clientVisitorSignals() {
 
 function isExcludedAnalyticsClientUser() {
   try {
-    const { user } = useSupabaseAuth()
+    const user = useState<{ email?: string | null } | null>('tracker-auth-user', () => null)
     const config = useRuntimeConfig()
     return isAnalyticsExcludedUser(user.value, config.public?.analyticsExcludeEmails)
   } catch {

@@ -1,7 +1,8 @@
 import { resolveToastGroupKey } from '#shared/groupedToast'
 
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin((nuxtApp) => {
   const toast = useToast()
+  nuxtApp.$vchToast = toast
   const {
     appendEntry,
     removeGroup,

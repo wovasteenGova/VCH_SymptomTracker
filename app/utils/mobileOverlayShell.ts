@@ -28,7 +28,9 @@ const PANEL_DEFAULTS: Required<Omit<MobileOverlayPanelOptions, 'extra'>> & { ext
 
 const OVERLAY_Z_CLASS: Record<string, string> = {
   90: 'z-[90]',
-  100: 'z-[100]'
+  100: 'z-[100]',
+  110: 'z-[110]',
+  120: 'z-[120]'
 }
 
 function overlayZClass(zIndex: number | string) {

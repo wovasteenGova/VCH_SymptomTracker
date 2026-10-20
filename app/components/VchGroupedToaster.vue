@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<{
   duration: 5000
 })
 
-const { toasts, remove } = useToast()
+const { toasts, remove } = useVchToast()
 const { getGroup } = useGroupedToast()
 const appConfig = useAppConfig()
 

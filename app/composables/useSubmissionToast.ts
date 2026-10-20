@@ -26,7 +26,7 @@ export { normalizeSubmissionToastPayload }
 export type { SubmissionToastPayload }
 
 export function useSubmissionToast() {
-  const toast = useToast()
+  const toast = useVchToast()
   const activeToast = computed(() => toast.toasts.value.length > 0)
 
   function showSubmissionToast(payload: string | SubmissionToastPayload) {

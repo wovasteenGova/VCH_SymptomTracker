@@ -37,7 +37,7 @@
             class="condition-browser-help"
             :class="{ 'condition-browser-help--compact': helpCompact }"
           >
-            <p class="condition-browser-help__copy mt-2 text-sm leading-6 text-toned">
+            <p class="condition-browser-help__copy mt-1 text-sm leading-5 text-toned">
               Pick catalog conditions or search to add your own: anything you want quick access to on your home screen.
             </p>
           </div>
@@ -66,10 +66,10 @@
 
       <div
         v-if="mode === 'manage' && selectedCount === 0"
-        class="condition-browser-help"
+        class="condition-browser-help mt-0.5"
         :class="{ 'condition-browser-help--compact': helpCompact }"
       >
-        <p class="condition-browser-help__copy mt-2 text-sm leading-6 text-toned">
+        <p class="condition-browser-help__copy mt-1 text-sm leading-5 text-toned">
           Tap conditions below or search to add a custom one to your home screen.
         </p>
       </div>
@@ -92,7 +92,10 @@
 
         placeholder="Search conditions"
 
-        class="mt-3 w-full border-0 border-b border-default/80 bg-transparent px-1 py-2.5 text-lg font-semibold text-highlighted outline-none placeholder:text-dimmed focus:border-primary"
+        :class="[
+          searchInputTopClass,
+          'w-full border-0 border-b border-default/80 bg-transparent px-1 py-2 text-lg font-semibold text-highlighted outline-none placeholder:text-dimmed focus:border-primary'
+        ]"
 
       >
 
@@ -127,7 +130,7 @@
           class="condition-browser-help"
           :class="{ 'condition-browser-help--compact': helpCompact }"
         >
-          <p class="condition-browser-help__copy mt-2 text-xs leading-5 text-toned">
+          <p class="condition-browser-help__copy mt-1 text-xs leading-5 text-toned">
             Not in the list? Type your condition and tap Add to track it on your home screen.
           </p>
         </div>
@@ -527,6 +530,17 @@ const restrictedKeySet = computed(() => new Set(props.restrictedKeys || []))
 
 const selectedCount = computed(() => props.selectedKeys.length)
 
+const searchInputTopClass = computed(() => {
+  if (helpCompact.value) {
+    return 'mt-1'
+  }
+
+  const hasVisibleHelpIntro = props.mode === 'onboarding'
+    || (props.mode === 'manage' && selectedCount.value === 0)
+
+  return hasVisibleHelpIntro ? 'mt-1.5' : 'mt-1'
+})
+
 const continueButtonLabel = computed(() => {
   if (props.saving) {
     return 'Saving...'
@@ -677,6 +691,7 @@ function handleConditionClick(key: string) {
 
 .condition-browser-help--compact {
   grid-template-rows: 0fr;
+  margin-block: 0;
 }
 
 .condition-browser-help__copy {

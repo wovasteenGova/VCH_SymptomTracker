@@ -474,165 +474,6 @@
           </NuxtLink>
         </div>
 
-        <section id="settings-logging" :class="settingsSectionClass(compact)">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Logging rhythm</p>
-          <h2 class="mt-1 text-xl font-bold text-highlighted">When you log symptoms</h2>
-          <p class="mt-2 text-sm leading-6 text-muted">
-            Weekly logging is recommended for PTSD and mental health so you are not revisiting painful events every day.
-          </p>
-
-          <div class="mt-4 grid gap-3">
-            <button
-              type="button"
-              class="rounded-3xl border px-4 py-4 text-left transition"
-              :class="loggingCadence === 'weekly'
-                ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-                : 'border-default bg-elevated/30'"
-              @click="saveLoggingCadence('weekly')"
-            >
-              <span class="block font-bold text-highlighted">End of the week</span>
-              <span class="mt-1 block text-sm leading-6 text-muted">Log once and capture the week together.</span>
-            </button>
-
-            <button
-              type="button"
-              class="rounded-3xl border px-4 py-4 text-left transition"
-              :class="loggingCadence === 'daily'
-                ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-                : 'border-default bg-elevated/30'"
-              @click="saveLoggingCadence('daily')"
-            >
-              <span class="block font-bold text-highlighted">Every day</span>
-              <span class="mt-1 block text-sm leading-6 text-muted">Best when you want details while they are fresh.</span>
-            </button>
-          </div>
-
-          <div v-if="loggingCadence === 'weekly'" class="mt-4">
-            <p class="text-xs font-bold uppercase tracking-[0.14em] text-muted">Preferred log day</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button
-                v-for="option in weeklyLogDayOptions"
-                :key="option.value"
-                type="button"
-                class="rounded-full px-3 py-2 text-sm font-bold transition"
-                :class="weeklyLogDay === option.value
-                  ? 'bg-primary text-inverted'
-                  : 'bg-elevated text-muted ring-1 ring-default'"
-                @click="saveWeeklyLogDay(option.value)"
-              >
-                {{ option.label }}
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section id="settings-reminders" :class="settingsSectionClass(compact)">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Reminders</p>
-          <h2 class="mt-1 text-xl font-bold text-highlighted">Logging notifications</h2>
-          <p class="mt-2 text-sm leading-6 text-muted">
-            {{ logReminderScheduleDescription }}
-          </p>
-          <p class="mt-2 text-xs leading-5 text-muted">
-            Device permission: {{ logReminderDevicePermissionLabel }}. Turning VCH reminders off stops app reminders but does not change your device notification permission.
-          </p>
-
-          <p v-if="logReminderPermissionState === 'unsupported'" class="mt-3 text-sm leading-6 text-amber-200">
-            Notifications are not supported in this browser.
-          </p>
-          <p v-else-if="logReminderPermissionState === 'denied'" class="mt-3 text-sm leading-6 text-amber-200">
-            Notifications are blocked for this app. Enable them in your phone or browser settings, then come back and tap Enable.
-          </p>
-          <p v-else-if="pushBackendConfigured === false" class="mt-3 text-sm leading-6 text-amber-200">
-            Background push is not configured on the server yet (missing VAPID keys in server setup). Reminders cannot reach this device until that is fixed.
-          </p>
-          <p v-else-if="hasRegisteredPushSubscription === false" class="mt-3 text-sm leading-6 text-amber-200">
-            This device is not registered for push reminders yet. Tap Enable after notifications are allowed.
-          </p>
-
-          <div class="mt-4 flex items-center justify-between gap-3 rounded-3xl border border-default bg-elevated/30 px-4 py-4">
-            <div>
-              <p class="font-bold text-highlighted">Log reminders</p>
-              <p class="mt-1 text-sm text-muted">
-                {{ logReminderStatusLabel }}
-              </p>
-            </div>
-            <button
-              type="button"
-              class="rounded-full px-4 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60"
-              :class="remindersEnabled
-                ? 'bg-primary text-inverted'
-                : 'bg-elevated text-muted ring-1 ring-default'"
-              :disabled="isReminderTogglePending"
-              @click="toggleLogReminders"
-            >
-              {{ isReminderTogglePending ? 'Working...' : logReminderButtonLabel }}
-            </button>
-          </div>
-
-          <div class="mt-4 rounded-3xl border border-default bg-elevated/30 px-4 py-4">
-            <label class="block text-xs font-bold uppercase tracking-[0.14em] text-muted">
-              {{ loggingCadence === 'daily' ? 'Morning reminder' : 'Reminder time' }}
-            </label>
-            <select
-              :value="reminderHour"
-              class="mt-2 w-full rounded-2xl border border-default bg-default px-4 py-3 text-sm font-semibold text-highlighted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/40"
-              @change="handleReminderHourChange"
-            >
-              <option
-                v-for="option in logReminderHourOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <div
-            v-if="loggingCadence === 'daily'"
-            class="mt-4 rounded-3xl border border-default bg-elevated/30 px-4 py-4"
-          >
-            <label class="block text-xs font-bold uppercase tracking-[0.14em] text-muted">
-              Evening reminder
-            </label>
-            <select
-              :value="reminderEveningHour"
-              class="mt-2 w-full rounded-2xl border border-default bg-default px-4 py-3 text-sm font-semibold text-highlighted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/40"
-              @change="handleReminderEveningHourChange"
-            >
-              <option
-                v-for="option in logReminderHourOptions"
-                :key="`evening-${option.value}`"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <p class="mt-3 text-xs leading-5 text-muted">
-            Uses your local timezone: {{ logReminderTimezoneLabel }} ({{ reminderTimezone }}).
-            Install the app for background alerts when closed. On Android, set notification channel to Sound and pop-up if alerts only appear in the shade.
-          </p>
-
-          <div class="mt-4 flex items-center justify-between gap-3 rounded-3xl border border-default bg-elevated/30 px-4 py-4">
-            <div class="min-w-0">
-              <p class="font-bold text-highlighted">Test notification</p>
-              <p class="mt-1 text-sm text-muted">
-                Sends a real OS notification now so you can confirm this device is set up.
-              </p>
-            </div>
-            <button
-              type="button"
-              class="shrink-0 rounded-full bg-elevated px-4 py-2 text-sm font-bold text-muted ring-1 ring-default transition hover:bg-accented disabled:cursor-not-allowed disabled:opacity-60"
-              :disabled="isReminderTogglePending || isSendingTestReminder"
-              @click="sendTestLogReminder"
-            >
-              {{ isSendingTestReminder ? 'Sending...' : 'Send test' }}
-            </button>
-          </div>
-        </section>
-
         <section id="settings-display" :class="settingsSectionClass(compact)">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Display</p>
           <h2 class="mt-1 text-xl font-bold text-highlighted">Tracker layout</h2>
@@ -664,165 +505,6 @@
               <span class="block font-bold text-highlighted">{{ option.label }}</span>
               <span class="mt-1 block text-sm leading-6 text-muted">{{ option.copy }}</span>
             </button>
-          </div>
-        </section>
-
-        <section
-          id="settings-supporters"
-          :class="settingsSectionClass(compact)"
-        >
-        <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Lay reporting</p>
-            <h2 class="mt-1 text-xl font-bold text-highlighted">Observer access links</h2>
-            <p class="mt-2 text-sm leading-6 text-muted">
-              Create a private link for someone you trust: family, friends, caregivers, or anyone else. They enter their own contact info on each report. You can also create a link from a saved entry in your history.
-            </p>
-          </div>
-
-          <div v-if="linkedEntryContext" class="mt-4 rounded-3xl border border-primary/35 bg-primary/10 p-4">
-            <p class="text-xs font-bold uppercase tracking-[0.14em] text-primary">Linked entry</p>
-            <p class="mt-2 font-semibold text-highlighted">{{ linkedEntryContext.summary }}</p>
-            <p class="mt-1 text-xs text-primary/80">{{ linkedEntryContext.condition }}</p>
-          </div>
-
-          <div class="mt-5 space-y-4">
-            <label class="block">
-              <span class="mb-2 block px-1 text-xs font-bold uppercase tracking-[0.14em] text-muted">Link label (optional)</span>
-              <input
-                v-model="supporterForm.link_label"
-                type="text"
-                class="w-full rounded-3xl border border-default bg-elevated/40 px-4 py-4 text-base font-medium text-highlighted outline-none placeholder:text-muted focus:border-primary focus:ring-1 focus:ring-primary/40"
-                placeholder="Example: Mom, spouse, caregiver"
-              >
-              <p class="mt-2 px-1 text-xs leading-5 text-muted">
-                This label is only for you to recognize the link. They enter their real info when submitting a report.
-              </p>
-            </label>
-
-            <div>
-              <span class="mb-2 block px-1 text-xs font-bold uppercase tracking-[0.14em] text-muted">Conditions to share</span>
-              <USelectMenu
-                v-model="supporterForm.visible_conditions"
-                :items="shareConditionOptions"
-                multiple
-                placeholder="Choose conditions to share"
-                class="w-full"
-                color="neutral"
-                size="xl"
-                :ui="settingsSelectMenuUi"
-                :content="settingsSelectMenuContent"
-              />
-            </div>
-
-            <p
-              v-if="supporterError"
-              class="text-center text-sm font-medium text-red-600 dark:text-red-300"
-              aria-live="assertive"
-            >
-              {{ supporterError }}
-            </p>
-
-            <button
-              type="button"
-              class="w-full rounded-2xl bg-primary px-5 py-4 text-base font-bold text-inverted shadow-lg transition hover:bg-primary/90"
-              :disabled="isCreatingSupporter"
-              @click="createSupporter"
-            >
-              {{ isCreatingSupporter ? 'Creating...' : 'Create Private Link' }}
-            </button>
-          </div>
-
-          <div
-            v-if="createdLink"
-            ref="createdLinkPanelEl"
-            class="mt-4 rounded-3xl border border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40"
-          >
-            <p class="text-sm font-bold text-emerald-950 dark:text-emerald-200">Private reporting link</p>
-            <p class="mt-2 break-all text-sm leading-6 text-emerald-900 dark:text-emerald-100">{{ createdLink }}</p>
-            <p class="mt-2 text-xs leading-5 text-emerald-800 dark:text-emerald-200/80">
-              Click Copy link to put this URL on the clipboard. The raw token is only shown here.
-            </p>
-            <button
-              type="button"
-              class="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
-              @click="copyCreatedLink"
-            >
-              <UIcon :name="createdLinkCopied ? 'i-lucide-check' : 'i-lucide-copy'" class="size-4" />
-              {{ createdLinkCopied ? 'Copied to clipboard' : 'Copy link' }}
-            </button>
-          </div>
-
-          <div class="mt-8 border-t border-default/70 pt-5">
-            <h2 class="text-xl font-bold text-highlighted">Existing reporting links</h2>
-
-            <div v-if="!supporterProfiles.length" class="py-5 text-center text-sm text-muted">
-              No reporting links yet.
-            </div>
-
-            <div v-else class="mt-4 divide-y divide-default/70">
-              <article
-                v-for="profile in supporterProfiles"
-                :key="profile.id"
-                class="py-4 first:pt-0"
-              >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h3 class="font-bold text-highlighted">{{ profile.display_name || 'Private reporting link' }}</h3>
-                <p class="mt-1 text-sm text-muted">Reporter details are collected on each submission.</p>
-              </div>
-              <UBadge :color="profile.active ? 'success' : 'neutral'" variant="soft" size="md">
-                {{ profile.active ? 'Active' : 'Disabled' }}
-              </UBadge>
-            </div>
-
-            <div class="mt-3 flex flex-wrap gap-2">
-              <UBadge
-                v-for="condition in profile.visible_conditions"
-                :key="condition"
-                color="neutral"
-                variant="soft"
-                size="md"
-              >
-                {{ condition }}
-              </UBadge>
-            </div>
-
-            <div v-if="profile.entry_context_summary" class="mt-3 rounded-2xl border border-primary/30 bg-primary/10 px-3 py-2">
-              <p class="text-xs font-bold uppercase tracking-[0.12em] text-primary">Linked entry</p>
-              <p class="mt-1 text-sm text-highlighted">{{ profile.entry_context_summary }}</p>
-            </div>
-
-            <div class="mt-4 flex items-center gap-3">
-              <button
-                type="button"
-                class="grid size-11 shrink-0 place-items-center rounded-full bg-elevated text-highlighted ring-1 ring-default transition hover:bg-accented"
-                :disabled="isCopyingSupporterId === profile.id"
-                :aria-label="`Show a copyable link for ${profile.display_name || 'private reporting link'}`"
-                @click="copyExistingSupporterLink(profile)"
-              >
-                <UIcon
-                  :name="copiedSupporterId === profile.id ? 'i-lucide-check' : 'i-lucide-copy'"
-                  class="size-4"
-                />
-                <span class="sr-only">{{ copiedSupporterId === profile.id ? 'Copied' : 'Show copyable link' }}</span>
-              </button>
-              <button
-                type="button"
-                class="flex-1 rounded-2xl bg-elevated px-4 py-3 text-sm font-bold text-highlighted ring-1 ring-default"
-                @click="toggleSupporter(profile)"
-              >
-                {{ profile.active ? 'Disable link' : 'Reactivate link' }}
-              </button>
-              <button
-                type="button"
-                class="flex-1 rounded-2xl bg-red-950/50 px-4 py-3 text-sm font-bold text-red-300 ring-1 ring-red-900/60"
-                @click="requestDeleteSupporter(profile)"
-              >
-                Delete link
-              </button>
-            </div>
-              </article>
-            </div>
           </div>
         </section>
 
@@ -1118,48 +800,6 @@
       </div>
     </Transition>
 
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="pendingDeleteSupporter"
-        class="fixed inset-0 z-[100] flex items-end justify-center bg-black/55 p-4 backdrop-blur-[2px] sm:items-center"
-        @click.self="cancelDeleteSupporter"
-      >
-        <div class="w-full max-w-md rounded-[1.75rem] border border-default/80 bg-default p-5 shadow-2xl">
-          <p class="text-xs font-bold uppercase tracking-[0.16em] text-muted">Delete reporting link</p>
-          <h3 class="mt-2 text-xl font-bold text-highlighted">Remove this link forever?</h3>
-          <p class="mt-3 text-sm leading-6 text-muted">
-            <span class="font-semibold text-highlighted">{{ pendingDeleteSupporter.display_name }}</span>
-            will stop working immediately. Anyone with the old URL will no longer be able to submit reports.
-          </p>
-
-          <div class="mt-5 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              class="rounded-2xl bg-elevated px-4 py-3 text-sm font-bold text-highlighted"
-              @click="cancelDeleteSupporter"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-highlighted"
-              :disabled="isDeletingSupporterId === pendingDeleteSupporter.id"
-              @click="confirmDeleteSupporter"
-            >
-              {{ isDeletingSupporterId === pendingDeleteSupporter.id ? 'Deleting...' : 'Delete link' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
     <DeleteEntriesByConditionSheet
       v-if="isDeleteEntriesModalOpen"
       :conditions="deletableConditionGroups"
@@ -1294,6 +934,18 @@
       :open="settingsFaqOpen"
       @close="supportOverlays.closeFaq()"
     />
+
+    <TrackerLayReportingSettingsOverlay
+      v-if="!overlay"
+      :open="layReportingSettingsOpen"
+      @close="closeHeaderSettingsOverlays"
+    />
+
+    <TrackerLogNotificationsSettingsOverlay
+      v-if="!overlay"
+      :open="logNotificationsSettingsOpen"
+      @close="closeHeaderSettingsOverlays"
+    />
   </component>
 </template>
 
@@ -1306,21 +958,16 @@ import { useSymptomEntries } from '../composables/useSymptomEntries'
 import { useEntitlements } from '../composables/useEntitlements'
 import { useAppWelcome } from '../composables/useAppWelcome'
 import { useTrackedConditions } from '../composables/useTrackedConditions'
-import { useCustomConditionLabels } from '../composables/useCustomConditionLabels'
-import { formatConditionKeyLabel } from '../utils/subscription'
-import { buildShareConditionPickerLabels } from '../utils/conditionCatalog'
-import { WEEKLY_LOG_DAY_OPTIONS, type LoggingCadence } from '../utils/loggingCadence'
-import {
-  describeLogReminderSchedule,
-  formatTimezoneLabel,
-  LOG_REMINDER_HOUR_OPTIONS
-} from '../utils/logReminders'
+import { useLogReminders } from '../composables/useLogReminders'
+import { useTrackerHeaderSettingsOverlays } from '../composables/useTrackerHeaderSettingsOverlays'
+import { useTrackerLayReportingSettings } from '../composables/useTrackerLayReportingSettings'
+import TrackerLayReportingSettingsOverlay from '../components/settings/TrackerLayReportingSettingsOverlay.vue'
+import TrackerLogNotificationsSettingsOverlay from '../components/settings/TrackerLogNotificationsSettingsOverlay.vue'
 import { useTrackerLayout, TRACKER_CLOSE_EMBED_PROFILE_KEY, TRACKER_CLOSE_SETTINGS_KEY } from '../composables/useTrackerLayout'
 import type { TrackerLayoutMode } from '../utils/trackerLayoutState'
 import type { SettingsSection } from '../composables/useSettingsSectionNav'
 import { mapEntryHistoryItem } from '../utils/entryDisplay'
 import { buildDeletableConditionGroups, type DeletableConditionGroup } from '../utils/deletableConditionGroups'
-import { copyToClipboard } from '../utils/copyToClipboard'
 import {
   SETTINGS_ACCOUNT_HELP_CLASS,
   settingsSectionsStackClass,
@@ -1384,11 +1031,8 @@ function closeSettingsPanel() {
 
 const settingsSections: SettingsSection[] = [
   { id: 'settings-account', label: 'Account' },
-  { id: 'settings-logging', label: 'Logging' },
-  { id: 'settings-reminders', label: 'Reminders' },
   { id: 'settings-display', label: 'Display' },
   { id: 'settings-install', label: 'Install app' },
-  { id: 'settings-supporters', label: 'Lay Reporting' },
   { id: 'settings-passkeys', label: 'Passkeys' },
   { id: 'settings-sessions', label: 'Sessions' },
   { id: 'settings-recovery', label: 'Recovery' },
@@ -1423,16 +1067,17 @@ const {
 } = usePasskeys()
 const {
   getProfile,
-  upsertProfile,
-  listSupporterProfiles,
-  createSupporterProfile,
-  createSupporterProfileLink,
-  toggleSupporterProfile,
-  deleteSupporterProfile
+  upsertProfile
 } = useUserProfiles()
 const { showSubmissionToast } = useSubmissionToast()
-const { trackedConditionKeys, loadTrackedConditions } = useTrackedConditions()
-const { persistedCustomConditionLabels } = useCustomConditionLabels()
+const { loadTrackedConditions } = useTrackedConditions()
+const {
+  layReportingOpen: layReportingSettingsOpen,
+  logNotificationsOpen: logNotificationsSettingsOpen,
+  closeHeaderSettingsOverlays,
+  openLayReportingSettingsOverlay
+} = useTrackerHeaderSettingsOverlays()
+const { applySupporterLinkFromRoute } = useTrackerLayReportingSettings()
 const {
   listEntries,
   listDeletedEntries,
@@ -1447,93 +1092,13 @@ const {
   loadEntitlements
 } = useEntitlements()
 const {
-  loggingCadence,
-  weeklyLogDay,
   needsAppWelcome,
-  loadAppWelcomeState,
-  updateLoggingCadence
+  loadAppWelcomeState
 } = useAppWelcome()
 const {
-  remindersEnabled,
-  reminderHour,
-  reminderEveningHour,
-  reminderTimezone,
-  permissionState: logReminderPermissionState,
-  pushBackendConfigured,
-  hasRegisteredPushSubscription,
-  isReminderTogglePending,
-  refreshPushReminderStatus,
-  enableRemindersWithPermission,
-  disableReminders,
   hydrateReminderSettings,
-  updateReminderHour,
-  updateReminderEveningHour,
-  sendTestReminderNotification,
-  syncPermissionState
+  refreshPushReminderStatus
 } = useLogReminders()
-const logReminderHourOptions = LOG_REMINDER_HOUR_OPTIONS
-const isSendingTestReminder = ref(false)
-
-const logReminderScheduleDescription = computed(() => {
-  return describeLogReminderSchedule(
-    loggingCadence.value,
-    weeklyLogDay.value,
-    reminderHour.value,
-    reminderTimezone.value,
-    reminderEveningHour.value
-  )
-})
-
-const logReminderTimezoneLabel = computed(() => formatTimezoneLabel(reminderTimezone.value))
-const logReminderStatusLabel = computed(() => {
-  if (logReminderPermissionState.value === 'denied') {
-    return 'Blocked in device settings'
-  }
-
-  if (logReminderPermissionState.value === 'unsupported') {
-    return 'Not supported on this browser'
-  }
-
-  if (pushBackendConfigured.value === false) {
-    return 'Server setup needed'
-  }
-
-  if (hasRegisteredPushSubscription.value === false) {
-    return 'Needs setup on this device'
-  }
-
-  if (logReminderPermissionState.value === 'granted' && !remindersEnabled.value) {
-    return 'Device allowed; VCH reminders off'
-  }
-
-  return remindersEnabled.value ? 'On for this device' : 'Off'
-})
-const logReminderButtonLabel = computed(() => {
-  if (remindersEnabled.value && hasRegisteredPushSubscription.value) {
-    return 'On'
-  }
-
-  if (logReminderPermissionState.value === 'denied') {
-    return 'Blocked'
-  }
-
-  return 'Enable'
-})
-const logReminderDevicePermissionLabel = computed(() => {
-  if (logReminderPermissionState.value === 'granted') {
-    return 'Allowed'
-  }
-
-  if (logReminderPermissionState.value === 'denied') {
-    return 'Blocked in device settings'
-  }
-
-  if (logReminderPermissionState.value === 'unsupported') {
-    return 'Not supported here'
-  }
-
-  return 'Not decided yet'
-})
 const { layoutMode, setLayoutMode } = useTrackerLayout()
 
 const layoutOptions: Array<{ value: TrackerLayoutMode, label: string, copy: string }> = [
@@ -1554,14 +1119,7 @@ const layoutOptions: Array<{ value: TrackerLayoutMode, label: string, copy: stri
   }
 ]
 
-const weeklyLogDayOptions = WEEKLY_LOG_DAY_OPTIONS
-
 const { contactUrl } = useVchPublicUrls()
-
-const shareConditionOptions = computed(() => buildShareConditionPickerLabels({
-  trackedKeys: trackedConditionKeys.value,
-  customLabels: persistedCustomConditionLabels.value
-}))
 
 const authMode = ref<'login' | 'signup'>('login')
 const authName = ref('')
@@ -1606,18 +1164,7 @@ const settingsSelectMenuContent = {
   sideOffset: 4,
   collisionPadding: 8
 }
-const supporterForm = ref({
-  link_label: '',
-  visible_conditions: [] as string[]
-})
-const supporterProfiles = useState<any[]>('profile-page-supporters', () => [])
 const deletedEntries = ref<any[]>([])
-const createdLink = ref('')
-const createdLinkCopied = ref(false)
-const createdLinkPanelEl = ref<HTMLElement | null>(null)
-const supporterError = ref('')
-const linkedEntryId = ref<string | null>(null)
-const linkedEntryContext = ref<null | { summary: string, condition: string }>(null)
 const pageError = ref('')
 const isSavingProfile = ref(false)
 const profileInitialized = useState('profile-page-initialized', () => false)
@@ -1667,13 +1214,8 @@ let profileSaveTimer: ReturnType<typeof setTimeout> | undefined
 let serviceSaveTimer: ReturnType<typeof setTimeout> | undefined
 let savedLabelTimer: ReturnType<typeof setTimeout> | undefined
 let profileLoadSequence = 0
-const isCreatingSupporter = ref(false)
 const isRestoringEntryId = ref<string | null>(null)
-const isDeletingSupporterId = ref<string | null>(null)
-const isCopyingSupporterId = ref<string | null>(null)
-const copiedSupporterId = ref<string | null>(null)
 const pendingPurgeEntry = ref<null | { id: string, title: string }>(null)
-const pendingDeleteSupporter = ref<null | { id: string, display_name: string }>(null)
 const activeLogCount = useState('profile-page-log-count', () => 0)
 const supportOverlays = useSettingsSupportOverlays()
 const { faqOpen: settingsFaqOpen } = supportOverlays
@@ -1761,8 +1303,10 @@ const deletedHistoryEntries = computed(() => {
 })
 
 onMounted(() => {
-  syncPermissionState()
-  applySupporterLinkQuery()
+  if (typeof route.query.entry === 'string') {
+    applySupporterLinkFromRoute()
+    openLayReportingSettingsOverlay()
+  }
   if (user.value) {
     loadProfilePage()
   }
@@ -1800,30 +1344,6 @@ watch(() => props.initialSection, () => {
   void scrollToInitialSection()
 })
 
-function applySupporterLinkQuery() {
-  const entryId = typeof route.query.entry === 'string' ? route.query.entry : null
-  const condition = typeof route.query.condition === 'string' ? route.query.condition : null
-  const label = typeof route.query.label === 'string' ? route.query.label : null
-  const summary = typeof route.query.summary === 'string' ? route.query.summary : null
-
-  linkedEntryId.value = entryId
-
-  if (condition) {
-    supporterForm.value.visible_conditions = [condition]
-  }
-
-  if (label) {
-    supporterForm.value.link_label = label
-  }
-
-  if (summary && condition) {
-    linkedEntryContext.value = {
-      summary,
-      condition
-    }
-  }
-}
-
 watch(user, (currentUser) => {
   profileLoadSequence += 1
   if (profileSaveTimer) clearTimeout(profileSaveTimer)
@@ -1834,7 +1354,6 @@ watch(user, (currentUser) => {
     void loadProfilePage(currentUser.id)
   } else {
     deletedEntries.value = []
-    supporterProfiles.value = []
     profileForm.value.full_name = ''
     serviceDraft.value = { ...EMPTY_VETERAN_SERVICE_PROFILE }
     activeLogCount.value = 0
@@ -1875,9 +1394,8 @@ async function loadProfilePage(expectedUserId = user.value?.id ?? null) {
   try {
     await loadDeletedEntries(expectedUserId)
     void loadPasskeys()
-    const [profile, supporters, entries] = await Promise.all([
+    const [profile, entries] = await Promise.all([
       getProfile(),
-      listSupporterProfiles(),
       listEntries().catch(() => [])
     ])
 
@@ -1894,7 +1412,6 @@ async function loadProfilePage(expectedUserId = user.value?.id ?? null) {
       serviceDraft.value = readVeteranServiceProfileFromRow(profile as Record<string, unknown> | null)
     }
     hydrateReminderSettings(profile)
-    supporterProfiles.value = supporters
     await refreshPushReminderStatus()
   } catch (error) {
     if (user.value?.id === expectedUserId && requestSequence === profileLoadSequence) {
@@ -2048,300 +1565,6 @@ async function saveProfile(expectedUserId = user.value?.id ?? null) {
     pageError.value = getErrorMessage(error)
   } finally {
     isSavingProfile.value = false
-  }
-}
-
-async function saveLoggingCadence(cadence: LoggingCadence) {
-  pageError.value = ''
-  markAutoSavePending()
-
-  try {
-    await updateLoggingCadence(cadence, weeklyLogDay.value)
-    markAutoSaveSaved()
-  } catch (error) {
-    autoSaveState.value = 'error'
-    pageError.value = getErrorMessage(error)
-  }
-}
-
-async function saveWeeklyLogDay(day: number) {
-  pageError.value = ''
-  markAutoSavePending()
-
-  try {
-    await updateLoggingCadence('weekly', day)
-    markAutoSaveSaved()
-  } catch (error) {
-    autoSaveState.value = 'error'
-    pageError.value = getErrorMessage(error)
-  }
-}
-
-async function toggleLogReminders() {
-  if (isReminderTogglePending.value) {
-    return
-  }
-
-  if (remindersEnabled.value) {
-    const result = await disableReminders()
-    if (!result?.ok) {
-      showSubmissionToast({
-        message: result?.message || 'Could not turn off reminders. Please try again.',
-        tone: 'error'
-      })
-      return
-    }
-    await refreshPushReminderStatus()
-    showSubmissionToast({ message: 'VCH reminders turned off.' })
-    return
-  }
-
-  const result = await enableRemindersWithPermission()
-
-  if (result.ok) {
-    showSubmissionToast({ message: 'Log reminders turned on for this device.' })
-    return
-  }
-
-  if (result.reason === 'missing-vapid') {
-    showSubmissionToast({
-      message: 'Push reminders are not configured on the server yet. Add VAPID keys in Render, redeploy, then try again.',
-      tone: 'error'
-    })
-    return
-  }
-
-  if (result.reason === 'permission-denied') {
-    showSubmissionToast({
-      message: 'Notifications are blocked for this app. Enable them in phone or browser settings, then tap Enable again.',
-      tone: 'error'
-    })
-    return
-  }
-
-  if (result.reason === 'unsupported') {
-    showSubmissionToast({
-      message: 'Notifications are not supported in this browser.',
-      tone: 'error'
-    })
-    return
-  }
-
-  if (result.reason === 'subscribe-failed') {
-    showSubmissionToast({
-      message: result.message || 'Could not register this device for push reminders.',
-      tone: 'error'
-    })
-    return
-  }
-
-  showSubmissionToast({
-    message: 'Allow notifications to turn on reminders.',
-    tone: 'error'
-  })
-}
-
-async function handleReminderHourChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  const hour = Number(target.value)
-
-  if (!Number.isFinite(hour)) {
-    return
-  }
-
-  pageError.value = ''
-
-  try {
-    await updateReminderHour(hour)
-    showSubmissionToast({ message: `Reminder time set to ${logReminderHourOptions.find((option) => option.value === hour)?.label || 'your chosen time'}.` })
-  } catch (error) {
-    pageError.value = getErrorMessage(error)
-  }
-}
-
-async function handleReminderEveningHourChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  const hour = Number(target.value)
-
-  if (!Number.isFinite(hour)) {
-    return
-  }
-
-  pageError.value = ''
-
-  try {
-    await updateReminderEveningHour(hour)
-    showSubmissionToast({
-      message: `Evening reminder set to ${logReminderHourOptions.find((option) => option.value === hour)?.label || 'your chosen time'}.`
-    })
-  } catch (error) {
-    pageError.value = getErrorMessage(error)
-  }
-}
-
-async function sendTestLogReminder() {
-  if (isSendingTestReminder.value) {
-    return
-  }
-
-  isSendingTestReminder.value = true
-
-  try {
-    const result = await sendTestReminderNotification()
-
-    if (result.ok) {
-      showSubmissionToast({
-        message: result.via === 'push'
-          ? 'Background push test sent. Check your notification shade.'
-          : result.message || 'Test notification shown. Check your notification shade.'
-      })
-      return
-    }
-
-    showSubmissionToast({
-      message: result.message || 'Could not send a test notification.',
-      tone: 'error'
-    })
-  } finally {
-    isSendingTestReminder.value = false
-  }
-}
-
-async function revealCreatedLink(url: string, toastMessage: string) {
-  createdLink.value = url
-  createdLinkCopied.value = false
-  await nextTick()
-  createdLinkPanelEl.value?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  showSubmissionToast({
-    message: toastMessage,
-    durationMs: 3600
-  })
-}
-
-async function createSupporter() {
-  pageError.value = ''
-  supporterError.value = ''
-  createdLink.value = ''
-
-  if (!supporterForm.value.visible_conditions.length) {
-    const message = 'Choose at least one condition to share.'
-    supporterError.value = message
-    showSubmissionToast({ message, tone: 'error' })
-    return
-  }
-
-  isCreatingSupporter.value = true
-
-  try {
-    const payload = {
-      ...supporterForm.value,
-      linked_entry_id: linkedEntryId.value,
-      entry_context_summary: linkedEntryContext.value?.summary || null
-    }
-    const { token } = await createSupporterProfile(payload)
-    supporterForm.value = {
-      link_label: '',
-      visible_conditions: []
-    }
-    linkedEntryId.value = null
-    linkedEntryContext.value = null
-    await revealCreatedLink(
-      `${window.location.origin}/report/${token}`,
-      'Reporting link created. Copy it below.'
-    )
-    await loadProfilePage()
-  } catch (error) {
-    const message = getErrorMessage(error)
-    supporterError.value = message
-    pageError.value = message
-    showSubmissionToast({ message, tone: 'error' })
-  } finally {
-    isCreatingSupporter.value = false
-  }
-}
-
-async function toggleSupporter(profile: any) {
-  pageError.value = ''
-
-  try {
-    await toggleSupporterProfile(profile.id, !profile.active)
-    await loadProfilePage()
-  } catch (error) {
-    pageError.value = getErrorMessage(error)
-  }
-}
-
-async function copyCreatedLink() {
-  if (!createdLink.value) {
-    return
-  }
-
-  const copied = await copyToClipboard(createdLink.value)
-  createdLinkCopied.value = copied
-  if (copied) {
-    supporterError.value = ''
-    showSubmissionToast('Private link copied.')
-    return
-  }
-
-  const message = 'Could not copy link. Copy it from the box below.'
-  supporterError.value = message
-  pageError.value = message
-  showSubmissionToast({ message, tone: 'error' })
-}
-
-async function copyExistingSupporterLink(profile: any) {
-  pageError.value = ''
-  supporterError.value = ''
-  copiedSupporterId.value = null
-  isCopyingSupporterId.value = profile.id
-
-  try {
-    const token = await createSupporterProfileLink(profile.id)
-    const link = `${window.location.origin}/report/${token}`
-    await revealCreatedLink(link, 'Private link ready. Copy it below.')
-  } catch (error) {
-    const message = getErrorMessage(error)
-    supporterError.value = message
-    pageError.value = message
-    showSubmissionToast({ message, tone: 'error' })
-  } finally {
-    isCopyingSupporterId.value = null
-  }
-}
-
-function requestDeleteSupporter(profile: any) {
-  pendingDeleteSupporter.value = {
-    id: profile.id,
-    display_name: profile.display_name || 'Private reporting link'
-  }
-}
-
-function cancelDeleteSupporter() {
-  pendingDeleteSupporter.value = null
-}
-
-async function confirmDeleteSupporter() {
-  if (!pendingDeleteSupporter.value) {
-    return
-  }
-
-  pageError.value = ''
-  isDeletingSupporterId.value = pendingDeleteSupporter.value.id
-
-  try {
-    await deleteSupporterProfile(pendingDeleteSupporter.value.id)
-    pendingDeleteSupporter.value = null
-    showSubmissionToast('Reporting link deleted.')
-    await loadProfilePage()
-  } catch (error) {
-    pageError.value = getErrorMessage(error)
-    showSubmissionToast({
-      message: getErrorMessage(error),
-      tone: 'error'
-    })
-  } finally {
-    isDeletingSupporterId.value = null
   }
 }
 

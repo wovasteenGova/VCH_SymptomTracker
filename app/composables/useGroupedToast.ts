@@ -57,7 +57,7 @@ export function useGroupedToast() {
   }
 
   function handleGroupedToastToggle(id: string) {
-    const toast = useToast()
+    const toast = useVchToast()
     const group = groups.value[id]
     const isExpanded = toggleExpanded(id)
     toast.update(id, {

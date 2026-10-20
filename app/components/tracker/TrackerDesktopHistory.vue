@@ -197,7 +197,7 @@ defineExpose({
           :key="entry.id"
           :data-entry-id="entry.id"
           :class="[
-            'group cursor-pointer rounded-2xl px-2 py-3 transition duration-500',
+            'group relative cursor-pointer rounded-2xl px-2 py-3 transition duration-500',
             td.rowHover,
             highlightedEntryId === entry.id
               ? 'submission-flash bg-primary/10 ring-2 ring-primary/35 shadow-lg shadow-black/10 dark:bg-primary/15 dark:ring-primary/50 dark:shadow-black/20'
@@ -209,7 +209,7 @@ defineExpose({
           @keydown.enter.prevent="$emit('openEntry', entry.id)"
           @keydown.space.prevent="$emit('openEntry', entry.id)"
         >
-          <div class="flex items-center gap-3">
+          <div class="flex items-start gap-3">
             <div :class="td.dateBadge">
               <p :class="['text-xs font-bold uppercase tracking-[0.12em]', td.meta]">
                 {{ entry.month }}
@@ -224,11 +224,11 @@ defineExpose({
                 <button
                   v-if="entry.conditionKey"
                   type="button"
-                  class="inline-flex items-center rounded-md bg-muted px-2.5 py-1 text-sm font-semibold text-toned transition hover:bg-accented"
+                  class="inline-flex max-w-full items-center rounded-md bg-muted px-2.5 py-1 text-sm font-semibold text-toned transition hover:bg-accented"
                   :aria-label="`View ${entry.condition} charts`"
                   @click.stop="$emit('viewCharts', entry.conditionKey)"
                 >
-                  {{ entry.condition }}
+                  <span class="truncate">{{ entry.condition }}</span>
                 </button>
                 <UBadge v-else color="neutral" variant="soft" size="md">{{ entry.condition }}</UBadge>
                 <UBadge :color="entry.source === 'Family' ? 'secondary' : 'primary'" variant="soft" size="md">
@@ -241,45 +241,47 @@ defineExpose({
                   Edited
                 </UBadge>
               </div>
-              <h3 class="mt-1.5 truncate text-base font-bold text-highlighted">
+              <h3 class="mt-1.5 text-base font-bold leading-snug text-highlighted">
                 {{ entry.title }}
               </h3>
-              <p :class="['mt-0.5 truncate', td.meta]">
+              <p :class="['mt-0.5 leading-snug', td.meta]">
                 {{ entry.time }} · Severity {{ entry.severity }}/10 · {{ entry.summary }}
               </p>
               <p v-if="entry.editedLabel" :class="['mt-1 text-xs', td.meta]">
                 {{ entry.editedLabel }}
               </p>
             </div>
+          </div>
 
-            <div class="flex shrink-0 items-center gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-              <button
-                v-if="entry.conditionKey"
-                type="button"
-                :class="['grid size-8 place-items-center rounded-full hover:bg-accented hover:text-highlighted', td.iconMuted]"
-                :aria-label="`View ${entry.condition} charts`"
-                @click.stop="$emit('viewCharts', entry.conditionKey)"
-              >
-                <UIcon name="i-lucide-chart-line" class="size-3.5" />
-              </button>
-              <button
-                v-if="entry.source !== 'Family'"
-                type="button"
-                :class="['grid size-8 place-items-center rounded-full hover:bg-accented hover:text-highlighted', td.iconMuted]"
-                :aria-label="`Edit ${entry.title}`"
-                @click.stop="$emit('editEntry', entry.id)"
-              >
-                <UIcon name="i-lucide-pencil" class="size-3.5" />
-              </button>
-              <button
-                type="button"
-                class="grid size-8 place-items-center rounded-full text-muted hover:bg-error/10 hover:text-error"
-                :aria-label="`Delete ${entry.title}`"
-                @click.stop="$emit('deleteEntry', entry.id)"
-              >
-                <UIcon name="i-lucide-trash-2" class="size-3.5" />
-              </button>
-            </div>
+          <div
+            class="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-1 rounded-r-2xl bg-gradient-to-l from-default from-45% via-default/95 to-transparent px-2 pl-10 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+          >
+            <button
+              v-if="entry.conditionKey"
+              type="button"
+              :class="['grid size-8 place-items-center rounded-full bg-elevated/90 shadow-sm ring-1 ring-default/70 hover:bg-accented hover:text-highlighted', td.iconMuted]"
+              :aria-label="`View ${entry.condition} charts`"
+              @click.stop="$emit('viewCharts', entry.conditionKey)"
+            >
+              <UIcon name="i-lucide-chart-line" class="size-3.5" />
+            </button>
+            <button
+              v-if="entry.source !== 'Family'"
+              type="button"
+              :class="['grid size-8 place-items-center rounded-full bg-elevated/90 shadow-sm ring-1 ring-default/70 hover:bg-accented hover:text-highlighted', td.iconMuted]"
+              :aria-label="`Edit ${entry.title}`"
+              @click.stop="$emit('editEntry', entry.id)"
+            >
+              <UIcon name="i-lucide-pencil" class="size-3.5" />
+            </button>
+            <button
+              type="button"
+              class="grid size-8 place-items-center rounded-full bg-elevated/90 text-muted shadow-sm ring-1 ring-default/70 hover:bg-error/10 hover:text-error"
+              :aria-label="`Delete ${entry.title}`"
+              @click.stop="$emit('deleteEntry', entry.id)"
+            >
+              <UIcon name="i-lucide-trash-2" class="size-3.5" />
+            </button>
           </div>
         </article>
       </template>

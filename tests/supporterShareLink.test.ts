@@ -4,15 +4,18 @@ import { describe, expect, it } from 'vitest'
 const app = readFileSync('app/app.vue', 'utf8')
 const toaster = readFileSync('app/components/VchGroupedToaster.vue', 'utf8')
 const groupedToastPlugin = readFileSync('app/plugins/grouped-toast.client.ts', 'utf8')
-const profile = readFileSync('app/pages/profile.vue', 'utf8')
+const laySettings = readFileSync('app/composables/useTrackerLayReportingSettings.ts', 'utf8')
+const layOverlay = readFileSync('app/components/settings/TrackerLayReportingSettingsOverlay.vue', 'utf8')
 const accountMenu = readFileSync('app/components/TrackerAccountMenu.vue', 'utf8')
 const index = readFileSync('app/pages/index.vue', 'utf8')
 
 function functionBody(source: string, name: string) {
   const start = source.indexOf(`async function ${name}`)
   expect(start).toBeGreaterThan(-1)
-  const next = source.indexOf('\nasync function ', start + 1)
-  return source.slice(start, next === -1 ? undefined : next)
+  const remainder = source.slice(start + 1)
+  const nextMatch = remainder.match(/\n\s*async function /)
+  const next = nextMatch?.index
+  return next === undefined ? source.slice(start) : source.slice(start, start + 1 + next)
 }
 
 describe('supporter share link create UX', () => {
@@ -22,14 +25,15 @@ describe('supporter share link create UX', () => {
     expect(toaster).toContain('<ToastPortal')
     expect(toaster).toContain('<ToastViewport')
     expect(groupedToastPlugin).toContain('resolveToastGroupKey')
+    expect(groupedToastPlugin).toContain('$vchToast')
     expect(accountMenu).toContain('[data-slot="viewport"]')
     expect(accountMenu).toContain('!activeToast')
   })
 
   it('creates a link then requires an explicit copy click', () => {
-    const createBody = functionBody(profile, 'createSupporter')
-    const existingCopyBody = functionBody(profile, 'copyExistingSupporterLink')
-    const copyBody = functionBody(profile, 'copyCreatedLink')
+    const createBody = functionBody(laySettings, 'createSupporter')
+    const existingCopyBody = functionBody(laySettings, 'copyExistingSupporterLink')
+    const copyBody = functionBody(laySettings, 'copyCreatedLink')
 
     expect(createBody).not.toContain('copyToClipboard')
     expect(createBody).toContain('revealCreatedLink')
@@ -41,14 +45,14 @@ describe('supporter share link create UX', () => {
     expect(existingCopyBody).toContain('Private link ready. Copy it below.')
 
     expect(copyBody).toContain('copyToClipboard(createdLink.value)')
-    expect(profile).toContain('Click Copy link to put this URL on the clipboard.')
+    expect(layOverlay).toContain('Click Copy link to put this URL on the clipboard.')
     expect(index).toContain('Click Copy link to put this URL on the clipboard.')
   })
 
   it('uses the tracked-first share condition picker', () => {
-    expect(profile).toContain('buildShareConditionPickerLabels')
-    expect(profile).toContain('shareConditionOptions')
-    expect(profile).toContain('Conditions to share')
-    expect(profile).not.toContain("'PTSD / Mental Health'")
+    expect(laySettings).toContain('buildShareConditionPickerLabels')
+    expect(laySettings).toContain('shareConditionOptions')
+    expect(layOverlay).toContain('Conditions to share')
+    expect(layOverlay).not.toContain("'PTSD / Mental Health'")
   })
 })

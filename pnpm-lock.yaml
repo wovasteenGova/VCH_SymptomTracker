@@ -22,9 +22,6 @@ importers:
       '@nuxtjs/supabase':
         specifier: ^1.6.2
         version: 1.6.2
-      '@stripe/stripe-js':
-        specifier: ^7.3.1
-        version: 7.9.0
       '@supabase/supabase-js':
         specifier: ^2.107.0
         version: 2.111.0
@@ -34,6 +31,9 @@ importers:
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
+      diff:
+        specifier: 8.0.4
+        version: 8.0.4
       jspdf:
         specifier: ^4.2.1
         version: 4.2.1
@@ -43,9 +43,9 @@ importers:
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
-      stripe:
-        specifier: ^22.6.1
-        version: 22.6.2(@types/node@26.1.2)
+      reka-ui:
+        specifier: 2.10.1
+        version: 2.10.1(vue@3.5.40(typescript@6.0.3))
       vue:
         specifier: ^3.5.34
         version: 3.5.40(typescript@6.0.3)
@@ -1615,10 +1615,6 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
-
-  '@stripe/stripe-js@7.9.0':
-    resolution: {integrity: sha512-ggs5k+/0FUJcIgNY08aZTqpBTtbExkJMYMLSMwyucrhtWexVOEY1KJmhBsxf+E/Q15f5rbwBpj+t0t2AW2oCsQ==}
-    engines: {node: '>=12.16'}
 
   '@supabase/auth-js@2.111.0':
     resolution: {integrity: sha512-hbRLgyQZEX0SDyF4LYXpv94qOIQyFATfpT5SIs2V0SisHnisVRkYgiPQWzv80l4S2mO3qof78rmoH9j5zoFsYQ==}
@@ -4826,15 +4822,6 @@ packages:
   strip-literal@4.0.0:
     resolution: {integrity: sha512-PaqAvfUZKBwc/SLmNZtHmzK+v19Z4O4eS3cKPeGvbIv/U3pnyEq4Tuw3/4v/FwfM8VQaEawsyCcOQ0P+kpwWWw==}
 
-  stripe@22.6.2:
-    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
   structured-clone-es@2.0.1:
     resolution: {integrity: sha512-10ZL5r77LhknxlP1FBiCW+VdnuWOEFLdSS2SKtjyEV+L4qP1hUEIMIZW94LC3jKxRmT/Dj7KkD1mqh/IY6lhKQ==}
 
@@ -7640,8 +7627,6 @@ snapshots:
   '@speed-highlight/core@1.2.23': {}
 
   '@standard-schema/spec@1.1.0': {}
-
-  '@stripe/stripe-js@7.9.0': {}
 
   '@supabase/auth-js@2.111.0':
     dependencies:
@@ -11300,10 +11285,6 @@ snapshots:
   strip-literal@4.0.0:
     dependencies:
       js-tokens: 10.0.0
-
-  stripe@22.6.2(@types/node@26.1.2):
-    optionalDependencies:
-      '@types/node': 26.1.2
 
   structured-clone-es@2.0.1: {}
 

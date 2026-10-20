@@ -175,6 +175,7 @@ export const mentalHealthSymptomPresets: EntryFieldPreset[] = [
 export const backJointSymptomPresets: EntryFieldPreset[] = [
   { label: 'Stiffness', value: 'Stiffness' },
   { label: 'Swelling', value: 'Swelling' },
+  { label: 'Sharp pain', value: 'Sharp pain' },
   { label: 'Limited ROM', value: 'Limited range of motion' },
   { label: 'Instability', value: 'Joint instability' },
   { label: 'Radiating pain', value: 'Radiating pain' },
@@ -198,6 +199,7 @@ export const flareUpTriggerPresets: EntryFieldPreset[] = [
   { label: 'Weather', value: 'Weather change' },
   { label: 'Overdoing it', value: 'Overdoing it' },
   { label: 'Prolonged sitting', value: 'Prolonged sitting' },
+  { label: 'Standing', value: 'Prolonged standing' },
   { label: 'Unknown', value: 'Unknown trigger' }
 ]
 

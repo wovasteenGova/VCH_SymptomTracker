@@ -24,19 +24,19 @@ export const supporterSeverityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Mild to moderate impact',
-    text: 'They seemed to slow down, rest, or change plans for part of the day.'
+    text: 'They seemed to slow down, rest, or change plans more than usual.'
   },
   {
     title: 'Moderate impact',
-    text: 'Symptoms appeared to affect them about half the day or clearly cut what they could do.'
+    text: 'Symptoms clearly limited what they could do: slower pace, rest, or changed plans.'
   },
   {
     title: 'Moderate to significant impact',
-    text: 'It looked like symptoms shaped much of the day: skipping tasks, leaving early, or needing extra rest.'
+    text: 'It looked like symptoms shaped much of what they could do: skipping tasks, leaving early, or needing extra rest.'
   },
   {
     title: 'Significant impact',
-    text: 'They seemed unable to function normally for most of the day.'
+    text: 'Normal function looked hard: many tasks skipped, cut short, or needed help.'
   },
   {
     title: 'Severe impact',
@@ -44,7 +44,7 @@ export const supporterSeverityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Very severe impact',
-    text: 'They appeared to struggle with basic routines for most of the day.'
+    text: 'Basic routines looked like a serious struggle today.'
   },
   {
     title: 'Debilitating impact',
@@ -60,8 +60,8 @@ export function getSupporterSeverityGuidance(value: number): SeverityGuidance {
 export const supporterSeverityQuickPresets: SeverityQuickPreset[] = [
   { label: 'Barely noticed', value: 1 },
   { label: 'Seemed manageable', value: 3 },
-  { label: 'About half the day', value: 5 },
-  { label: 'Most of the day', value: 7 },
+  { label: 'Moderate impact', value: 5 },
+  { label: 'Significant impact', value: 7 },
   { label: 'Worst I have seen', value: 9 }
 ]
 

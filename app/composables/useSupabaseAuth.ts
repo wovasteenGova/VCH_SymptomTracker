@@ -1,6 +1,5 @@
 import { useState, useSupabaseClient } from '#imports'
 import type { User } from '@supabase/supabase-js'
-import { onMounted } from 'vue'
 import { useTrackerAuthRedirects } from '../utils/authRedirects'
 import { AUTH_NOTICES, AUTH_VALIDATION, normalizeAuthEmail, validateAuthEmailField } from '../utils/authNotices'
 import { assertAuthEmailCooldown, formatAuthEmailCooldownMessage, isAuthEmailCooldownMessage, markAuthEmailSent } from '../utils/authEmailCooldown'
@@ -370,12 +369,6 @@ export function useSupabaseAuth() {
       || /session.*(does not exist|not found|missing)|auth session missing|session_not_found/i.test(message)
       || /session_not_found|auth_session_missing/i.test(code)
   }
-
-  onMounted(() => {
-    if (!authBootstrapStarted.value) {
-      void bootstrapAuth()
-    }
-  })
 
   function requireAuthEmail(email: string) {
     return validateAuthEmail(email)

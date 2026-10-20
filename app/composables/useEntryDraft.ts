@@ -158,6 +158,40 @@ export function buildEntryDraftSnapshot(input: {
   return isMeaningfulEntryDraft(snapshot) ? snapshot : null
 }
 
+export function entryDraftSnapshotsEqual(a: EntryDraftSnapshot, b: EntryDraftSnapshot) {
+  if (a.conditionTitle !== b.conditionTitle) {
+    return false
+  }
+
+  if (a.entryStep !== b.entryStep) {
+    return false
+  }
+
+  if (a.severityValue !== b.severityValue) {
+    return false
+  }
+
+  if (a.customConditionInput !== b.customConditionInput) {
+    return false
+  }
+
+  if (JSON.stringify(a.selectedSearchCondition) !== JSON.stringify(b.selectedSearchCondition)) {
+    return false
+  }
+
+  const formA = a.entryForm || {}
+  const formB = b.entryForm || {}
+  const keys = new Set([...Object.keys(formA), ...Object.keys(formB)])
+
+  for (const key of keys) {
+    if ((formA[key] || '').trim() !== (formB[key] || '').trim()) {
+      return false
+    }
+  }
+
+  return true
+}
+
 export function formatEntryDraftTimeLabel(savedAt: string) {
   const savedDate = new Date(savedAt)
 

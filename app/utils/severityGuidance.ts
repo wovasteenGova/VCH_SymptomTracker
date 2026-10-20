@@ -22,19 +22,19 @@ export const severityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Mild to moderate impact',
-    text: 'You had to slow down, rest, or change plans for part of the day.'
+    text: 'Symptoms made you slow down, rest, or change plans more than usual.'
   },
   {
     title: 'Moderate impact',
-    text: 'Your condition affected you about half the day or clearly cut what you could do.'
+    text: 'Your condition clearly limited what you could do: slower pace, rest, or changed plans.'
   },
   {
     title: 'Moderate to significant impact',
-    text: 'Symptoms shaped much of your day: skipping tasks, leaving early, or needing extra rest.'
+    text: 'Symptoms shaped much of what you could do: skipping tasks, leaving early, or needing extra rest.'
   },
   {
     title: 'Significant impact',
-    text: 'Your condition kept you from functioning normally for most of the day.'
+    text: 'Normal function was hard: many tasks were skipped, cut short, or needed help.'
   },
   {
     title: 'Severe impact',
@@ -42,7 +42,7 @@ export const severityGuidanceByLevel: SeverityGuidance[] = [
   },
   {
     title: 'Very severe impact',
-    text: 'You struggled to get through basic routines for most of the day.'
+    text: 'Basic routines were a serious struggle today.'
   },
   {
     title: 'Debilitating impact',
@@ -85,7 +85,7 @@ export type SeverityQuickPreset = {
 export const severityQuickPresets: SeverityQuickPreset[] = [
   { label: 'Barely noticed', value: 1 },
   { label: 'Manageable', value: 3 },
-  { label: 'Half my day', value: 5 },
-  { label: 'Most of my day', value: 7 },
+  { label: 'Moderate impact', value: 5 },
+  { label: 'Significant impact', value: 7 },
   { label: 'Worst lately', value: 9 }
 ]

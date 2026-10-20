@@ -177,7 +177,7 @@ export const entryFieldsByCondition: Record<string, EntryFieldDef[]> = {
     {
       label: 'Joint symptoms',
       type: 'text',
-      placeholder: 'Stiffness, swelling, limited motion, instability, radiating pain...'
+      placeholder: 'Stiffness, swelling, sharp pain, limited motion, instability, radiating pain...'
     },
     {
       label: 'Movement limit',
@@ -187,7 +187,7 @@ export const entryFieldsByCondition: Record<string, EntryFieldDef[]> = {
     {
       label: 'Flare-up trigger',
       type: 'text',
-      placeholder: 'Driving, stairs, lifting groceries, weather, unknown...'
+      placeholder: 'Driving, stairs, prolonged sitting or standing, lifting, weather...'
     }
   ]),
   'Nerve / Radiculopathy': buildEntryFields('Nerve / Radiculopathy', [

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildEntryDraftSnapshot, isMeaningfulEntryDraft } from '../app/composables/useEntryDraft'
+import {
+  buildEntryDraftSnapshot,
+  entryDraftSnapshotsEqual,
+  isMeaningfulEntryDraft,
+  type EntryDraftSnapshot
+} from '../app/composables/useEntryDraft'
 
 const condition = {
   title: 'Knee pain',
@@ -38,5 +43,22 @@ describe('entry draft meaning', () => {
   it('retains drafts with a selected symptom or changed severity', () => {
     expect(isMeaningfulEntryDraft({ entryForm: { daily_impact: 'Could not climb stairs' } })).toBe(true)
     expect(isMeaningfulEntryDraft({ severityValue: 7, entryForm: {} })).toBe(true)
+  })
+
+  it('compares stored drafts for resume conflicts', () => {
+    const base: EntryDraftSnapshot = {
+      version: 1,
+      savedAt: '2026-09-13T12:00:00.000Z',
+      entryStep: 2,
+      severityValue: 6,
+      entryForm: { daily_impact: 'Skipped chores' },
+      selectedSearchCondition: condition,
+      customConditionInput: '',
+      conditionTitle: condition.title
+    }
+
+    expect(entryDraftSnapshotsEqual(base, { ...base, savedAt: '2026-09-14T12:00:00.000Z' })).toBe(true)
+    expect(entryDraftSnapshotsEqual(base, { ...base, severityValue: 7 })).toBe(false)
+    expect(entryDraftSnapshotsEqual(base, { ...base, conditionTitle: 'Back pain' })).toBe(false)
   })
 })
