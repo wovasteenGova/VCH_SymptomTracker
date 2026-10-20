@@ -1,10 +1,11 @@
 <template>
   <div class="w-full" data-step-swipe-block data-symptom-calendar>
     <UCalendar
-      v-model="modelValue"
-      v-model:placeholder="placeholder"
+      v-model="calendarSelection"
+      v-model:placeholder="calendarPlaceholder"
       color="primary"
       :view-control="false"
+      prevent-deselect
       class="mx-auto w-full"
     >
       <template #day="{ day }">
@@ -22,6 +23,7 @@
 
 <script setup lang="ts">
 import type { CalendarDate } from '@internationalized/date'
+import { coerceCalendarDate, getTodayCalendarDate } from '~/utils/symptomDateTime'
 
 defineProps<{
   hasLoggedEntryOnDay: (day: CalendarDate | { year: number, month: number, day: number }) => boolean
@@ -31,4 +33,23 @@ defineProps<{
 
 const modelValue = defineModel<CalendarDate>({ required: true })
 const placeholder = defineModel<CalendarDate>('placeholder', { required: true })
+
+function resolvedCalendarDate(value: unknown) {
+  return coerceCalendarDate(value) ?? getTodayCalendarDate()
+}
+
+/** UCalendar can emit null when a day is toggled off; keep a valid date so the panel does not crash. */
+const calendarSelection = computed({
+  get: () => resolvedCalendarDate(modelValue.value),
+  set: (value) => {
+    modelValue.value = resolvedCalendarDate(value)
+  }
+})
+
+const calendarPlaceholder = computed({
+  get: () => resolvedCalendarDate(placeholder.value),
+  set: (value) => {
+    placeholder.value = resolvedCalendarDate(value)
+  }
+})
 </script>

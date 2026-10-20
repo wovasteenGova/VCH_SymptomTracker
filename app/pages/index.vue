@@ -2860,10 +2860,13 @@ const loggedEntryPeakSeverityByDate = computed(() => {
   return severityByDate
 })
 
-function normalizeCalendarDay(day: CalendarDate | { year: number, month: number, day: number }) {
-  return day instanceof CalendarDate
-    ? day
-    : new CalendarDate(day.year, day.month, day.day)
+function normalizeCalendarDay(day: CalendarDate | { year: number, month: number, day: number } | null | undefined) {
+  const parsed = coerceCalendarDate(day)
+  if (parsed) {
+    return parsed
+  }
+
+  return getTodayCalendarDate()
 }
 
 function getLoggedDayPeakSeverity(day: CalendarDate | { year: number, month: number, day: number }) {
@@ -2911,10 +2914,12 @@ function entryLocalDateKey(entry: Record<string, any>) {
   ))
 }
 
-const selectedHistoryDayKey = computed(() => calendarDateToDateString(historyCalendarDate.value))
+const selectedHistoryDayKey = computed(() =>
+  calendarDateToDateString(coerceCalendarDate(historyCalendarDate.value) ?? getTodayCalendarDate())
+)
 
 const selectedHistoryDayLabel = computed(() => {
-  const selected = historyCalendarDate.value
+  const selected = coerceCalendarDate(historyCalendarDate.value) ?? getTodayCalendarDate()
   const date = new Date(selected.year, selected.month - 1, selected.day)
 
   return date.toLocaleDateString('en-US', {
@@ -3001,7 +3006,7 @@ function onEntryCalendarDateUpdate(date: unknown) {
 }
 
 const loggingActivityMetrics = computed(() => {
-  const date = historyCalendarPlaceholder.value
+  const date = coerceCalendarDate(historyCalendarPlaceholder.value) ?? getTodayCalendarDate()
   return buildLoggingActivityMetrics(savedEntries.value, date.year, date.month - 1)
 })
 

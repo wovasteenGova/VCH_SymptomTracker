@@ -152,6 +152,9 @@ export default defineNuxtConfig({
       importScripts: ['/log-reminder-handlers.js'],
       skipWaiting: false,
       clientsClaim: false,
+      // @vite-pwa/nuxt defaults navigateFallback to `/`, which is not precached on SSR
+      // builds and throws non-precached-url in the service worker.
+      navigateFallback: null,
       // This is an authenticated server app, not an offline SPA shell. Keep the
       // reminder service worker active without replacing navigations or API/auth
       // responses with a cached root document.
