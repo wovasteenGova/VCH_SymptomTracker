@@ -105,7 +105,7 @@ export default defineNuxtConfig({
         || env('NUXT_PUBLIC_SITE_URL')
         || (isProduction ? 'https://tracker.veteranscentralhub.com' : ''),
       claimBuilderUrl: envFirst('NUXT_PUBLIC_CLAIMBUILDER_URL', 'CLAIMBUILDER_URL')
-        || (isProduction ? 'https://claimbuilder.veteranscentralhub.com' : 'http://localhost:3000'),
+        || (isProduction ? 'https://claimbuilder.veteranscentralhub.com' : 'http://localhost:3002'),
       analyticsExcludeEmails: envFirst(
         'NUXT_PUBLIC_ANALYTICS_EXCLUDE_EMAILS',
         'ANALYTICS_EXCLUDE_EMAILS'
