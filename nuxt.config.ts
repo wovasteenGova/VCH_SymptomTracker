@@ -58,8 +58,8 @@ export default defineNuxtConfig({
   modules: ['./nuxt-modules/vch-host', '@nuxt/ui', '@vite-pwa/nuxt', '@nuxtjs/supabase'],
   css: ['~/assets/css/main.css'],
   colorMode: {
-    preference: 'dark',
-    fallback: 'dark',
+    preference: 'light',
+    fallback: 'light',
     classSuffix: ''
   },
   supabase: {
@@ -118,9 +118,9 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: 'A mobile-first symptom tracker for veterans to log symptoms, track daily impact, and collect supporter observations.' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
-        { name: 'theme-color', content: '#0f172a' },
+        { name: 'theme-color', content: '#f8fafc' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
-        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
         { name: 'apple-mobile-web-app-title', content: 'Symptoms' },
         { property: 'og:title', content: 'Veteran Symptom Tracker' },
         { property: 'og:description', content: 'Track symptoms, daily impact, and signed supporter observations from your phone.' },
@@ -166,8 +166,8 @@ export default defineNuxtConfig({
       name: 'VCH Symptom Tracker',
       short_name: 'Symptoms',
       description: 'A mobile-first symptom tracker for veterans to log symptoms and supporter observations.',
-      theme_color: '#0f172a',
-      background_color: '#020617',
+      theme_color: '#f8fafc',
+      background_color: '#f8fafc',
       display: 'standalone',
       orientation: 'portrait',
       scope: '/',
