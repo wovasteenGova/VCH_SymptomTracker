@@ -129,6 +129,36 @@ html.dark body {
   background: var(--ui-bg);
 }
 
+/* Interactive cursors — Tailwind preflight sets buttons to default. */
+@layer base {
+  a[href],
+  summary,
+  select:not(:disabled),
+  label:where(:not([aria-disabled='true'])):has(> input[type='checkbox']:not(:disabled)),
+  label:where(:not([aria-disabled='true'])):has(> input[type='radio']:not(:disabled)),
+  [data-clickable='true'] {
+    cursor: pointer;
+  }
+
+  button:not(:disabled),
+  input[type='button']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='reset']:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input[type='button']:disabled,
+  input[type='submit']:disabled,
+  input[type='reset']:disabled,
+  select:disabled,
+  [role='button'][aria-disabled='true'],
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
 .app-shell,
 .tracker-chrome-frame {
   height: calc(var(--app-height) - var(--site-notice-height, 0px));
@@ -171,19 +201,6 @@ html.dark .vch-site-notice-banner {
 }
 body::-webkit-scrollbar {
   display: none;
-}
-
-button,
-a,
-summary,
-[role="button"],
-[data-clickable="true"] {
-  cursor: pointer;
-}
-
-button:disabled,
-[aria-disabled="true"] {
-  cursor: not-allowed;
 }
 
 .no-scrollbar {
