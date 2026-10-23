@@ -128,7 +128,8 @@ describe('tracker site notice wiring', () => {
     const api = readFileSync('server/api/site-notices.get.ts', 'utf8')
     const css = readFileSync('app/assets/css/main.css', 'utf8')
 
-    expect(app).toContain('<VchSiteNoticeBanner />')
+    expect(app).toContain('<VchSiteNoticeBanner v-if="!isFamilyObservationReportRoute" />')
+    expect(app).toContain("route.path.startsWith('/report/')")
     expect(banner).toContain('vch-site-notice-banner')
     expect(banner).toContain('Dismiss this notice')
     expect(banner).toContain('border border-current')

@@ -1,6 +1,6 @@
 <template>
   <UApp :toaster="null">
-    <VchSiteNoticeBanner />
+    <VchSiteNoticeBanner v-if="!isFamilyObservationReportRoute" />
     <NuxtRouteAnnouncer />
     <NuxtPage />
     <VchGroupedToaster
@@ -15,7 +15,7 @@
       :max="5"
     />
     <PwaInstallPrompt />
-    <VchCookieConsentBanner />
+    <VchCookieConsentBanner v-if="!isFamilyObservationReportRoute" />
   </UApp>
 </template>
 
@@ -26,6 +26,7 @@ import { VCH_TRACKER_ORIGIN_COM } from './utils/vchHost'
 
 const { themeId } = useClaimColorTheme()
 const route = useRoute()
+const isFamilyObservationReportRoute = computed(() => route.path.startsWith('/report/'))
 const canonicalUrl = computed(() => {
   const path = route.path === '/' ? '/' : route.path.replace(/\/+$/, '')
   return `${VCH_TRACKER_ORIGIN_COM}${path}`
