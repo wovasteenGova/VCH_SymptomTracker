@@ -8,7 +8,7 @@
         </div>
 
         <NuxtLink
-          to="/"
+          :to="backPath"
           class="grid size-10 place-items-center rounded-full bg-slate-900 text-white shadow-sm ring-1 ring-slate-800 transition hover:bg-slate-800"
           aria-label="Back to tracker"
         >
@@ -82,7 +82,7 @@
 
       <StickyActionBar tone="dark">
         <NuxtLink
-          to="/"
+          :to="backPath"
           class="flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-4 text-base font-bold text-slate-950 shadow-lg transition hover:bg-slate-200"
         >
           <UIcon name="i-lucide-arrow-left" class="size-5" />
@@ -97,4 +97,5 @@
 import { useVchPublicUrls } from '../composables/useVchPublicUrls'
 
 const { privacyUrl, termsUrl, disclaimerUrl } = useVchPublicUrls()
+const { backPath } = useLegalPageBackPath()
 </script>

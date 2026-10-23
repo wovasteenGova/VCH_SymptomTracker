@@ -1,4 +1,5 @@
 import { useSupabaseClient } from '#imports'
+import { createSupporterLinkToken } from '../utils/supporterLinkToken'
 import { useTrackerDb } from './useTrackerDb'
 
 type UserProfilePayload = {
@@ -48,15 +49,6 @@ async function sha256Hex(value: string) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', encodedValue)
 
   return Array.from(new Uint8Array(hashBuffer))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-function createLinkToken() {
-  const randomValues = new Uint8Array(32)
-  crypto.getRandomValues(randomValues)
-
-  return Array.from(randomValues)
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('')
 }
@@ -152,7 +144,7 @@ export function useUserProfiles() {
 
   async function createSupporterProfile(payload: SupporterProfilePayload) {
     const userId = await getUserId()
-    const token = createLinkToken()
+    const token = createSupporterLinkToken()
     const tokenHash = await sha256Hex(token)
 
     const linkLabel = payload.link_label?.trim()
@@ -201,7 +193,7 @@ export function useUserProfiles() {
 
   async function createSupporterProfileLink(profileId: string) {
     const userId = await getUserId()
-    const token = createLinkToken()
+    const token = createSupporterLinkToken()
     const tokenHash = await sha256Hex(token)
 
     const { error } = await trackerDb

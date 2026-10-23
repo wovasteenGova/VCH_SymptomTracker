@@ -481,8 +481,8 @@
         v-if="!isLoading && !pageError"
         class="flex shrink-0 items-center justify-center gap-3 py-4 text-xs font-semibold text-slate-500"
       >
-        <NuxtLink to="/privacy" class="hover:text-slate-700 dark:hover:text-slate-300">Privacy</NuxtLink>
-        <NuxtLink to="/disclaimer" class="hover:text-slate-700 dark:hover:text-slate-300">Disclaimer</NuxtLink>
+        <NuxtLink :to="legalPageLink('/privacy')" class="hover:text-slate-700 dark:hover:text-slate-300">Privacy</NuxtLink>
+        <NuxtLink :to="legalPageLink('/disclaimer')" class="hover:text-slate-700 dark:hover:text-slate-300">Disclaimer</NuxtLink>
       </footer>
     </section>
   </main>
@@ -536,6 +536,10 @@ const route = useRoute()
 const trackerDb = useTrackerDb()
 const { showSubmissionToast } = useSubmissionToast()
 const token = String(route.params.token || '')
+
+function legalPageLink(path: '/privacy' | '/disclaimer') {
+  return { path, query: { returnTo: route.path } }
+}
 
 definePageMeta({
   layout: false,
