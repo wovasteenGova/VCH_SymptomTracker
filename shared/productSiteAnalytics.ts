@@ -12,7 +12,9 @@ export type ProductAnalyticsSource = typeof PRODUCT_ANALYTICS_SOURCES[number]
 export const DEFAULT_ANALYTICS_EXCLUDED_EMAILS = [
   'philippeashelton@gmail.com',
   'wovasteen@gmail.com',
-  'veteranscentral1818@gmail.com'
+  'veteranscentral1818@gmail.com',
+  'julia.vch.qa@gmail.com',
+  'marcus.hale.vch.qa@gmail.com'
 ] as const
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
