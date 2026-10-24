@@ -5116,6 +5116,8 @@ async function toggleDraftConditionAsync(key: string) {
       && user.value
     ) {
       await persistDraftTrackedConditions()
+    } else {
+      await persistGuestTrackedConditionsIfBrowsing()
     }
     return
   }
@@ -5128,10 +5130,12 @@ async function toggleDraftConditionAsync(key: string) {
 
   if (isMentalHealthConditionKey(key)) {
     draftSelectedKeys.value = keysWithSingleMentalHealthSelection(draftSelectedKeys.value, key)
+    await persistGuestTrackedConditionsIfBrowsing()
     return
   }
 
   draftSelectedKeys.value = [key, ...draftSelectedKeys.value]
+  await persistGuestTrackedConditionsIfBrowsing()
 }
 
 async function persistDraftTrackedConditions() {
@@ -6095,6 +6099,26 @@ async function persistGuestConditionDraftLocally(keysToSave: string[]) {
       || formatConditionKeyLabel(key)
     await rememberCustomConditionLabel(key, label)
   }
+}
+
+/** Logged-out manage mode: each toggle updates local tracked keys (no Done required). */
+async function persistGuestTrackedConditionsIfBrowsing() {
+  if (
+    isDemoMode
+    || user.value
+    || needsOnboarding.value
+    || !isConditionBrowserOpen.value
+    || isSavingTrackedConditions.value
+  ) {
+    return
+  }
+
+  const keysToSave = resolveTrackedKeysToSave(draftSelectedKeys.value)
+  if (!validateDraftMentalHealthSelection(keysToSave)) {
+    return
+  }
+
+  await persistGuestConditionDraftLocally(keysToSave)
 }
 
 function reportTrackedConditionsError(error: unknown) {
