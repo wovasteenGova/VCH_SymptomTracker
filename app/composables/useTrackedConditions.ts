@@ -5,6 +5,7 @@ import { useTrackerDb } from './useTrackerDb'
 import { TRACKER_DEMO_KEY } from './useTrackerLayout'
 import { conditionKeyFromLabel } from '../utils/subscription'
 import { normalizeTrackedConditionKeys } from '../utils/conditionCatalog'
+import { resolveGuestTrackedConditionsFromLocalState } from '../utils/guestTrackedConditions'
 import { isTrackedConditionsHydrating } from '../utils/homeConditionsPanel'
 import { TRACKER_SIGN_IN } from '../utils/trackerSignInMessages'
 
@@ -171,20 +172,19 @@ export function useTrackedConditions() {
 
       if (userError || !userData.user) {
         const scoped = localKeys(null)
+        const hasStoredKeysRecord = import.meta.client
+          ? window.localStorage.getItem(scoped.storageKey) !== null
+          : false
         const storedKeys = readStoredKeys(scoped.storageKey)
         const localCompleted = readStoredOnboardingCompleted(scoped.onboardingKey)
+        const resolved = resolveGuestTrackedConditionsFromLocalState({
+          hasStoredKeysRecord,
+          storedKeys,
+          onboardingCompleted: localCompleted,
+          entryConditionKeys
+        })
 
-        if (storedKeys.length) {
-          applyLocalState(storedKeys, localCompleted, null)
-          return
-        }
-
-        if (entryConditionKeys.length) {
-          applyLocalState(entryConditionKeys.slice(0, 12), true, null)
-          return
-        }
-
-        applyLocalState([], false, null)
+        applyLocalState(resolved.keys, resolved.completed, null)
         return
       }
 
