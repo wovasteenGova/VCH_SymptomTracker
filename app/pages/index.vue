@@ -296,14 +296,12 @@
                 :selected-keys="draftSelectedKeys"
                 :list-order-keys="conditionBrowserListOrder"
                 :locked-keys="[]"
-                :restricted-keys="mentalHealthRestrictedKeys"
                 :saving="isSavingTrackedConditions"
                 :error="trackedConditionsError"
                 :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
                 :inactive-custom-condition-count="inactiveCustomConditions.length"
                 @toggle="toggleDraftCondition"
                 @add-custom="addCustomDraftCondition"
-                @restricted-select="handleRestrictedConditionSelect"
                 @open-inactive-custom="openRemovedCustomConditionsSheet"
                 @confirm="confirmConditionOnboarding"
                 @done="finishConditionBrowser"
@@ -394,14 +392,12 @@
                 :selected-keys="draftSelectedKeys"
                 :list-order-keys="conditionBrowserListOrder"
                 :locked-keys="[]"
-                :restricted-keys="mentalHealthRestrictedKeys"
                 :saving="isSavingTrackedConditions"
                 :error="trackedConditionsError"
                 :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
                 :inactive-custom-condition-count="inactiveCustomConditions.length"
                 @toggle="toggleDraftCondition"
                 @add-custom="addCustomDraftCondition"
-                @restricted-select="handleRestrictedConditionSelect"
                 @open-inactive-custom="openRemovedCustomConditionsSheet"
                 @confirm="confirmConditionOnboarding"
                 @done="finishConditionBrowser"
@@ -609,14 +605,12 @@
                   :selected-keys="draftSelectedKeys"
                   :list-order-keys="conditionBrowserListOrder"
                   :locked-keys="[]"
-                  :restricted-keys="mentalHealthRestrictedKeys"
                   :saving="isSavingTrackedConditions"
                   :error="trackedConditionsError"
                   :demo-search-query="isDemoMode ? demoConditionSearch : undefined"
                   :inactive-custom-condition-count="inactiveCustomConditions.length"
                   @toggle="toggleDraftCondition"
                   @add-custom="addCustomDraftCondition"
-                  @restricted-select="handleRestrictedConditionSelect"
                   @open-inactive-custom="openRemovedCustomConditionsSheet"
                   @confirm="confirmConditionOnboarding"
                   @done="finishConditionBrowser"
@@ -1922,7 +1916,7 @@ import { filterAndRankConditions } from '../utils/conditionSearch'
 import { getWeeklyLogCaution, type WeeklyLogCaution } from '../utils/loggingCadence'
 import { buildLoggingActivityMetrics } from '../utils/loggingActivityReport'
 import { buildSymptomDashboardMetrics } from '../utils/symptomDashboard'
-import { buildConditionPickerOptions, buildCustomConditionLabelsFromEntries, buildHomeVisitTips, collectCustomConditionBrowserKeys, conditionCatalog, getCatalogConditionByKey, isCustomTrackedConditionKey, isMentalHealthConditionKey, listMentalHealthConditionKeys, mergeCustomConditionLabelMaps, MENTAL_HEALTH_ONE_CONDITION_MESSAGE, normalizeConditionLabel, pickRandomHomeVisitTip, resolveCatalogConditionByStoredKey, resolveTrackedConditionByStoredKey, resolveTrackedConditionKey, VA_CRISIS_LINE_SHORT, type HomeVisitTip } from '../utils/conditionCatalog'
+import { buildConditionPickerOptions, buildCustomConditionLabelsFromEntries, buildHomeVisitTips, collectCustomConditionBrowserKeys, conditionCatalog, getCatalogConditionByKey, isCustomTrackedConditionKey, isMentalHealthConditionKey, keysWithSingleMentalHealthSelection, mergeCustomConditionLabelMaps, MENTAL_HEALTH_ONE_CONDITION_MESSAGE, normalizeConditionLabel, pickRandomHomeVisitTip, resolveCatalogConditionByStoredKey, resolveTrackedConditionByStoredKey, resolveTrackedConditionKey, VA_CRISIS_LINE_SHORT, type HomeVisitTip } from '../utils/conditionCatalog'
 import { buildInactiveCustomConditions, type InactiveCustomCondition } from '../utils/inactiveCustomConditions'
 import { LOG_REMINDER_TEST_INTERVAL_MS, LOG_REMINDER_TEST_MODE } from '../utils/logReminders'
 import { conditionImageAssets } from '../utils/conditionImages'
@@ -3135,51 +3129,6 @@ const homeCarouselSlideCount = computed(() => homeConditions.value.length + 1)
 
 function isConditionLogLocked(_key: string) {
   return false
-}
-
-function resolveActiveMentalHealthConditionKey() {
-  const entryCounts = new Map<string, number>()
-
-  for (const entry of savedEntries.value) {
-    const key = savedEntryConditionKey(entry)
-    if (!isMentalHealthConditionKey(key)) {
-      continue
-    }
-
-    entryCounts.set(key, (entryCounts.get(key) || 0) + 1)
-  }
-
-  if (entryCounts.size) {
-    return [...entryCounts.entries()]
-      .sort((left, right) => right[1] - left[1])[0]?.[0] || null
-  }
-
-  for (const key of trackedConditionKeys.value) {
-    if (isMentalHealthConditionKey(key)) {
-      return key
-    }
-  }
-
-  for (const key of draftSelectedKeys.value) {
-    if (isMentalHealthConditionKey(key)) {
-      return key
-    }
-  }
-
-  return null
-}
-
-const mentalHealthRestrictedKeys = computed(() => {
-  const activeKey = resolveActiveMentalHealthConditionKey()
-  if (!activeKey) {
-    return []
-  }
-
-  return listMentalHealthConditionKeys().filter((key) => key !== activeKey)
-})
-
-function handleRestrictedConditionSelect() {
-  trackedConditionsError.value = MENTAL_HEALTH_ONE_CONDITION_MESSAGE
 }
 
 function validateDraftMentalHealthSelection(keys: string[]) {
@@ -5153,11 +5102,6 @@ function toggleDraftCondition(key: string) {
 async function toggleDraftConditionAsync(key: string) {
   trackedConditionsError.value = ''
 
-  if (mentalHealthRestrictedKeys.value.includes(key)) {
-    trackedConditionsError.value = MENTAL_HEALTH_ONE_CONDITION_MESSAGE
-    return
-  }
-
   if (draftSelectedKeys.value.includes(key)) {
     if (isCustomTrackedConditionKey(key)) {
       prependConditionBrowserListOrderKey(key)
@@ -5176,17 +5120,14 @@ async function toggleDraftConditionAsync(key: string) {
     return
   }
 
-  if (isMentalHealthConditionKey(key)) {
-    const existingMentalHealthKey = draftSelectedKeys.value.find((existingKey) => isMentalHealthConditionKey(existingKey))
-    if (existingMentalHealthKey && existingMentalHealthKey !== key) {
-      trackedConditionsError.value = MENTAL_HEALTH_ONE_CONDITION_MESSAGE
-      return
-    }
-  }
-
   // Demo: one active condition at a time (replace, don't stack).
   if (isDemoMode) {
     draftSelectedKeys.value = [key]
+    return
+  }
+
+  if (isMentalHealthConditionKey(key)) {
+    draftSelectedKeys.value = keysWithSingleMentalHealthSelection(draftSelectedKeys.value, key)
     return
   }
 
