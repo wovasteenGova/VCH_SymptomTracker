@@ -704,6 +704,23 @@ export function listMentalHealthConditionKeys() {
     .map((condition) => condition.key)
 }
 
+/** First mental health catalog key in a tracked-condition list (order preserved). */
+export function findMentalHealthConditionKeyInList(keys: string[]) {
+  for (const key of keys) {
+    if (isMentalHealthConditionKey(key)) {
+      return key
+    }
+  }
+
+  return null
+}
+
+/** Keep non-mental keys and replace any prior mental health pick with `mentalHealthKey`. */
+export function keysWithSingleMentalHealthSelection(keys: string[], mentalHealthKey: string) {
+  const withoutMentalHealth = keys.filter((key) => !isMentalHealthConditionKey(key))
+  return [mentalHealthKey, ...withoutMentalHealth]
+}
+
 const conditionKeyAliases: Record<string, string> = {
   [conditionKeyFromLabel('GERD')]: conditionKeyFromLabel('GERD / Acid Reflux'),
   [conditionKeyFromLabel('Acid reflux')]: conditionKeyFromLabel('GERD / Acid Reflux'),
