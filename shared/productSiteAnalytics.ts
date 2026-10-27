@@ -19,6 +19,11 @@ export const DEFAULT_ANALYTICS_EXCLUDED_EMAILS = [
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const INET_RE = /^(?:\d{1,3}\.){3}\d{1,3}$|^[0-9a-f:]+$/i
+const LOCAL_ANALYTICS_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
+
+function hostnameFromHostHeader(host: string): string {
+  return String(host || '').trim().toLowerCase().split(':')[0] || ''
+}
 
 export function normalizeAnalyticsEmail(value: unknown): string {
   return String(value || '').trim().toLowerCase()
@@ -54,6 +59,29 @@ export function isValidInet(value: unknown): boolean {
   if (!ip || ip === 'unknown') return false
   if (ip === '127.0.0.1' || ip === '::1') return true
   return INET_RE.test(ip)
+}
+
+export function isLocalAnalyticsHostname(hostOrHostname: unknown): boolean {
+  const host = hostnameFromHostHeader(String(hostOrHostname || ''))
+  return LOCAL_ANALYTICS_HOSTS.has(host)
+}
+
+export function isLocalAnalyticsVisitorIp(ip: unknown): boolean {
+  const raw = String(ip || '').trim().toLowerCase()
+  if (!raw || raw === 'unknown') return false
+  const value = raw.split('/')[0].replace(/^::ffff:/, '')
+  if (value === 'localhost' || value === '::1' || value === '0:0:0:0:0:0:0:1') return true
+  if (value === '127.0.0.1' || value.startsWith('127.')) return true
+  return false
+}
+
+export function shouldSkipLocalDevAnalytics(input: {
+  hostname?: unknown
+  clientIP?: unknown
+} = {}): boolean {
+  if (isLocalAnalyticsHostname(input.hostname)) return true
+  if (isLocalAnalyticsVisitorIp(input.clientIP)) return true
+  return false
 }
 
 export function shouldSkipPagePath(path: unknown): boolean {
@@ -113,6 +141,52 @@ export function detectKnownAnalyticsBot(signals: AnalyticsVisitorSignals = {}): 
 
 export function shouldSkipAnalyticsWrite(signals: AnalyticsVisitorSignals = {}): boolean {
   return detectKnownAnalyticsBot(signals).isBot
+}
+
+export const ANALYTICS_VIEW_DEDUPE_SESSION_PREFIX = 'vch:analytics:view:'
+
+export function buildAnalyticsViewDedupeKey(input: {
+  product?: unknown
+  path?: unknown
+  entityType?: unknown
+  entityId?: unknown
+  entityKey?: unknown
+}): string | null {
+  const explicit = String(input.entityKey || '').trim()
+  if (explicit) return explicit
+  const entityType = String(input.entityType || 'page').trim().toLowerCase()
+  if (entityType === 'page') {
+    const path = String(input.path || '/').split('?')[0].trim() || '/'
+    const product = normalizeProductAnalyticsSource(input.product) || 'symptom_tracker'
+    return `${product}:${path}`
+  }
+  const id = String(input.entityId ?? 'unknown')
+  return `${entityType}:${id}`
+}
+
+export function isDuplicateAnalyticsViewInSession(key: string): boolean {
+  if (typeof sessionStorage === 'undefined') return false
+  try {
+    return sessionStorage.getItem(ANALYTICS_VIEW_DEDUPE_SESSION_PREFIX + key) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function markAnalyticsViewRecordedInSession(key: string): void {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    sessionStorage.setItem(ANALYTICS_VIEW_DEDUPE_SESSION_PREFIX + key, '1')
+  } catch {
+    // private mode / quota
+  }
+}
+
+export function consumeUniqueAnalyticsViewSlot(key: string | null | undefined): boolean {
+  if (!key) return true
+  if (isDuplicateAnalyticsViewInSession(key)) return false
+  markAnalyticsViewRecordedInSession(key)
+  return true
 }
 
 export function normalizeProductAnalyticsSource(value: unknown): ProductAnalyticsSource | null {

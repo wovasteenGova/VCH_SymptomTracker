@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
-import { getHeader, getRequestIP } from 'h3'
+import { getHeader, getRequestHost, getRequestIP } from 'h3'
 import { serverSupabaseUser } from '#supabase/server'
 import {
   buildProductPageViewRow,
   detectKnownAnalyticsBot,
   isAnalyticsExcludedUser,
-  isValidInet
+  isValidInet,
+  shouldSkipLocalDevAnalytics
 } from '../../utils/productAnalyticsTrack'
 import { getSupabaseNodeOptions } from '../../utils/supabaseNodeOptions'
 import { resolveSupabaseEnv } from '../../utils/supabaseEnv'
@@ -59,6 +60,12 @@ export default defineEventHandler(async (event) => {
       return { success: true, skipped: 'bot' }
     }
 
+    const clientIP = getRequestIP(event, { xForwardedFor: true }) || ''
+    const requestHost = getRequestHost(event, { xForwardedHost: true })
+    if (shouldSkipLocalDevAnalytics({ hostname: requestHost, clientIP })) {
+      return { success: true, skipped: 'localhost' }
+    }
+
     const body = await readBody(event).catch(() => ({})) as Record<string, unknown>
     const sessionUser = await serverSupabaseUser(event).catch(() => null)
     const config = useRuntimeConfig(event)
@@ -78,7 +85,6 @@ export default defineEventHandler(async (event) => {
     })
     if (!row) return { success: false }
 
-    const clientIP = getRequestIP(event, { xForwardedFor: true }) || ''
     const referrer = String(
       body?.referrer || getHeader(event, 'referer') || getHeader(event, 'referrer') || ''
     ).slice(0, 500) || null

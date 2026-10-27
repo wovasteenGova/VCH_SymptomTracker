@@ -1,6 +1,9 @@
 import {
+  buildAnalyticsViewDedupeKey,
+  consumeUniqueAnalyticsViewSlot,
   isAnalyticsExcludedUser,
   shouldSkipAnalyticsWrite,
+  shouldSkipLocalDevAnalytics,
   shouldSkipPagePath
 } from '#shared/productSiteAnalytics'
 
@@ -23,8 +26,14 @@ function isExcludedAnalyticsClientUser() {
   }
 }
 
+function isLocalAnalyticsClient() {
+  if (typeof window === 'undefined') return false
+  return shouldSkipLocalDevAnalytics({ hostname: window.location.hostname })
+}
+
 function fireTrack(body: Record<string, unknown>) {
   if (!canTrackOnClient()) return
+  if (isLocalAnalyticsClient()) return
   if (shouldSkipAnalyticsWrite(clientVisitorSignals())) return
   if (isExcludedAnalyticsClientUser()) return
   $fetch('/api/analytics/track', {
@@ -39,6 +48,12 @@ export function useProductAnalytics() {
     if (!canTrackOnClient()) return
     const path = String(input.path || '').split('?')[0] || '/'
     if (shouldSkipPagePath(path)) return
+    const dedupeKey = buildAnalyticsViewDedupeKey({
+      product: 'symptom_tracker',
+      path,
+      entityType: 'page'
+    })
+    if (!consumeUniqueAnalyticsViewSlot(dedupeKey)) return
     fireTrack({
       path,
       title: input.title || (typeof document !== 'undefined' ? document.title : ''),
