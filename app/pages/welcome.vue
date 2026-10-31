@@ -154,6 +154,7 @@ import { computed, onMounted } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { reportBranding, resolveTrackerAppUrl } from '../utils/reportBranding'
 import { useVchPublicUrls } from '../composables/useVchPublicUrls'
+import { DEFAULT_CLAIM_COLOR_THEME } from '../../shared/claimColorThemes'
 
 const config = useRuntimeConfig()
 const { hubUrl, symptomTrackerMarketingUrl, hostname } = useVchPublicUrls()
@@ -183,7 +184,7 @@ const highlights = [
 useHead({
   title: 'VCH Symptom Tracker',
   htmlAttrs: {
-    'data-theme': 'classic-warm'
+    'data-theme': DEFAULT_CLAIM_COLOR_THEME
   },
   meta: [
     {

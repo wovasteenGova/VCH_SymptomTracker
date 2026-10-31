@@ -303,39 +303,41 @@ html.dark[data-theme='high-contrast'] {
   --scrollbar-thumb-hover: rgb(255 255 255 / 0.65);
 }
 
-/* Fallback before client theme plugin runs */
+/* Fallback before client theme plugin runs (Pacific Slate) */
 html:not([data-theme]) {
   color-scheme: light;
-  --ui-primary: var(--ui-color-primary-600);
-  --ui-bg: #f7f4ef;
-  --ui-bg-muted: #efe9df;
-  --ui-bg-elevated: #faf8f4;
-  --ui-bg-accented: #e8e0d4;
-  --ui-bg-inverted: #131110;
-  --ui-border: #d9cfc2;
-  --ui-border-muted: #e5ddd2;
-  --ui-border-accented: #c9bba8;
-  --ui-text-dimmed: #8a8074;
-  --ui-text-muted: #6b6258;
-  --ui-text-toned: #4a433c;
-  --ui-text: #2f2a24;
-  --ui-text-highlighted: #1a1612;
+  --ui-primary: #475569;
+  --ui-secondary: #64748b;
+  --ui-bg: #f8fafc;
+  --ui-bg-muted: #f1f5f9;
+  --ui-bg-elevated: #ffffff;
+  --ui-bg-accented: #e2e8f0;
+  --ui-bg-inverted: #0f172a;
+  --ui-border: #cbd5e1;
+  --ui-border-muted: #e2e8f0;
+  --ui-border-accented: #94a3b8;
+  --ui-text-dimmed: #64748b;
+  --ui-text-muted: #475569;
+  --ui-text-toned: #334155;
+  --ui-text: #1e293b;
+  --ui-text-highlighted: #0f172a;
 }
 
 html.dark:not([data-theme]) {
   color-scheme: dark;
-  --ui-primary: var(--ui-color-primary-400);
-  --ui-bg: #131110;
-  --ui-bg-muted: #1a1714;
-  --ui-bg-elevated: #211d19;
-  --ui-bg-accented: #2a2520;
-  --ui-bg-inverted: #f2ead8;
-  --ui-border: #3a342e;
-  --ui-border-muted: #322c27;
-  --ui-border-accented: #453d36;
-  --ui-text-dimmed: #7a7168;
-  --ui-text-muted: #a69d92;
-  --ui-text-toned: #c4bab0;
-  --ui-text: #e8e0d6;
-  --ui-text-highlighted: #faf7f0;
+  --ui-primary: #94a3b8;
+  --ui-secondary: #cbd5e1;
+  --ui-bg: #0f172a;
+  --ui-bg-muted: #1e293b;
+  --ui-bg-elevated: #243044;
+  --ui-bg-accented: #334155;
+  --ui-bg-inverted: #f8fafc;
+  --ui-border: #334155;
+  --ui-border-muted: #1e293b;
+  --ui-border-accented: #475569;
+  --ui-text-dimmed: #64748b;
+  --ui-text-muted: #94a3b8;
+  --ui-text-toned: #cbd5e1;
+  --ui-text: #e2e8f0;
+  --ui-text-highlighted: #f8fafc;
 }
